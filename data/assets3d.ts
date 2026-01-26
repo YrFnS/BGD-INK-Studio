@@ -12,7 +12,7 @@ export interface ModelConfig {
 
 // SOURCE OF TRUTH FOR 3D ASSETS
 // Using the local t-shirt.glb file provided in the public directory.
-const STABLE_SHIRT_URL = '/public/basic_t-shirt.glb';
+const STABLE_SHIRT_URL = '/basic_t-shirt.glb';
 
 // Rotation Correction: The model is Z-up. 
 // -Math.PI / 2 (-90 deg) on X-axis is required to orient it upright correctly.
