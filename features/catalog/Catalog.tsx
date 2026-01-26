@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useAppContext } from '../../contexts/AppContext';
@@ -12,7 +11,7 @@ interface CatalogProps {
 }
 
 export const Catalog: React.FC<CatalogProps> = ({ onSelectProduct }) => {
-  const { t } = useAppContext();
+  const { t, language } = useAppContext();
   const [products, setProducts] = useState<Product[]>([]);
   
   useSEO('seo.catalog.title', 'seo.catalog.description');
@@ -64,7 +63,7 @@ export const Catalog: React.FC<CatalogProps> = ({ onSelectProduct }) => {
       
       {/* Catalog Header */}
       <div className="mb-12 md:mb-16 text-center md:text-start" ref={titleRef}>
-        <h2 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 text-black dark:text-white">
+        <h2 className={`text-4xl md:text-6xl font-bold tracking-tighter mb-4 text-black dark:text-white ${language === 'en' ? 'font-display' : ''}`}>
           {t('catalog.title')}
         </h2>
         <p className="text-gray-500 dark:text-gray-400 max-w-xl text-lg">

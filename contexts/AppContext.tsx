@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AppContextType, Language, Theme } from '../types';
 import { translations } from '../translations';
@@ -29,9 +28,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     // Switch font based on language
     if (language === 'ar') {
-      root.style.fontFamily = "'Noto Kufi Arabic', sans-serif";
+      root.style.fontFamily = "'Readex Pro', sans-serif";
     } else {
-      root.style.fontFamily = "'Space Grotesk', sans-serif";
+      root.style.fontFamily = "'Plus Jakarta Sans', sans-serif";
     }
   }, [language]);
 

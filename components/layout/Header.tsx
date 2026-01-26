@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { ViewState } from '../../types';
@@ -29,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 className="flex-shrink-0 cursor-pointer group z-50 px-2" 
                 onClick={() => handleNavigate('HOME')}
               >
-                <h1 className="text-2xl font-bold tracking-tighter text-black dark:text-white group-hover:opacity-80 transition-opacity">
+                <h1 className="text-2xl font-bold tracking-tighter text-black dark:text-white group-hover:opacity-80 transition-opacity font-display">
                   ASHUS
                 </h1>
               </div>

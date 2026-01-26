@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -147,7 +146,7 @@ export const Hero: React.FC<HeroProps> = ({ onStart }) => {
           {/* Text */}
           <div className="text-center lg:text-start flex flex-col items-center lg:items-start z-10">
             <div className="overflow-hidden mb-6">
-              <h1 className="hero-text text-5xl sm:text-7xl lg:text-8xl font-bold tracking-tighter leading-[0.9]">
+              <h1 className={`hero-text text-5xl sm:text-7xl lg:text-8xl font-bold tracking-tighter leading-[0.9] ${language === 'en' ? 'font-display' : ''}`}>
                 {language === 'en' ? (
                   <>PRINT<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-400 to-gray-600 dark:from-gray-500 dark:to-gray-300">REALITY.</span></>
                 ) : (
@@ -203,7 +202,7 @@ export const Hero: React.FC<HeroProps> = ({ onStart }) => {
       <div className="w-full bg-accent text-white py-4 overflow-hidden relative z-20 rotate-1 scale-105 shadow-xl">
         <div ref={marqueeRef} className="whitespace-nowrap flex gap-8">
           {[...Array(8)].map((_, i) => (
-            <span key={i} className="text-xl md:text-3xl font-bold uppercase tracking-widest">
+            <span key={i} className={`text-xl md:text-3xl font-bold uppercase tracking-widest ${language === 'en' ? 'font-display' : ''}`}>
               {t('home.marquee')}
             </span>
           ))}
@@ -213,7 +212,7 @@ export const Hero: React.FC<HeroProps> = ({ onStart }) => {
       {/* --- HOW IT WORKS --- */}
       <div ref={processRef} className="py-24 md:py-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tighter mb-4">{t('home.process.title')}</h2>
+          <h2 className={`text-4xl md:text-5xl font-bold tracking-tighter mb-4 ${language === 'en' ? 'font-display' : ''}`}>{t('home.process.title')}</h2>
           <div className="w-24 h-1 bg-accent mx-auto"></div>
         </div>
         
@@ -249,7 +248,7 @@ export const Hero: React.FC<HeroProps> = ({ onStart }) => {
       <div ref={qualityRef} className="py-24 bg-gray-50 dark:bg-zinc-900 border-y border-gray-200 dark:border-zinc-800 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div className="quality-content order-2 md:order-1">
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6 leading-tight">
+            <h2 className={`text-4xl md:text-6xl font-bold tracking-tighter mb-6 leading-tight ${language === 'en' ? 'font-display' : ''}`}>
               {t('home.quality.title')}
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
@@ -302,7 +301,7 @@ export const Hero: React.FC<HeroProps> = ({ onStart }) => {
 
       {/* --- FINAL CTA --- */}
       <div className="bg-black text-white py-24 text-center">
-        <h2 className="text-4xl md:text-6xl font-bold mb-8">{t('hero.title')}</h2>
+        <h2 className={`text-4xl md:text-6xl font-bold mb-8 ${language === 'en' ? 'font-display' : ''}`}>{t('hero.title')}</h2>
         <Magnetic strength={0.3}>
           <button 
             onClick={onStart}
