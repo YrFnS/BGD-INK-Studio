@@ -47,7 +47,8 @@ const DecalLayer = ({
     <Decal 
       position={position} 
       rotation={rotation} 
-      scale={[scale, scale, 0.6]} 
+      // Reduced Z scale (3rd value) from 0.6 to 0.15 to prevent bleed-through to back of shirt
+      scale={[scale, scale, 0.15]} 
       debug={false}
     >
       <meshBasicMaterial 
