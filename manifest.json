@@ -1,0 +1,23 @@
+
+{
+  "name": "ASHUS | Custom Printing Platform",
+  "short_name": "ASHUS",
+  "description": "High-performance custom clothing printing platform for Baghdad.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/863/863684.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/863/863684.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

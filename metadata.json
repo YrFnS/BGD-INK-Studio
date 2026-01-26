@@ -1,0 +1,10 @@
+{
+  "name": "ASHUS | Custom Printing Platform",
+  "description": "High-performance custom clothing printing platform for Baghdad. Monochrome aesthetic, bilingual, and 3D visualization.",
+  "short_name": "ASHUS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "requestFramePermissions": []
+}
