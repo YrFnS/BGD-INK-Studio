@@ -26,14 +26,20 @@ export interface Product {
   inStock: boolean;
 }
 
+export interface DecalLayer {
+  id: string;
+  url: string;
+  position: [number, number, number];
+  rotation: [number, number, number]; // Surface orientation
+  userRotation: number; // Z-axis rotation (radians)
+  scale: number;
+}
+
 export interface CustomizationState {
   productId: string | null;
   size: Size;
   color: string;
-  decalImage: string | null; // Base64 or URL
-  decalPosition: [number, number, number];
-  decalRotation: [number, number, number];
-  decalScale: number;
+  decals: DecalLayer[]; // Changed from single decal fields to array
   notes: string;
 }
 

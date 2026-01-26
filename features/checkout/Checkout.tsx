@@ -49,33 +49,16 @@ export const Checkout: React.FC<CheckoutProps> = ({ order, onBack, onSuccess }) 
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-      
-      // Animate Container
       tl.from(containerRef.current, { opacity: 0, duration: 0.5 });
-      
-      // Stagger Form Fields
       const formElements = formRef.current?.querySelectorAll('.form-group');
       if (formElements) {
-        tl.from(formElements, {
-          y: 20,
-          opacity: 0,
-          duration: 0.6,
-          stagger: 0.1
-        }, '-=0.2');
+        tl.from(formElements, { y: 20, opacity: 0, duration: 0.6, stagger: 0.1 }, '-=0.2');
       }
-
-      // Slide in Summary
-      tl.from('.order-summary', {
-        x: isRTL ? -30 : 30,
-        opacity: 0,
-        duration: 0.8
-      }, '-=0.6');
-
+      tl.from('.order-summary', { x: isRTL ? -30 : 30, opacity: 0, duration: 0.8 }, '-=0.6');
     }, containerRef);
     return () => ctx.revert();
   }, [isRTL]);
 
-  // Schema Validation
   const schema = z.object({
     fullName: z.string().min(3, 'error.min'),
     phone: z.string().regex(/^07\d{9}$/, 'error.phone'),
@@ -86,7 +69,6 @@ export const Checkout: React.FC<CheckoutProps> = ({ order, onBack, onSuccess }) 
 
   const handleChange = (field: keyof OrderDetails, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error on change
     if (errors[field]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -99,14 +81,10 @@ export const Checkout: React.FC<CheckoutProps> = ({ order, onBack, onSuccess }) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!order) return;
-    
     setIsSubmitting(true);
-
     try {
       schema.parse(formData);
-      
       const result = await submitOrder(order, formData);
-      
       if (result.success) {
         onSuccess(result.orderId, formData);
       }
@@ -146,71 +124,35 @@ export const Checkout: React.FC<CheckoutProps> = ({ order, onBack, onSuccess }) 
           <h2 className="text-3xl font-bold mb-8 uppercase tracking-tight">{t('checkout.title')}</h2>
 
           <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-            
-            {/* Name */}
             <div className="form-group">
               <label className="block text-sm font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase">{t('checkout.name')}</label>
-              <input 
-                type="text"
-                value={formData.fullName}
-                onChange={(e) => handleChange('fullName', e.target.value)}
-                className={`w-full bg-gray-50 dark:bg-zinc-900 border ${errors.fullName ? 'border-red-500' : 'border-gray-200 dark:border-zinc-700'} rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all`}
-              />
+              <input type="text" value={formData.fullName} onChange={(e) => handleChange('fullName', e.target.value)} className={`w-full bg-gray-50 dark:bg-zinc-900 border ${errors.fullName ? 'border-red-500' : 'border-gray-200 dark:border-zinc-700'} rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all`} />
               {errors.fullName && <p className="text-red-500 text-xs mt-1">{t(errors.fullName)}</p>}
             </div>
-
-            {/* Phone */}
             <div className="form-group">
               <label className="block text-sm font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase">{t('checkout.phone')}</label>
-              <input 
-                type="tel"
-                placeholder="07xxxxxxxxx"
-                value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
-                className={`w-full bg-gray-50 dark:bg-zinc-900 border ${errors.phone ? 'border-red-500' : 'border-gray-200 dark:border-zinc-700'} rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all`}
-              />
+              <input type="tel" placeholder="07xxxxxxxxx" value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} className={`w-full bg-gray-50 dark:bg-zinc-900 border ${errors.phone ? 'border-red-500' : 'border-gray-200 dark:border-zinc-700'} rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all`} />
                {errors.phone && <p className="text-red-500 text-xs mt-1">{t(errors.phone)}</p>}
             </div>
-
-            {/* Area */}
             <div className="form-group">
               <label className="block text-sm font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase">{t('checkout.area')}</label>
               <div className="relative">
-                <select 
-                  value={formData.area}
-                  onChange={(e) => handleChange('area', e.target.value)}
-                  className={`w-full appearance-none bg-gray-50 dark:bg-zinc-900 border ${errors.area ? 'border-red-500' : 'border-gray-200 dark:border-zinc-700'} rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all`}
-                >
+                <select value={formData.area} onChange={(e) => handleChange('area', e.target.value)} className={`w-full appearance-none bg-gray-50 dark:bg-zinc-900 border ${errors.area ? 'border-red-500' : 'border-gray-200 dark:border-zinc-700'} rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all`}>
                   <option value="">{t('checkout.selectArea')}</option>
-                  {BAGHDAD_AREAS.map(area => (
-                    <option key={area} value={area}>{area}</option>
-                  ))}
+                  {BAGHDAD_AREAS.map(area => (<option key={area} value={area}>{area}</option>))}
                 </select>
                 <div className={`absolute inset-y-0 ${isRTL ? 'left-4' : 'right-4'} flex items-center pointer-events-none text-gray-500`}>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </div>
               </div>
               {errors.area && <p className="text-red-500 text-xs mt-1">{t(errors.area)}</p>}
             </div>
-
-            {/* Street / Address */}
             <div className="form-group">
               <label className="block text-sm font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase">{t('checkout.address')}</label>
-              <textarea 
-                value={formData.street}
-                onChange={(e) => handleChange('street', e.target.value)}
-                className={`w-full bg-gray-50 dark:bg-zinc-900 border ${errors.street ? 'border-red-500' : 'border-gray-200 dark:border-zinc-700'} rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all h-32 resize-none`}
-              />
+              <textarea value={formData.street} onChange={(e) => handleChange('street', e.target.value)} className={`w-full bg-gray-50 dark:bg-zinc-900 border ${errors.street ? 'border-red-500' : 'border-gray-200 dark:border-zinc-700'} rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all h-32 resize-none`} />
               {errors.street && <p className="text-red-500 text-xs mt-1">{t(errors.street)}</p>}
             </div>
-
-            <button 
-              type="submit"
-              disabled={isSubmitting}
-              className={`form-group w-full bg-accent text-white py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
+            <button type="submit" disabled={isSubmitting} className={`form-group w-full bg-accent text-white py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}>
               {isSubmitting ? '...' : t('checkout.submit')}
             </button>
           </form>
@@ -222,30 +164,24 @@ export const Checkout: React.FC<CheckoutProps> = ({ order, onBack, onSuccess }) 
           
           {/* Visual Preview */}
           <div className="relative aspect-square bg-white dark:bg-black rounded-2xl overflow-hidden mb-6 border border-gray-100 dark:border-zinc-800">
-             {/* Base Product Image */}
-             <img 
-               src={product?.image} 
-               alt="Product Base" 
-               className="w-full h-full object-cover opacity-80"
-             />
-             
-             {/* Color Overlay (Simulated) */}
+             <img src={product?.image} alt="Product Base" className="w-full h-full object-cover opacity-80" />
              <div className="absolute inset-0 mix-blend-multiply opacity-50" style={{ backgroundColor: order.color }}></div>
-
-             {/* Decal Overlay */}
-             {order.decalImage && (
-               <div className="absolute inset-0 flex items-center justify-center">
+             
+             {/* Render all layers */}
+             {order.decals.map(layer => (
+               <div key={layer.id} className="absolute inset-0 flex items-center justify-center pointer-events-none">
                  <img 
-                   src={order.decalImage} 
+                   src={layer.url} 
                    alt="Custom Print" 
                    style={{ 
-                     width: `${order.decalScale * 300}%`, // Approximate visual scale match
-                     transform: `translate(${order.decalPosition[0] * 100}px, ${-order.decalPosition[1] * 100}px)`
+                     width: `${layer.scale * 300}%`,
+                     // Invert Y for 2D preview approximation and apply rotation
+                     transform: `translate(${layer.position[0] * 100}px, ${-layer.position[1] * 100}px) rotate(${layer.userRotation || 0}rad)`
                    }}
                    className="object-contain"
                  />
                </div>
-             )}
+             ))}
           </div>
 
           {/* Details List */}
@@ -268,6 +204,13 @@ export const Checkout: React.FC<CheckoutProps> = ({ order, onBack, onSuccess }) 
               </div>
             </div>
 
+            {order.decals.length > 0 && (
+              <div className="flex justify-between py-3 border-b border-gray-200 dark:border-zinc-800">
+                 <span className="text-gray-500 dark:text-gray-400">Designs Added</span>
+                 <span className="font-bold">{order.decals.length}</span>
+              </div>
+            )}
+
             {order.notes && (
               <div className="py-3 border-b border-gray-200 dark:border-zinc-800">
                 <span className="block text-gray-500 dark:text-gray-400 mb-1">{t('customizer.notes')}</span>
@@ -282,7 +225,6 @@ export const Checkout: React.FC<CheckoutProps> = ({ order, onBack, onSuccess }) 
               </span>
             </div>
           </div>
-
         </div>
 
       </div>

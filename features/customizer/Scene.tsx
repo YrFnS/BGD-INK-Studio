@@ -3,41 +3,25 @@ import React, { Component, ReactNode } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stage } from '@react-three/drei';
 import { ShirtModel, ProceduralFallback } from './ShirtModel';
-import { ProductType, Theme } from '../../types';
+import { ProductType, Theme, DecalLayer } from '../../types';
 
 interface SceneProps {
   productId: string;
   productType: ProductType;
   color: string;
   theme: Theme;
-  decalImage: string | null;
-  decalPosition: [number, number, number];
-  decalRotation: [number, number, number];
-  decalScale: number;
+  decals: DecalLayer[];
+  activeDecalId: string | null;
   enableControls: boolean;
   onDecalChange: (pos: [number, number, number], rot: [number, number, number]) => void;
   setDraggingDecal: (dragging: boolean) => void;
 }
 
-// Error Boundary specifically for the 3D Model part of the scene
-// If useGLTF fails (network/404), this catches it and shows a box instead.
 class ModelErrorBoundary extends React.Component<{ fallback: ReactNode; children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
-  
-  static getDerivedStateFromError() { 
-    return { hasError: true }; 
-  }
-
-  componentDidCatch(error: any) {
-    console.error("3D Model Load Failed:", error);
-  }
-  
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-    return this.props.children;
-  }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error: any) { console.error("3D Model Load Failed:", error); }
+  render() { return this.state.hasError ? this.props.fallback : this.props.children; }
 }
 
 export const Scene: React.FC<SceneProps> = ({ 
@@ -45,10 +29,8 @@ export const Scene: React.FC<SceneProps> = ({
   productType, 
   color, 
   theme,
-  decalImage,
-  decalPosition,
-  decalRotation,
-  decalScale,
+  decals,
+  activeDecalId,
   enableControls,
   onDecalChange,
   setDraggingDecal
@@ -72,10 +54,8 @@ export const Scene: React.FC<SceneProps> = ({
             productId={productId}
             type={productType} 
             color={color} 
-            decalImage={decalImage}
-            decalPosition={decalPosition}
-            decalRotation={decalRotation}
-            decalScale={decalScale}
+            decals={decals}
+            activeDecalId={activeDecalId}
             onDecalChange={onDecalChange}
             setDraggingDecal={setDraggingDecal}
           />

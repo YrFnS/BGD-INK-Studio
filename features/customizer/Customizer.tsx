@@ -6,7 +6,7 @@ import { Controls } from './Controls';
 import { PRODUCTS } from '../../data/products';
 import { useAppContext } from '../../contexts/AppContext';
 import { useToast } from '../../contexts/ToastContext';
-import { Size, PendingOrder } from '../../types';
+import { Size, PendingOrder, DecalLayer } from '../../types';
 import { useSEO } from '../../hooks/useSEO';
 
 interface CustomizerProps {
@@ -26,13 +26,11 @@ export const Customizer: React.FC<CustomizerProps> = ({ productId, onCheckout })
   // Customization State
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
   const [selectedSize, setSelectedSize] = useState<Size>(Size.L);
-  const [decalImage, setDecalImage] = useState<string | null>(null);
-  
-  // Position [x, y, z] and Rotation [x, y, z]
-  const [decalPosition, setDecalPosition] = useState<[number, number, number]>([0, 0.04, 0.15]);
-  const [decalRotation, setDecalRotation] = useState<[number, number, number]>([0, 0, 0]);
-  const [decalScale, setDecalScale] = useState<number>(0.15);
   const [notes, setNotes] = useState('');
+  
+  // Multi-Layer State
+  const [decals, setDecals] = useState<DecalLayer[]>([]);
+  const [activeDecalId, setActiveDecalId] = useState<string | null>(null);
   
   // Interaction State
   const [isInteracting, setIsInteracting] = useState(false);
@@ -45,7 +43,6 @@ export const Customizer: React.FC<CustomizerProps> = ({ productId, onCheckout })
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // 3D Viewer Appearance (Scale + Fade)
       gsap.from(viewerRef.current, {
         scale: 0.95,
         opacity: 0,
@@ -53,8 +50,6 @@ export const Customizer: React.FC<CustomizerProps> = ({ productId, onCheckout })
         ease: 'power3.out',
         delay: 0.2
       });
-
-      // Controls Slide in (Direction depends on Language)
       const xOffset = language === 'ar' ? -50 : 50;
       gsap.from(controlsRef.current, {
         x: xOffset,
@@ -63,13 +58,11 @@ export const Customizer: React.FC<CustomizerProps> = ({ productId, onCheckout })
         ease: 'power3.out',
         delay: 0.4
       });
-      
     }, containerRef);
-
     return () => ctx.revert();
   }, [language]);
 
-  // File Upload Handler
+  // File Upload Handler (Adds a new layer)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -85,21 +78,37 @@ export const Customizer: React.FC<CustomizerProps> = ({ productId, onCheckout })
     }
 
     const url = URL.createObjectURL(file);
-    setDecalImage(url);
-    // Reset position slightly on new upload to default front
-    setDecalPosition([0, 0.04, 0.15]);
-    setDecalRotation([0, 0, 0]);
-    showToast('Design uploaded successfully', 'success');
+    const newId = Math.random().toString(36).substring(7);
+    
+    const newLayer: DecalLayer = {
+      id: newId,
+      url,
+      position: [0, 0.04, 0.15], // Default front center
+      rotation: [0, 0, 0],
+      userRotation: 0, // Default 0 rotation
+      scale: 0.15
+    };
+
+    setDecals(prev => [...prev, newLayer]);
+    setActiveDecalId(newId);
+    showToast('Layer added successfully', 'success');
   };
 
-  const handleRemoveDecal = () => {
-    setDecalImage(null);
-    showToast('Design removed', 'info');
+  const handleRemoveDecal = (id: string) => {
+    setDecals(prev => prev.filter(d => d.id !== id));
+    if (activeDecalId === id) setActiveDecalId(null);
+    showToast('Layer removed', 'info');
   };
 
-  const handleDecalChange = (pos: [number, number, number], rot: [number, number, number]) => {
-    setDecalPosition(pos);
-    setDecalRotation(rot);
+  const handleDecalUpdate = (id: string, updates: Partial<DecalLayer>) => {
+    setDecals(prev => prev.map(d => d.id === id ? { ...d, ...updates } : d));
+  };
+
+  // Called by the 3D Scene when dragging the ACTIVE decal
+  const handleSceneDecalChange = (pos: [number, number, number], rot: [number, number, number]) => {
+    if (activeDecalId) {
+      handleDecalUpdate(activeDecalId, { position: pos, rotation: rot });
+    }
   };
 
   const handleCheckout = () => {
@@ -109,10 +118,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ productId, onCheckout })
       basePrice: product.basePrice,
       color: selectedColor,
       size: selectedSize,
-      decalImage,
-      decalPosition,
-      decalRotation,
-      decalScale,
+      decals, // Pass array
       notes
     });
   };
@@ -138,7 +144,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ productId, onCheckout })
           </div>
         </div>
 
-        {/* Interaction Guard Overlay (Scroll Trap Solution) */}
+        {/* Interaction Guard */}
         {!isInteracting && (
           <div 
             className="absolute inset-0 z-20 flex items-center justify-center bg-black/5 dark:bg-white/5 backdrop-blur-[2px] cursor-pointer transition-all hover:bg-black/10 dark:hover:bg-white/10"
@@ -154,7 +160,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ productId, onCheckout })
           </div>
         )}
 
-        {/* Exit Interaction Mode Button */}
+        {/* Exit Interaction Button */}
         {isInteracting && (
           <button 
             onClick={(e) => { e.stopPropagation(); setIsInteracting(false); }}
@@ -167,19 +173,16 @@ export const Customizer: React.FC<CustomizerProps> = ({ productId, onCheckout })
           </button>
         )}
 
-        {/* The 3D Canvas */}
         <div className={`w-full h-full ${isDraggingDecal ? 'cursor-grabbing' : ''}`}>
           <Scene 
             productId={product.id}
             productType={product.type} 
             color={selectedColor} 
             theme={theme}
-            decalImage={decalImage}
-            decalPosition={decalPosition}
-            decalRotation={decalRotation}
-            decalScale={decalScale}
+            decals={decals}
+            activeDecalId={activeDecalId}
             enableControls={isInteracting && !isDraggingDecal}
-            onDecalChange={handleDecalChange}
+            onDecalChange={handleSceneDecalChange}
             setDraggingDecal={setIsDraggingDecal}
           />
         </div>
@@ -193,11 +196,12 @@ export const Customizer: React.FC<CustomizerProps> = ({ productId, onCheckout })
           onColorChange={setSelectedColor}
           selectedSize={selectedSize}
           onSizeChange={setSelectedSize}
-          decalImage={decalImage}
+          decals={decals}
+          activeDecalId={activeDecalId}
+          onSetActiveDecal={setActiveDecalId}
           onUpload={handleFileUpload}
           onRemoveDecal={handleRemoveDecal}
-          decalScale={decalScale}
-          onScaleChange={setDecalScale}
+          onUpdateDecal={handleDecalUpdate}
           notes={notes}
           onNotesChange={setNotes}
           onCheckout={handleCheckout}

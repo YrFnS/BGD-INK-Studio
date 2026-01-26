@@ -1,6 +1,6 @@
 
 import React, { useRef } from 'react';
-import { Product, Size } from '../../types';
+import { Product, Size, DecalLayer } from '../../types';
 import { useAppContext } from '../../contexts/AppContext';
 
 interface ControlsProps {
@@ -9,11 +9,14 @@ interface ControlsProps {
   onColorChange: (color: string) => void;
   selectedSize: Size;
   onSizeChange: (size: Size) => void;
-  decalImage: string | null;
+  
+  decals: DecalLayer[];
+  activeDecalId: string | null;
+  onSetActiveDecal: (id: string) => void;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onRemoveDecal: () => void;
-  decalScale: number;
-  onScaleChange: (scale: number) => void;
+  onRemoveDecal: (id: string) => void;
+  onUpdateDecal: (id: string, updates: Partial<DecalLayer>) => void;
+  
   notes: string;
   onNotesChange: (notes: string) => void;
   onCheckout: () => void;
@@ -25,11 +28,12 @@ export const Controls: React.FC<ControlsProps> = ({
   onColorChange,
   selectedSize,
   onSizeChange,
-  decalImage,
+  decals,
+  activeDecalId,
+  onSetActiveDecal,
   onUpload,
   onRemoveDecal,
-  decalScale,
-  onScaleChange,
+  onUpdateDecal,
   notes,
   onNotesChange,
   onCheckout
@@ -42,6 +46,7 @@ export const Controls: React.FC<ControlsProps> = ({
   };
 
   const sizes = Object.values(Size);
+  const activeDecal = decals.find(d => d.id === activeDecalId);
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
@@ -64,9 +69,7 @@ export const Controls: React.FC<ControlsProps> = ({
                     : 'border-gray-200 dark:border-gray-600 hover:scale-105'
                 }`}
                 style={{ backgroundColor: color }}
-                aria-label={`Select color ${color}`}
               >
-                {/* Checkmark for active state visibility even on white/black */}
                 {selectedColor === color && (
                   <span className={`absolute inset-0 flex items-center justify-center ${['#FFFFFF', '#fff'].includes(color.toLowerCase()) ? 'text-black' : 'text-white'}`}>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -101,83 +104,108 @@ export const Controls: React.FC<ControlsProps> = ({
           </div>
         </div>
 
-        {/* Upload & Decal Controls */}
+        {/* Layers & Upload */}
         <div>
-          <label className="block text-sm font-bold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">
-            {t('customizer.upload')}
-          </label>
-          
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            accept="image/*"
-            onChange={onUpload}
-          />
-
-          {!decalImage ? (
+          <div className="flex justify-between items-center mb-3">
+            <label className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              {t('customizer.upload')} ({decals.length})
+            </label>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*"
+              onChange={onUpload}
+            />
             <button 
               onClick={triggerFileUpload}
-              className="w-full h-32 border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-accent dark:hover:border-accent transition-colors group bg-gray-50 dark:bg-zinc-900/50"
+              className="text-xs bg-black dark:bg-white text-white dark:text-black px-3 py-1 rounded-full font-bold hover:opacity-80 transition-opacity"
             >
-              <svg className="w-8 h-8 text-gray-400 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="text-sm text-gray-500 font-medium">{t('customizer.upload')}</span>
+              + Add Layer
             </button>
+          </div>
+
+          {decals.length === 0 ? (
+            <div 
+              onClick={triggerFileUpload}
+              className="w-full h-24 border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-accent dark:hover:border-accent transition-colors group bg-gray-50 dark:bg-zinc-900/50 cursor-pointer"
+            >
+              <span className="text-sm text-gray-500 font-medium group-hover:text-accent">Upload Image</span>
+            </div>
           ) : (
-            <div className="space-y-6">
-              {/* Image Preview & Remove */}
-              <div className="relative group rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-700 bg-white dark:bg-black h-32">
-                <img src={decalImage} alt="Preview" className="w-full h-full object-contain p-2" />
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
-                  <button 
-                    onClick={triggerFileUpload} 
-                    className="text-white text-xs font-bold border border-white/50 px-3 py-1 rounded-full hover:bg-white hover:text-black transition-colors"
+            <div className="space-y-4">
+              {/* Layers List */}
+              <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                {decals.map((layer, index) => (
+                  <div 
+                    key={layer.id}
+                    onClick={() => onSetActiveDecal(layer.id)}
+                    className={`relative flex-shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden cursor-pointer transition-all ${
+                      activeDecalId === layer.id 
+                        ? 'border-accent ring-2 ring-accent/20' 
+                        : 'border-gray-200 dark:border-zinc-700 opacity-70 hover:opacity-100'
+                    }`}
                   >
-                    {t('customizer.change')}
-                  </button>
-                  <button 
-                    onClick={onRemoveDecal} 
-                    className="text-red-400 text-xs font-bold hover:text-red-300 transition-colors"
-                  >
-                    {t('customizer.remove')}
-                  </button>
-                </div>
+                    <img src={layer.url} alt={`Layer ${index}`} className="w-full h-full object-cover" />
+                    {activeDecalId === layer.id && (
+                       <div className="absolute inset-0 bg-accent/10 pointer-events-none"></div>
+                    )}
+                  </div>
+                ))}
               </div>
 
-              {/* Adjustments Section */}
-              <div className="space-y-4 bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-800">
-                <div className="flex items-center gap-2 mb-2">
-                   <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                   </svg>
-                   <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Adjustments</span>
-                </div>
+              {/* Active Layer Controls */}
+              {activeDecal && (
+                <div className="bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-800 animate-fade-in space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-gray-500 uppercase">Selected Layer</span>
+                    <button 
+                      onClick={() => onRemoveDecal(activeDecal.id)}
+                      className="text-red-500 hover:text-red-600 text-xs font-bold"
+                    >
+                      {t('customizer.remove')}
+                    </button>
+                  </div>
 
-                <div className="mb-2">
-                  <p className="text-[10px] text-gray-400 mb-2">
-                    Tip: Drag the logo on the shirt to move it.
+                  {/* Size Control */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase">Size</label>
+                      <span className="text-[10px] font-mono text-gray-400">{Math.round(activeDecal.scale * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.05"
+                      max="0.4"
+                      step="0.01"
+                      value={activeDecal.scale}
+                      onChange={(e) => onUpdateDecal(activeDecal.id, { scale: parseFloat(e.target.value) })}
+                      className="w-full h-1.5 bg-gray-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-accent"
+                    />
+                  </div>
+
+                  {/* Rotation Control */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase">Rotation</label>
+                      <span className="text-[10px] font-mono text-gray-400">{Math.round((activeDecal.userRotation || 0) * (180/Math.PI))}°</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max={Math.PI * 2}
+                      step="0.1"
+                      value={activeDecal.userRotation || 0}
+                      onChange={(e) => onUpdateDecal(activeDecal.id, { userRotation: parseFloat(e.target.value) })}
+                      className="w-full h-1.5 bg-gray-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-accent"
+                    />
+                  </div>
+                  
+                  <p className="text-[10px] text-gray-400 mt-2 italic">
+                    Drag on shirt to move • Use sliders to resize/rotate
                   </p>
                 </div>
-
-                {/* Scale Slider */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Size</label>
-                    <span className="text-[10px] font-mono text-gray-400">{Math.round(decalScale * 100)}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.05"
-                    max="0.4"
-                    step="0.01"
-                    value={decalScale}
-                    onChange={(e) => onScaleChange(parseFloat(e.target.value))}
-                    className="w-full h-1.5 bg-gray-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-accent"
-                  />
-                </div>
-              </div>
+              )}
             </div>
           )}
         </div>

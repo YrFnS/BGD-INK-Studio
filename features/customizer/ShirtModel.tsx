@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useFrame, ThreeEvent } from '@react-three/fiber';
 import { Center, Decal, useTexture, useGLTF } from '@react-three/drei';
-import { ProductType } from '../../types';
+import { ProductType, DecalLayer } from '../../types';
 import { ASSET_CONFIGS } from '../../data/assets3d';
 import * as THREE from 'three';
 
@@ -10,15 +10,12 @@ interface ShirtModelProps {
   productId: string;
   type: ProductType;
   color: string;
-  decalImage?: string | null;
-  decalPosition?: [number, number, number];
-  decalRotation?: [number, number, number];
-  decalScale?: number;
+  decals: DecalLayer[];
+  activeDecalId: string | null;
   onDecalChange: (pos: [number, number, number], rot: [number, number, number]) => void;
   setDraggingDecal: (dragging: boolean) => void;
 }
 
-// Fallback component to display if GLTF fails to load
 export const ProceduralFallback = ({ color }: { color: string }) => (
   <Center>
     <mesh castShadow receiveShadow>
@@ -28,34 +25,48 @@ export const ProceduralFallback = ({ color }: { color: string }) => (
   </Center>
 );
 
-// Sub-component to safely load texture
-const DecalLayer = ({ 
-  textureUrl, 
-  position, 
-  rotation, 
-  scale 
+const DecalItem = ({ 
+  layer, 
+  isActive 
 }: { 
-  textureUrl: string, 
-  position: [number, number, number], 
-  rotation: [number, number, number],
-  scale: number 
+  layer: DecalLayer, 
+  isActive: boolean 
 }) => {
-  const texture = useTexture(textureUrl);
+  const texture = useTexture(layer.url);
   texture.anisotropy = 16;
   
+  // Combine the surface normal rotation with the user's custom Z-rotation
+  const finalRotation = React.useMemo(() => {
+    // 1. Create quaternion from the surface normal orientation
+    const orientation = new THREE.Euler(...layer.rotation);
+    const qOrientation = new THREE.Quaternion().setFromEuler(orientation);
+    
+    // 2. Create quaternion for user's rotation around the Z axis (spin)
+    const qUser = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 0, 1), 
+      layer.userRotation || 0
+    );
+    
+    // 3. Combine: Align to surface, then spin around Z
+    const finalQ = qOrientation.multiply(qUser);
+    
+    // 4. Convert back to Euler for the Decal component
+    const finalEuler = new THREE.Euler().setFromQuaternion(finalQ);
+    return [finalEuler.x, finalEuler.y, finalEuler.z] as [number, number, number];
+  }, [layer.rotation, layer.userRotation]);
+
   return (
     <Decal 
-      position={position} 
-      rotation={rotation} 
-      // Reduced Z scale (3rd value) from 0.6 to 0.15 to prevent bleed-through to back of shirt
-      scale={[scale, scale, 0.15]} 
-      debug={false}
+      position={layer.position} 
+      rotation={finalRotation} 
+      scale={[layer.scale, layer.scale, 0.15]} 
+      debug={false} 
     >
       <meshBasicMaterial 
         map={texture} 
         transparent 
         polygonOffset 
-        polygonOffsetFactor={-4} 
+        polygonOffsetFactor={isActive ? -10 : -4} // Active layer sits on top
         depthTest={true}
         depthWrite={false}
       />
@@ -66,25 +77,20 @@ const DecalLayer = ({
 export const ShirtModel: React.FC<ShirtModelProps> = ({ 
   productId,
   color,
-  decalImage,
-  decalPosition = [0, 0.04, 0.15],
-  decalRotation = [0, 0, 0],
-  decalScale = 0.15,
+  decals,
+  activeDecalId,
   onDecalChange,
   setDraggingDecal
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Get configuration based on productId, fallback to first if missing
+  // Get configuration
   const config = ASSET_CONFIGS[productId] || Object.values(ASSET_CONFIGS)[0];
-  
-  // Load GLTF Model (Will throw if network fails, caught by Boundary)
   const { nodes, materials } = useGLTF(config.url) as any;
 
   // Apply Color to Material
   useEffect(() => {
-    // Traverse materials to find the fabric material and apply color
     Object.values(materials).forEach((material: any) => {
       if (material.name !== 'label' && material.name !== 'Label') { 
         material.color = new THREE.Color(color);
@@ -93,30 +99,31 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
     });
   }, [color, materials]);
 
-  // Idle Animation (Spins the outer group)
+  // Idle Animation
   useFrame((state) => {
-    if (groupRef.current) {
-      // Simple idle sway/spin
+    if (groupRef.current && !isDragging) {
       groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
     }
   });
 
   // Dragging Logic
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
-    if (!decalImage) return;
+    if (!activeDecalId) return;
+    // We stop propagation only if we hit the shirt mesh to drag the decal
+    // This allows OrbitControls to work if we click outside the mesh
     e.stopPropagation();
     setIsDragging(true);
     setDraggingDecal(true);
     updateDecal(e);
   };
 
-  const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
+  const handlePointerUp = () => {
     setIsDragging(false);
     setDraggingDecal(false);
   };
 
   const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
-    if (isDragging) {
+    if (isDragging && activeDecalId) {
       e.stopPropagation();
       updateDecal(e);
     }
@@ -126,7 +133,6 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
     if (!e.face) return;
     
     const mesh = e.object as THREE.Mesh;
-    // Convert world point to local point so decal moves with the mesh
     const localPoint = mesh.worldToLocal(e.point.clone());
     
     // Calculate rotation to align with face normal
@@ -142,21 +148,18 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
     );
   };
 
-  // Identify the target mesh node from the GLTF
   const TargetMesh = nodes[config.nodeName] || Object.values(nodes).find((n: any) => n.isMesh);
 
   if (!TargetMesh) return null;
 
   return (
     <Center>
-      {/* Outer Group: Handles Animation & Scene Positioning */}
       <group 
         ref={groupRef} 
         dispose={null} 
         position={config.position} 
         scale={config.scale}
       >
-        {/* Inner Group: Handles Static Orientation Correction */}
         <group rotation={config.rotation}>
           <mesh
             castShadow
@@ -167,14 +170,13 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
             onPointerUp={handlePointerUp}
             onPointerMove={handlePointerMove}
           >
-            {decalImage && decalPosition && decalRotation && (
-               <DecalLayer 
-                 textureUrl={decalImage} 
-                 position={decalPosition}
-                 rotation={decalRotation}
-                 scale={decalScale} 
-               />
-            )}
+            {decals.map(layer => (
+              <DecalItem 
+                key={layer.id} 
+                layer={layer} 
+                isActive={layer.id === activeDecalId}
+              />
+            ))}
           </mesh>
         </group>
       </group>
