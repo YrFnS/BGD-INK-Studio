@@ -25,10 +25,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const dir = language === 'ar' ? 'rtl' : 'ltr';
     root.setAttribute('dir', dir);
     root.setAttribute('lang', language);
-    
+
     // Switch font based on language
     if (language === 'ar') {
-      root.style.fontFamily = "'Readex Pro', sans-serif";
+      root.style.fontFamily = "'Cairo', sans-serif";
     } else {
       root.style.fontFamily = "'Plus Jakarta Sans', sans-serif";
     }
