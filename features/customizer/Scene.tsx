@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { Component, ReactNode } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stage } from '@react-three/drei';
-import { ShirtModel } from './ShirtModel';
+import { ShirtModel, ProceduralFallback } from './ShirtModel';
 import { ProductType, Theme } from '../../types';
 
 interface SceneProps {
+  productId: string;
   productType: ProductType;
   color: string;
   theme: Theme;
@@ -18,7 +19,29 @@ interface SceneProps {
   setDraggingDecal: (dragging: boolean) => void;
 }
 
+// Error Boundary specifically for the 3D Model part of the scene
+// If useGLTF fails (network/404), this catches it and shows a box instead.
+class ModelErrorBoundary extends React.Component<{ fallback: ReactNode; children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  
+  static getDerivedStateFromError() { 
+    return { hasError: true }; 
+  }
+
+  componentDidCatch(error: any) {
+    console.error("3D Model Load Failed:", error);
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
+
 export const Scene: React.FC<SceneProps> = ({ 
+  productId,
   productType, 
   color, 
   theme,
@@ -44,16 +67,19 @@ export const Scene: React.FC<SceneProps> = ({
         adjustCamera={false}
         shadows={{ type: 'accumulative', color: '#000000', opacity: 0.2 }}
       >
-        <ShirtModel 
-          type={productType} 
-          color={color} 
-          decalImage={decalImage}
-          decalPosition={decalPosition}
-          decalRotation={decalRotation}
-          decalScale={decalScale}
-          onDecalChange={onDecalChange}
-          setDraggingDecal={setDraggingDecal}
-        />
+        <ModelErrorBoundary fallback={<ProceduralFallback color={color} />}>
+          <ShirtModel 
+            productId={productId}
+            type={productType} 
+            color={color} 
+            decalImage={decalImage}
+            decalPosition={decalPosition}
+            decalRotation={decalRotation}
+            decalScale={decalScale}
+            onDecalChange={onDecalChange}
+            setDraggingDecal={setDraggingDecal}
+          />
+        </ModelErrorBoundary>
       </Stage>
 
       <OrbitControls 

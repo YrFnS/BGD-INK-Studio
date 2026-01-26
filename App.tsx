@@ -1,4 +1,5 @@
-import React, { useState, Suspense, ReactNode } from 'react';
+
+import React, { useState, Suspense, ReactNode, Component } from 'react';
 import { AppProvider } from './contexts/AppContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { Header } from './components/layout/Header';
@@ -35,13 +36,14 @@ interface ErrorBoundaryState {
 
 // Simple Error Boundary for 3D Context crashes
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
-  }
+  state: ErrorBoundaryState = { hasError: false };
   
   public static getDerivedStateFromError(): ErrorBoundaryState { 
     return { hasError: true }; 
+  }
+
+  public componentDidCatch(error: any, errorInfo: any) {
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
   
   public render() {

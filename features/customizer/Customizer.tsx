@@ -170,6 +170,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ productId, onCheckout })
         {/* The 3D Canvas */}
         <div className={`w-full h-full ${isDraggingDecal ? 'cursor-grabbing' : ''}`}>
           <Scene 
+            productId={product.id}
             productType={product.type} 
             color={selectedColor} 
             theme={theme}
