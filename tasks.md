@@ -1,75 +1,68 @@
-# ASHUS Platform Development Plan
+# BGD/INK Studio Roadmap
 
-## Project Overview
-**Goal:** Build a high-performance, monochrome (Black & White) 3D custom printing web app for Baghdad.
-**Tech:** React, Tailwind CSS, Three.js (R3F), GSAP.
-**Key Constraints:** Bilingual (EN/AR), Light/Dark Theme, 500-line limit per file.
+## Project objective
 
----
+Build a production-grade bilingual custom-printing platform for Baghdad with an accurate 3D editor, durable artwork storage, real order processing, and a Frappe/ERPNext operations backend.
 
-## Phase 1: Foundation & Architecture
-- [x] **Task 1: Configuration & Global State**
-    - Setup `metadata.json` for permissions.
-    - Create `types.ts` for strictly typed interfaces (Product, Order, Theme, Language).
-    - Create `translations.ts` for English/Arabic dictionaries.
-    - Build `contexts/AppContext.tsx` to manage Theme (Light/Dark) and Language (LTR/RTL).
-    - Configure Tailwind for dark mode `class` strategy.
+## P0 — Safe foundation and rebrand
 
-- [x] **Task 2: App Shell & Navigation**
-    - Create `index.html` with fonts (`Space Grotesk`, `Noto Kufi Arabic`) and global CSS.
-    - Build `components/layout/Header.tsx`: Floating, minimalist nav with Theme/Lang toggles.
-    - Build `components/layout/Footer.tsx`.
-    - Setup `App.tsx` as the main view orchestrator (Home -> Catalog -> Customizer -> Checkout).
+- [x] Create `agent/bgd-ink-p0-foundation` from `main`.
+- [x] Introduce centralized BGD/INK brand configuration.
+- [x] Rename package, metadata, manifest, document title, header, footer, preloader, order prefix, and browser-storage namespace.
+- [x] Preserve old browser data through a non-destructive `ashus_*` migration.
+- [x] Remove browser-exposed Gemini/API-key injection.
+- [x] Remove the hardcoded client-side admin route and PIN.
+- [x] Stop presenting local browser drafts as confirmed orders.
+- [x] Remove placeholder contact actions unless real values are configured.
+- [x] Disable obsolete service-worker/offline behavior.
+- [x] Restore browser zoom and add reduced-motion handling.
+- [x] Replace AI Studio boilerplate with accurate project documentation.
+- [x] Document the production backend contract.
+- [ ] Validate the branch with a clean dependency install, type-check, and production build in CI.
 
-## Phase 2: Core User Interface (Frontend)
-- [x] **Task 3: Hero Section (Home)**
-    - Build `features/hero/Hero.tsx`.
-    - Implement GSAP scroll animations for text and images.
-    - Create the "Animated Gallery" showing previous work in a monochrome style.
-    - Ensure RTL compatibility for Arabic headlines.
+## P1 — Engineering and backend foundation
 
-- [x] **Task 4: Product Catalog**
-    - Build `features/catalog/Catalog.tsx`.
-    - Create a data file `data/products.ts` with T-Shirts, Hoodies, Vests (Mock data).
-    - Implement a responsive grid layout.
-    - Add "Quick View" animation using GSAP.
+- [ ] Move Tailwind from the browser CDN into PostCSS/Vite.
+- [ ] Introduce `src/`, strict TypeScript, ESLint, Prettier, and import boundaries.
+- [ ] Add unit, component, accessibility, and Playwright end-to-end tests.
+- [ ] Add GitHub Actions for install, type-check, lint, test, build, and bundle budgets.
+- [ ] Add route-based navigation and recoverable design drafts.
+- [ ] Implement a typed API adapter with development mocks and a Frappe production implementation.
+- [ ] Create authenticated staff access in Frappe rather than the storefront bundle.
+- [ ] Persist products, variants, stock, pricing, customers, and orders in Frappe.
+- [ ] Store original artwork and generated previews in S3-compatible object storage.
 
-## Phase 3: The 3D Engine (Customizer)
-- [x] **Task 5: 3D Scene Components**
-    - Build `features/customizer/Scene.tsx` (Canvas wrapper).
-    - Build `features/customizer/ShirtModel.tsx` using `@react-three/drei`.
-    - Implement the logic to swap geometries based on product type (T-Shirt/Hoodie).
-    - Add lighting suitable for black & white materials.
+## P2 — Production-grade customizer
 
-- [x] **Task 6: Decal & Upload Logic**
-    - Implement file input handling (limit to images, max size).
-    - Add `Decal` component from `drei` to wrap the uploaded image onto the mesh.
-    - Add state management for Decal Position, Scale, and Rotation.
+- [ ] Use a genuine optimized 3D model for every sellable product.
+- [ ] Define front, back, sleeve, and other physical print areas in centimeters.
+- [ ] Constrain artwork to printable surfaces and warn about seams or unsafe placement.
+- [ ] Add layer ordering, visibility, rename, duplicate, undo, redo, and keyboard controls.
+- [ ] Add image-resolution, transparency, aspect-ratio, and estimated-DPI checks.
+- [ ] Separate original artwork, preview textures, and production files.
+- [ ] Generate a 2D proof plus machine-readable placement specification.
+- [ ] Add adaptive mobile rendering, WebGL fallback, and GPU/context recovery.
 
-- [x] **Task 7: Customizer UI Controls**
-    - Build `features/customizer/Controls.tsx`.
-    - Create UI for Color Picker (Preset colors), Size Selector, and Upload Button.
-    - Add "Order Notes" text area (Arabic support).
+## P3 — Premium storefront and customer journey
 
-## Phase 4: Commerce & Logistics
-- [x] **Task 8: Checkout System**
-    - Build `features/checkout/Checkout.tsx`.
-    - Implement Zod validation for inputs.
-    - Create specific fields for Baghdad logistics: Area (Al-Mansour, Karrada, etc.), Street, House.
-    - Display Order Summary (Image of the configured product + Details).
+- [ ] Establish the full BGD/INK visual identity and owned asset library.
+- [ ] Replace generic stock imagery, emoji, and unverified testimonials.
+- [ ] Build accessible product cards, size guides, quantities, variants, and delivery estimates.
+- [ ] Complete Iraqi Arabic localization and RTL review.
+- [ ] Add truthful production, material, care, returns, privacy, and artwork policies.
+- [ ] Add draft recovery, cart behavior, clear totals, and order confirmation.
+- [ ] Optimize the editor and checkout for touch-first mobile use.
 
-- [x] **Task 9: Success & Error Handling**
-    - Build `features/checkout/Success.tsx` (Order confirmation).
-    - Connect a mock "Send to Admin" function (simulating WhatsApp/Email trigger).
+## P4 — Operations, PWA, SEO, and growth
 
-## Phase 5: Optimization & SEO
-- [x] **Task 10: SEO & Performance**
-    - Add dynamic `<title>` and `<meta>` description updates based on language.
-    - Keyword injection: "Printing on clothes", "طباعة على الملابس", "Baghdad".
-    - Lazy load the 3D Canvas to ensure fast LCP (Largest Contentful Paint).
+- [ ] Add production queues, artwork approval, status timelines, and staff audit trails.
+- [ ] Create ERPNext Sales Orders and inventory reservations from validated storefront orders.
+- [ ] Add configured WhatsApp notifications without making WhatsApp the order database.
+- [ ] Implement Workbox-based PWA caching with local owned icons and upgrade handling.
+- [ ] Add structured product data, canonical URLs, social cards, sitemap, and robots controls.
+- [ ] Add privacy-respecting analytics, consent, error monitoring, and performance budgets.
+- [ ] Add campaigns, coupons, bulk orders, corporate accounts, and repeat-order flows.
 
-## Phase 6: Final Review
-- [x] **Task 11: QA & Polish**
-    - Verify Dark/Light mode contrast ratios.
-    - Verify Arabic text alignment (RTL).
-    - Check mobile responsiveness.
+## Definition of done
+
+A phase is complete only when its user-facing behavior, failure states, tests, documentation, and deployment checks all pass. Visual completion alone is not completion.
