@@ -6,6 +6,7 @@ const tinyPng = Buffer.from(
 );
 
 test('recovers artwork and checkout fields across refreshes', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/catalog');
 
   const product = page.getByRole('button', { name: /Classic T-Shirt/ });
