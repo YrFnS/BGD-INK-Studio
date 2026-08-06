@@ -1,10 +1,10 @@
 {
-  "name": "ASHUS | Custom Printing Platform",
-  "description": "High-performance custom clothing printing platform for Baghdad. Monochrome aesthetic, bilingual, and 3D visualization.",
-  "short_name": "ASHUS",
+  "name": "BGD/INK Studio",
+  "description": "Bilingual 3D custom-printing studio for Baghdad.",
+  "short_name": "BGD INK",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#050505",
+  "theme_color": "#050505",
   "requestFramePermissions": []
 }
