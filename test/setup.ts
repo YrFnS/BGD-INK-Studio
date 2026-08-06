@@ -1,9 +1,29 @@
 import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
+import { Blob as NodeBlob, File as NodeFile } from 'node:buffer';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
 
 let objectUrlSequence = 0;
+let animationFrameSequence = 0;
+const animationFrameTimers = new Map<number, ReturnType<typeof setTimeout>>();
+
+Object.defineProperty(globalThis, 'Blob', {
+  configurable: true,
+  value: NodeBlob,
+});
+Object.defineProperty(globalThis, 'File', {
+  configurable: true,
+  value: NodeFile,
+});
+Object.defineProperty(window, 'Blob', {
+  configurable: true,
+  value: NodeBlob,
+});
+Object.defineProperty(window, 'File', {
+  configurable: true,
+  value: NodeFile,
+});
 
 Object.defineProperty(URL, 'createObjectURL', {
   configurable: true,
@@ -37,14 +57,23 @@ Object.defineProperty(window, 'scrollTo', {
 Object.defineProperty(window, 'requestAnimationFrame', {
   configurable: true,
   value: (callback: FrameRequestCallback) => {
-    callback(0);
-    return 1;
+    const id = ++animationFrameSequence;
+    const timer = setTimeout(() => {
+      animationFrameTimers.delete(id);
+      callback(performance.now());
+    }, 0);
+    animationFrameTimers.set(id, timer);
+    return id;
   },
 });
 
 Object.defineProperty(window, 'cancelAnimationFrame', {
   configurable: true,
-  value: vi.fn(),
+  value: (id: number) => {
+    const timer = animationFrameTimers.get(id);
+    if (timer) clearTimeout(timer);
+    animationFrameTimers.delete(id);
+  },
 });
 
 class ResizeObserverMock implements ResizeObserver {
@@ -68,5 +97,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  animationFrameTimers.forEach((timer) => clearTimeout(timer));
+  animationFrameTimers.clear();
   cleanup();
 });
