@@ -18,7 +18,7 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 - [x] Restore browser zoom and add reduced-motion handling.
 - [x] Replace AI Studio boilerplate with accurate project documentation.
 - [x] Document the production backend contract.
-- [ ] Validate the branch with a clean dependency install, type-check, and production build in CI.
+- [x] Validate the branch with a clean dependency install, TypeScript check, and production build through the Netlify deploy preview.
 
 ## P1 — Engineering and backend foundation
 
