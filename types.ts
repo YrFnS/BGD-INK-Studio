@@ -28,6 +28,9 @@ export interface Product {
 export interface DecalLayer {
   id: string;
   url: string;
+  assetId?: string;
+  fileName?: string;
+  mimeType?: string;
   position: [number, number, number];
   rotation: [number, number, number];
   userRotation: number;
@@ -61,6 +64,7 @@ export interface Order extends PendingOrder, OrderDetails {
   id: string;
   date: string;
   status: OrderStatus;
+  designDraftId?: string;
 }
 
 export type ViewState = 'HOME' | 'CATALOG' | 'CUSTOMIZER' | 'CHECKOUT' | 'SUCCESS';
