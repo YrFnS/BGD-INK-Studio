@@ -1,6 +1,6 @@
 import { BRAND } from '../../config/brand';
 import { PLATFORM_STATUS } from '../../config/platform';
-import { Order } from '../../types';
+import { Order, PendingOrder } from '../../types';
 import { getProducts, saveOrder } from '../../utils/storage';
 import { PlatformApi, PlatformApiError, SubmitOrderInput } from './types';
 
@@ -19,8 +19,25 @@ const createDraftId = (): string => {
   return `${BRAND.orderPrefix}-${token.toUpperCase()}`;
 };
 
+const createDurablePendingOrder = (pendingOrder: PendingOrder): PendingOrder => ({
+  ...pendingOrder,
+  decals: pendingOrder.decals.map((layer) => {
+    if (layer.url.startsWith('blob:') && !layer.assetId) {
+      throw new PlatformApiError({
+        code: 'ARTWORK_NOT_PERSISTED',
+        message: 'Artwork must be stored before the local draft can be submitted.',
+      });
+    }
+
+    return {
+      ...layer,
+      url: layer.assetId ? `indexeddb://artwork/${layer.assetId}` : layer.url,
+    };
+  }),
+});
+
 const submitLocalDraft = (
-  { pendingOrder, details }: SubmitOrderInput,
+  { designDraftId, pendingOrder, details }: SubmitOrderInput,
   signal?: AbortSignal,
 ) => {
   throwIfAborted(signal);
@@ -34,11 +51,12 @@ const submitLocalDraft = (
 
   const orderId = createDraftId();
   const draft: Order = {
-    ...pendingOrder,
+    ...createDurablePendingOrder(pendingOrder),
     ...details,
     id: orderId,
     date: new Date().toISOString(),
     status: 'PENDING',
+    designDraftId,
   };
 
   if (!saveOrder(draft)) {
