@@ -1,11 +1,10 @@
-
 export type Language = 'en' | 'ar';
 export type Theme = 'light' | 'dark';
 
 export enum ProductType {
   TSHIRT = 'T-Shirt',
   HOODIE = 'Hoodie',
-  VEST = 'Vest'
+  VEST = 'Vest',
 }
 
 export enum Size {
@@ -13,7 +12,7 @@ export enum Size {
   M = 'M',
   L = 'L',
   XL = 'XL',
-  XXL = 'XXL'
+  XXL = 'XXL',
 }
 
 export interface Product {
@@ -30,8 +29,8 @@ export interface DecalLayer {
   id: string;
   url: string;
   position: [number, number, number];
-  rotation: [number, number, number]; // Surface orientation
-  userRotation: number; // Z-axis rotation (radians)
+  rotation: [number, number, number];
+  userRotation: number;
   scale: number;
 }
 
@@ -39,11 +38,10 @@ export interface CustomizationState {
   productId: string | null;
   size: Size;
   color: string;
-  decals: DecalLayer[]; // Changed from single decal fields to array
+  decals: DecalLayer[];
   notes: string;
 }
 
-// Data passed from Customizer to Checkout
 export interface PendingOrder extends CustomizationState {
   productName: string;
   basePrice: number;
@@ -61,17 +59,17 @@ export type OrderStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
 
 export interface Order extends PendingOrder, OrderDetails {
   id: string;
-  date: string; // ISO String
+  date: string;
   status: OrderStatus;
 }
 
-export type ViewState = 'HOME' | 'CATALOG' | 'CUSTOMIZER' | 'CHECKOUT' | 'SUCCESS' | 'ADMIN';
+export type ViewState = 'HOME' | 'CATALOG' | 'CUSTOMIZER' | 'CHECKOUT' | 'SUCCESS';
 
 export interface AppContextType {
   language: Language;
   theme: Theme;
   toggleTheme: () => void;
-  setLanguage: (lang: Language) => void;
+  setLanguage: (language: Language) => void;
   t: (key: string) => string;
   isRTL: boolean;
 }
