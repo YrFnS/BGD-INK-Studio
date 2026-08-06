@@ -5,6 +5,7 @@ import {
   DESIGN_DRAFT_VERSION,
   DesignDraftRecord,
   DesignDraftSnapshot,
+  DesignDraftSummary,
   DraftStorageError,
   HydratedDesignDraft,
   StoredArtworkAsset,
@@ -15,8 +16,13 @@ const DATABASE_NAME = `${BRAND.storageNamespace}_studio`;
 const DATABASE_VERSION = 1;
 const DRAFT_STORE = 'design-drafts';
 const ASSET_STORE = 'artwork-assets';
+const MAX_DRAFT_NAME_LENGTH = 80;
 
 let databasePromise: Promise<IDBDatabase> | null = null;
+
+type LegacyDesignDraftRecord = Omit<DesignDraftRecord, 'name'> & {
+  name?: unknown;
+};
 
 const emptyCheckoutDetails = (): OrderDetails => ({
   fullName: '',
@@ -34,6 +40,14 @@ const createId = (prefix: string): string => {
 
   return `${prefix}-${token}`;
 };
+
+const normalizeDraftName = (name: string): string =>
+  name.trim().replace(/\s+/g, ' ').slice(0, MAX_DRAFT_NAME_LENGTH);
+
+const normalizeDraftRecord = (draft: LegacyDesignDraftRecord): DesignDraftRecord => ({
+  ...draft,
+  name: typeof draft.name === 'string' ? draft.name : '',
+});
 
 const requestToPromise = <T>(request: IDBRequest<T>): Promise<T> =>
   new Promise((resolve, reject) => {
@@ -134,11 +148,49 @@ const getDraftRecord = async (draftId: string): Promise<DesignDraftRecord | null
   const transaction = database.transaction(DRAFT_STORE, 'readonly');
   const completion = waitForTransaction(transaction);
   const request = transaction.objectStore(DRAFT_STORE).get(draftId) as IDBRequest<
-    DesignDraftRecord | undefined
+    LegacyDesignDraftRecord | undefined
   >;
   const draft = await requestToPromise(request);
   await completion;
-  return draft ?? null;
+  return draft ? normalizeDraftRecord(draft) : null;
+};
+
+const getAllDraftRecords = async (): Promise<DesignDraftRecord[]> => {
+  const database = await openDatabase();
+  const transaction = database.transaction(DRAFT_STORE, 'readonly');
+  const completion = waitForTransaction(transaction);
+  const request = transaction.objectStore(DRAFT_STORE).getAll() as IDBRequest<
+    LegacyDesignDraftRecord[]
+  >;
+  const drafts = await requestToPromise(request);
+  await completion;
+  return drafts.map(normalizeDraftRecord);
+};
+
+const getArtworkAssets = async (
+  assetIds: string[],
+): Promise<Map<string, StoredArtworkAsset>> => {
+  const uniqueAssetIds = Array.from(new Set(assetIds));
+  const assetsById = new Map<string, StoredArtworkAsset>();
+  if (uniqueAssetIds.length === 0) return assetsById;
+
+  const database = await openDatabase();
+  const transaction = database.transaction(ASSET_STORE, 'readonly');
+  const completion = waitForTransaction(transaction);
+  const assetStore = transaction.objectStore(ASSET_STORE);
+  const requests = uniqueAssetIds.map(async (assetId) => {
+    const asset = await requestToPromise(
+      assetStore.get(assetId) as IDBRequest<StoredArtworkAsset | undefined>,
+    );
+    return [assetId, asset] as const;
+  });
+
+  const entries = await Promise.all(requests);
+  await completion;
+  entries.forEach(([assetId, asset]) => {
+    if (asset) assetsById.set(assetId, asset);
+  });
+  return assetsById;
 };
 
 const putDraftRecord = async (draft: DesignDraftRecord): Promise<void> => {
@@ -192,6 +244,7 @@ export const createDesignDraft = async ({
   const draft: DesignDraftRecord = {
     version: DESIGN_DRAFT_VERSION,
     id: createId('draft'),
+    name: '',
     productId,
     color,
     size,
@@ -210,6 +263,35 @@ export const createDesignDraft = async ({
   transaction.objectStore(DRAFT_STORE).add(draft);
   await completion;
   return draft;
+};
+
+export const listDesignDrafts = async (): Promise<DesignDraftSummary[]> => {
+  const drafts = (await getAllDraftRecords()).sort((left, right) =>
+    right.updatedAt.localeCompare(left.updatedAt),
+  );
+  const previewAssetIds = drafts.flatMap((draft) => {
+    const firstLayer = draft.decals[0];
+    return firstLayer ? [firstLayer.assetId] : [];
+  });
+  const assetsById = await getArtworkAssets(previewAssetIds);
+
+  return drafts.map((draft) => {
+    const firstLayer = draft.decals[0];
+    const previewAsset = firstLayer ? assetsById.get(firstLayer.assetId) : undefined;
+
+    return {
+      id: draft.id,
+      name: draft.name,
+      productId: draft.productId,
+      color: draft.color,
+      size: draft.size,
+      layerCount: draft.decals.length,
+      previewUrl: previewAsset ? URL.createObjectURL(previewAsset.blob) : null,
+      submittedOrderId: draft.submittedOrderId,
+      createdAt: draft.createdAt,
+      updatedAt: draft.updatedAt,
+    };
+  });
 };
 
 export const loadDesignDraft = async (
@@ -274,6 +356,107 @@ export const saveDesignDraft = async (
     updatedAt: new Date().toISOString(),
   }));
 
+export const renameDesignDraft = async (
+  draftId: string,
+  name: string,
+): Promise<DesignDraftRecord> => {
+  const normalizedName = normalizeDraftName(name);
+  if (!normalizedName) {
+    throw new DraftStorageError('DRAFT_NAME_REQUIRED', 'Enter a name for this design.');
+  }
+
+  return updateDraftRecord(draftId, (draft) => ({
+    ...draft,
+    name: normalizedName,
+    updatedAt: new Date().toISOString(),
+  }));
+};
+
+export const duplicateDesignDraft = async (
+  draftId: string,
+  name: string,
+): Promise<DesignDraftRecord> => {
+  const sourceDraft = await getDraftRecord(draftId);
+  if (!sourceDraft) {
+    throw new DraftStorageError('DRAFT_NOT_FOUND', 'The requested design draft no longer exists.');
+  }
+
+  const sourceAssetIds = Array.from(
+    new Set(sourceDraft.decals.map((layer) => layer.assetId)),
+  );
+  const sourceAssets = await getArtworkAssets(sourceAssetIds);
+  const missingAssetId = sourceAssetIds.find((assetId) => !sourceAssets.has(assetId));
+  if (missingAssetId) {
+    throw new DraftStorageError(
+      'DRAFT_ARTWORK_MISSING',
+      'This design cannot be duplicated because one of its artwork files is missing.',
+    );
+  }
+
+  const now = new Date().toISOString();
+  const assetIdMap = new Map<string, string>();
+  const duplicatedAssets = sourceAssetIds.map((assetId) => {
+    const sourceAsset = sourceAssets.get(assetId);
+    if (!sourceAsset) {
+      throw new DraftStorageError(
+        'DRAFT_ARTWORK_MISSING',
+        'This design cannot be duplicated because one of its artwork files is missing.',
+      );
+    }
+
+    const duplicatedAssetId = createId('asset');
+    assetIdMap.set(assetId, duplicatedAssetId);
+    return {
+      ...sourceAsset,
+      id: duplicatedAssetId,
+      blob: sourceAsset.blob.slice(0, sourceAsset.blob.size, sourceAsset.mimeType),
+      createdAt: now,
+    } satisfies StoredArtworkAsset;
+  });
+
+  const layerIdMap = new Map<string, string>();
+  const duplicatedLayers = sourceDraft.decals.map((layer) => {
+    const duplicatedLayerId = createId('layer');
+    const duplicatedAssetId = assetIdMap.get(layer.assetId);
+    if (!duplicatedAssetId) {
+      throw new DraftStorageError(
+        'DRAFT_ARTWORK_MISSING',
+        'This design cannot be duplicated because one of its artwork files is missing.',
+      );
+    }
+
+    layerIdMap.set(layer.id, duplicatedLayerId);
+    return {
+      ...layer,
+      id: duplicatedLayerId,
+      assetId: duplicatedAssetId,
+    };
+  });
+
+  const duplicate: DesignDraftRecord = {
+    ...sourceDraft,
+    id: createId('draft'),
+    name: normalizeDraftName(name) || normalizeDraftName(sourceDraft.name),
+    activeDecalId: sourceDraft.activeDecalId
+      ? (layerIdMap.get(sourceDraft.activeDecalId) ?? null)
+      : null,
+    decals: duplicatedLayers,
+    checkoutDetails: emptyCheckoutDetails(),
+    submittedOrderId: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const database = await openDatabase();
+  const transaction = database.transaction([DRAFT_STORE, ASSET_STORE], 'readwrite');
+  const completion = waitForTransaction(transaction);
+  const assetStore = transaction.objectStore(ASSET_STORE);
+  duplicatedAssets.forEach((asset) => assetStore.add(asset));
+  transaction.objectStore(DRAFT_STORE).add(duplicate);
+  await completion;
+  return duplicate;
+};
+
 export const storeArtworkFile = async (file: File): Promise<StoredArtworkAsset> => {
   const asset: StoredArtworkAsset = {
     id: createId('asset'),
@@ -331,12 +514,20 @@ export const deleteDesignDraft = async (draftId: string): Promise<void> => {
   transaction.objectStore(DRAFT_STORE).delete(draftId);
 
   const assetStore = transaction.objectStore(ASSET_STORE);
-  draft.decals.forEach((layer) => assetStore.delete(layer.assetId));
+  Array.from(new Set(draft.decals.map((layer) => layer.assetId))).forEach((assetId) =>
+    assetStore.delete(assetId),
+  );
   await completion;
 };
 
 export const releaseDraftObjectUrls = (draft: Pick<HydratedDesignDraft, 'decals'>): void => {
   draft.decals.forEach((layer) => {
     if (layer.url.startsWith('blob:')) URL.revokeObjectURL(layer.url);
+  });
+};
+
+export const releaseDraftSummaryObjectUrls = (summaries: DesignDraftSummary[]): void => {
+  summaries.forEach((summary) => {
+    if (summary.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(summary.previewUrl);
   });
 };
