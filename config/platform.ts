@@ -1,10 +1,25 @@
 import { Language } from '../types';
 import { LocalizedText } from './brand';
 
+const requestedDataSource = import.meta.env.VITE_PLATFORM_DATA_SOURCE?.trim().toLowerCase();
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() ?? '';
+const frappeRequested = requestedDataSource === 'frappe';
+const frappeConfigured = frappeRequested && apiBaseUrl.length > 0;
+
+export const PLATFORM_RUNTIME = {
+  requestedDataSource: frappeRequested ? 'frappe' : 'local-prototype',
+  dataSource: frappeConfigured ? 'frappe' : 'local-prototype',
+  apiBaseUrl,
+  configurationWarning:
+    frappeRequested && !frappeConfigured
+      ? 'VITE_API_BASE_URL is required when VITE_PLATFORM_DATA_SOURCE is set to frappe.'
+      : null,
+} as const;
+
 export const PLATFORM_STATUS = {
-  phase: 'prototype',
-  backendConnected: false,
-  localOrderStorageEnabled: true,
+  phase: PLATFORM_RUNTIME.dataSource === 'frappe' ? 'integration' : 'prototype',
+  backendConnected: PLATFORM_RUNTIME.dataSource === 'frappe',
+  localOrderStorageEnabled: PLATFORM_RUNTIME.dataSource === 'local-prototype',
   adminPortalEnabled: false,
   pwaEnabled: false,
   notice: {
