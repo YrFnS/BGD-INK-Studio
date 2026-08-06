@@ -4,6 +4,7 @@ export type PlatformDataSource = 'local-prototype' | 'frappe';
 export type SubmissionStatus = 'DRAFT' | 'PENDING';
 
 export interface SubmitOrderInput {
+  designDraftId: string;
   pendingOrder: PendingOrder;
   details: OrderDetails;
 }
