@@ -1,81 +1,74 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 
 export const Cursor: React.FC = () => {
   const cursorRef = useRef<HTMLDivElement>(null);
   const followerRef = useRef<HTMLDivElement>(null);
+  const [isEnabled, setIsEnabled] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
-    // Hide cursor on touch devices to prevent stuck visual artifacts
-    if (window.matchMedia('(pointer: coarse)').matches) return;
+    const finePointer = window.matchMedia('(pointer: fine)');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-    const moveCursor = (e: MouseEvent) => {
-      // Direct fast movement for the central dot
-      gsap.to(cursorRef.current, {
-        x: e.clientX,
-        y: e.clientY,
-        duration: 0, // Instant response
-      });
-      // Smooth follow for the outer ring
+    const updateEnabledState = () => setIsEnabled(finePointer.matches && !reducedMotion.matches);
+    updateEnabledState();
+
+    finePointer.addEventListener('change', updateEnabledState);
+    reducedMotion.addEventListener('change', updateEnabledState);
+
+    return () => {
+      finePointer.removeEventListener('change', updateEnabledState);
+      reducedMotion.removeEventListener('change', updateEnabledState);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isEnabled) return undefined;
+
+    const moveCursor = (event: MouseEvent) => {
+      gsap.set(cursorRef.current, { x: event.clientX, y: event.clientY });
       gsap.to(followerRef.current, {
-        x: e.clientX,
-        y: e.clientY,
-        duration: 0.4,
-        ease: 'power3.out'
+        x: event.clientX,
+        y: event.clientY,
+        duration: 0.25,
+        ease: 'power3.out',
+        overwrite: 'auto',
       });
     };
 
-    const handleMouseOver = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      // Detect interactive elements
-      const isInteractive = 
-        target.tagName === 'BUTTON' || 
-        target.tagName === 'A' || 
-        target.closest('button') || 
-        target.closest('a') ||
-        target.classList.contains('interactive') ||
-        target.tagName === 'INPUT' ||
-        target.tagName === 'SELECT' ||
-        target.tagName === 'LABEL';
-
-      setIsHovering(!!isInteractive);
+    const handleMouseOver = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const isInteractive = Boolean(
+        target.closest('button, a, input, select, textarea, label, [role="button"], .interactive'),
+      );
+      setIsHovering(isInteractive);
     };
 
-    window.addEventListener('mousemove', moveCursor);
-    window.addEventListener('mouseover', handleMouseOver);
+    window.addEventListener('mousemove', moveCursor, { passive: true });
+    window.addEventListener('mouseover', handleMouseOver, { passive: true });
 
     return () => {
       window.removeEventListener('mousemove', moveCursor);
       window.removeEventListener('mouseover', handleMouseOver);
     };
-  }, []);
+  }, [isEnabled]);
 
-  // Do not render on mobile/touch devices
-  if (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches) return null;
+  if (!isEnabled) return null;
 
   return (
     <>
-      {/* 
-        CRITICAL: mix-blend-difference is used with BG-WHITE.
-        - Light Theme (White BG): White - White = Black (Visible Cursor)
-        - Dark Theme (Black BG): |White - Black| = White (Visible Cursor)
-        - Black Section in Light Theme: |White - Black| = White (Visible Cursor)
-        
-        This satisfies the 'auto change' requirement mathematically.
-      */}
-      <div 
+      <div
         ref={cursorRef}
         className="fixed top-0 left-0 w-2 h-2 bg-white rounded-full pointer-events-none z-[10001] -translate-x-1/2 -translate-y-1/2 mix-blend-difference"
+        aria-hidden="true"
       />
-      <div 
+      <div
         ref={followerRef}
-        className={`fixed top-0 left-0 border border-white rounded-full pointer-events-none z-[10000] -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out mix-blend-difference ${
-          isHovering 
-            ? 'w-12 h-12 bg-white opacity-100' // Solid blob on hover -> Inverts background completely
-            : 'w-8 h-8 opacity-100' // Outlined ring normally -> Inverts border pixels
+        className={`fixed top-0 left-0 border border-white rounded-full pointer-events-none z-[10000] -translate-x-1/2 -translate-y-1/2 transition-[width,height,opacity] duration-200 ease-out mix-blend-difference ${
+          isHovering ? 'w-12 h-12 bg-white opacity-100' : 'w-8 h-8 opacity-100'
         }`}
+        aria-hidden="true"
       />
     </>
   );
