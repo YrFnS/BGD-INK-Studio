@@ -1,23 +1,27 @@
 import { useEffect } from 'react';
+import { BRAND } from '../config/brand';
 import { useAppContext } from '../contexts/AppContext';
 
-export const useSEO = (titleKey: string, descKey: string) => {
+const applyCurrentBrand = (value: string): string =>
+  BRAND.legacyNames.reduce(
+    (result, legacyName) => result.replaceAll(legacyName, BRAND.displayName),
+    value,
+  );
+
+export const useSEO = (titleKey: string, descriptionKey: string) => {
   const { t } = useAppContext();
+  const title = applyCurrentBrand(t(titleKey));
+  const description = applyCurrentBrand(t(descriptionKey));
 
   useEffect(() => {
-    // Update Title
-    document.title = t(titleKey);
+    document.title = title;
 
-    // Update Meta Description
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      metaDesc.setAttribute('content', t(descKey));
-    } else {
-      // Create if missing (fallback)
-      const meta = document.createElement('meta');
-      meta.name = 'description';
-      meta.content = t(descKey);
-      document.head.appendChild(meta);
+    let metaDescription = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.name = 'description';
+      document.head.appendChild(metaDescription);
     }
-  }, [t, titleKey, descKey]);
+    metaDescription.content = description;
+  }, [description, title]);
 };
