@@ -22,6 +22,8 @@ Brand values, contact destinations, storage namespaces, and order prefixes are c
 - GSAP
 - Zod runtime validation
 - IndexedDB for recoverable local design drafts and binary artwork
+- Vitest, Testing Library, fake IndexedDB, and axe accessibility checks
+- Playwright for Chromium browser journeys
 - ESLint flat configuration and Prettier
 
 ## Local development
@@ -45,18 +47,43 @@ Before opening a pull request:
 npm run check
 ```
 
-`npm run check` performs strict TypeScript validation, ESLint validation, and a production Vite build.
+`npm run check` performs strict TypeScript validation, ESLint validation, the fast unit/component test suite, and a production Vite build.
 
 Additional commands:
 
 ```bash
 npm run typecheck
 npm run lint
+npm run test
+npm run test:unit
+npm run test:coverage
+npm run test:e2e
+npm run test:e2e:ui
 npm run format:check
 npm run format
 npm run build
 npm run preview
 ```
+
+## Automated testing
+
+The fast Vitest suite runs in jsdom with fake IndexedDB and currently covers:
+
+- Route parsing, path generation, History API navigation, and Back/Forward behavior
+- Draft creation, naming, checkout persistence, artwork restoration, duplication, and independent deletion
+- The My Designs empty state and populated card actions
+- An axe accessibility scan of the My Designs workspace
+
+The Playwright Chromium journey exercises the customer path in a real browser:
+
+1. Select a product and create a recoverable draft.
+2. Upload artwork and edit design notes.
+3. Refresh the studio and verify artwork and notes are restored.
+4. Continue to checkout and enter delivery information.
+5. Refresh checkout and verify the form is restored.
+6. Submit a local draft and confirm it appears as submitted in My Designs.
+
+Coverage reports can be generated with `npm run test:coverage`. Generated coverage, Playwright reports, and browser test results are ignored by Git.
 
 ## URL routes
 
@@ -142,6 +169,7 @@ Do not use the current local prototype adapter for real customer orders or sensi
 components/          Shared layout and UI components
 config/              Brand, runtime, and capability configuration
 contexts/            Theme, language, and toast state
+e2e/                 Playwright browser journeys
 features/            Catalog, designs, customizer, checkout, and landing experiences
 data/                Prototype product and 3D asset configuration
 docs/                Architecture and backend contracts
@@ -149,13 +177,14 @@ hooks/                Shared hooks
 routing/              History API route parsing and navigation
 services/api/         Typed local and Frappe data adapters
 services/drafts/      IndexedDB draft and artwork repository
+test/                 Shared Vitest and browser-environment setup
 utils/                Legacy/prototype summary persistence helpers
 ```
 
 ## Validation
 
-Netlify deploy previews run `npm run check` before publishing. A GitHub Actions workflow contains the same install-and-check sequence for repositories where Actions is enabled.
+Netlify deploy previews run `npm run check` before publishing. GitHub Actions runs the same fast validation gate and, after it passes, installs Chromium and executes the Playwright recovery journey. A failed browser job uploads its Playwright report for diagnosis.
 
 ## Roadmap
 
-The implementation plan lives in `tasks.md` and is organized into P0–P4. P0 establishes the safe BGD/INK foundation. P1 adds the engineering pipeline, recoverable workspace, route recovery, and backend boundary. P2 rebuilds the production-grade customizer. P3 redesigns the storefront, and P4 adds operations, PWA, analytics, and growth features.
+The implementation plan lives in `tasks.md` and is organized into P0–P4. P0 establishes the safe BGD/INK foundation. P1 adds the engineering pipeline, recoverable workspace, route recovery, automated testing, and backend boundary. P2 rebuilds the production-grade customizer. P3 redesigns the storefront, and P4 adds operations, PWA, analytics, and growth features.
