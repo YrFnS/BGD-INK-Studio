@@ -1,23 +1,14 @@
-
 {
-  "name": "ASHUS | Custom Printing Platform",
-  "short_name": "ASHUS",
-  "description": "High-performance custom clothing printing platform for Baghdad.",
+  "id": "/",
+  "name": "BGD/INK Studio",
+  "short_name": "BGD INK",
+  "description": "Design and preview custom-printed apparel in Baghdad.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#050505",
-  "theme_color": "#000000",
-  "orientation": "portrait",
-  "icons": [
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/863/863684.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/863/863684.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+  "theme_color": "#050505",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "dir": "auto"
 }
