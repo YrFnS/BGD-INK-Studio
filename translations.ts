@@ -1,4 +1,3 @@
-
 import { Language } from './types';
 
 type TranslationKey =
@@ -7,6 +6,7 @@ type TranslationKey =
   | 'hero.cta'
   | 'nav.home'
   | 'nav.catalog'
+  | 'nav.designs'
   | 'catalog.title'
   | 'catalog.subtitle'
   | 'catalog.startDesign'
@@ -50,11 +50,12 @@ type TranslationKey =
   | 'seo.home.description'
   | 'seo.catalog.title'
   | 'seo.catalog.description'
+  | 'seo.designs.title'
+  | 'seo.designs.description'
   | 'seo.customizer.title'
   | 'seo.customizer.description'
   | 'seo.checkout.title'
   | 'seo.checkout.description'
-  // New Landing Page Keys
   | 'home.process.title'
   | 'home.process.step1.title'
   | 'home.process.step1.desc'
@@ -72,12 +73,15 @@ type TranslationKey =
 export const translations: Record<Language, Record<TranslationKey, string>> = {
   en: {
     'hero.title': 'WE PRINT YOUR VISION',
-    'hero.subtitle': 'Premium custom clothing printed in Baghdad. High quality, durable prints, and fast delivery.',
+    'hero.subtitle':
+      'Premium custom clothing printed in Baghdad. High quality, durable prints, and fast delivery.',
     'hero.cta': 'START DESIGNING',
     'nav.home': 'Home',
     'nav.catalog': 'Catalog',
+    'nav.designs': 'My Designs',
     'catalog.title': 'SELECT BASE MODEL',
-    'catalog.subtitle': 'Choose a canvas for your creativity. Premium cotton blends optimized for Baghdad weather.',
+    'catalog.subtitle':
+      'Choose a canvas for your creativity. Premium cotton blends optimized for Baghdad weather.',
     'catalog.startDesign': 'Customize',
     'catalog.soldOut': 'Sold Out',
     'product.classic_tshirt': 'Classic T-Shirt',
@@ -111,33 +115,45 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'common.price': 'IQD',
     'common.scroll': 'Scroll',
     'success.title': 'Order Received',
-    'success.message': 'Thank you. We have received your request. Please send the details via WhatsApp to finalize the design.',
+    'success.message':
+      'Thank you. We have received your request. Please send the details via WhatsApp to finalize the design.',
     'success.orderId': 'Order ID',
     'success.whatsapp': 'Send via WhatsApp',
     'success.home': 'Back to Home',
     'seo.home.title': 'ASHUS | Printing on clothes in Baghdad',
-    'seo.home.description': 'Best custom t-shirt printing in Baghdad. High quality monochrome printing on Hoodies and T-Shirts. Fast delivery in Iraq.',
+    'seo.home.description':
+      'Best custom t-shirt printing in Baghdad. High quality monochrome printing on Hoodies and T-Shirts. Fast delivery in Iraq.',
     'seo.catalog.title': 'Product Catalog | ASHUS Custom Printing',
-    'seo.catalog.description': 'Choose from our premium collection of T-Shirts, Hoodies, and Vests ready for custom printing in Baghdad.',
+    'seo.catalog.description':
+      'Choose from our premium collection of T-Shirts, Hoodies, and Vests ready for custom printing in Baghdad.',
+    'seo.designs.title': 'My Designs | BGD/INK Studio',
+    'seo.designs.description':
+      'Reopen and manage custom apparel designs saved on this browser with BGD/INK Studio.',
     'seo.customizer.title': '3D Design Tool | ASHUS',
-    'seo.customizer.description': 'Upload your design and visualize it on 3D clothing models. Customize size, color, and placement instantly.',
+    'seo.customizer.description':
+      'Upload your design and visualize it on 3D clothing models. Customize size, color, and placement instantly.',
     'seo.checkout.title': 'Checkout | ASHUS',
     'seo.checkout.description': 'Complete your order for custom printed clothing in Baghdad.',
-
-    // New Sections
     'home.process.title': 'HOW IT WORKS',
     'home.process.step1.title': 'Choose Your Gear',
-    'home.process.step1.desc': 'Select from our premium heavy-weight cotton T-shirts, hoodies, or vests.',
+    'home.process.step1.desc':
+      'Select from our premium heavy-weight cotton T-shirts, hoodies, or vests.',
     'home.process.step2.title': 'Upload & Visualize',
-    'home.process.step2.desc': 'Upload your artwork and see exactly how it looks in 3D before ordering.',
+    'home.process.step2.desc':
+      'Upload your artwork and see exactly how it looks in 3D before ordering.',
     'home.process.step3.title': 'We Print & Ship',
-    'home.process.step3.desc': 'We print in Baghdad using durable DTF tech and deliver to your door.',
+    'home.process.step3.desc':
+      'We print in Baghdad using durable DTF tech and deliver to your door.',
     'home.quality.title': 'BUILT TO LAST',
-    'home.quality.desc': 'We use 100% combed cotton that withstands the Baghdad heat. Our prints are stretch-resistant and washing-machine safe.',
+    'home.quality.desc':
+      'We use 100% combed cotton that withstands the Baghdad heat. Our prints are stretch-resistant and washing-machine safe.',
     'home.reviews.title': 'TRUSTED BY BAGHDAD',
-    'home.reviews.1': '"The print quality is insane. The 3D preview helped me get the logo size exactly right."',
-    'home.reviews.2': '"Finally a local brand with high quality blanks. Ordered 5 hoodies for my team."',
-    'home.marquee': 'PREMIUM QUALITY • MADE IN BAGHDAD • 3D VISUALIZATION • FAST DELIVERY • ',
+    'home.reviews.1':
+      '"The print quality is insane. The 3D preview helped me get the logo size exactly right."',
+    'home.reviews.2':
+      '"Finally a local brand with high quality blanks. Ordered 5 hoodies for my team."',
+    'home.marquee':
+      'PREMIUM QUALITY • MADE IN BAGHDAD • 3D VISUALIZATION • FAST DELIVERY • ',
   },
   ar: {
     'hero.title': 'اطبع خيالك',
@@ -145,6 +161,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'hero.cta': 'صمم قطعتك',
     'nav.home': 'الرئيسية',
     'nav.catalog': 'الموديلات',
+    'nav.designs': 'تصاميمي',
     'catalog.title': 'اختار الموديل',
     'catalog.subtitle': 'خامات قطنية فاخرة ومريحة، تناسب جوّنا.',
     'catalog.startDesign': 'تخصيص',
@@ -185,15 +202,19 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'success.whatsapp': 'دز الطلب واتساب',
     'success.home': 'العودة',
     'seo.home.title': 'اشوز | طباعة ملابس في بغداد',
-    'seo.home.description': 'أفضل طباعة تيشيرتات وهوديز في بغداد. صمم تيشيرتك بنفسك واطبعه بجودة عالية. توصيل لباب البيت.',
+    'seo.home.description':
+      'أفضل طباعة تيشيرتات وهوديز في بغداد. صمم تيشيرتك بنفسك واطبعه بجودة عالية. توصيل لباب البيت.',
     'seo.catalog.title': 'الموديلات | اشوز',
-    'seo.catalog.description': 'تشكيلة تيشيرتات وهوديز جاهزة للطباعة. قطن فاخر يتحمل الغسل واللبس.',
+    'seo.catalog.description':
+      'تشكيلة تيشيرتات وهوديز جاهزة للطباعة. قطن فاخر يتحمل الغسل واللبس.',
+    'seo.designs.title': 'تصاميمي | BGD/INK Studio',
+    'seo.designs.description':
+      'افتح وأدر تصاميم الملابس المحفوظة بهذا المتصفح باستخدام BGD/INK Studio.',
     'seo.customizer.title': 'صمم بنفسك | اشوز',
-    'seo.customizer.description': 'أداة تصميم مباشر. ارفع صورتك وشوفها على التيشيرت قبل ما تطلب.',
+    'seo.customizer.description':
+      'أداة تصميم مباشر. ارفع صورتك وشوفها على التيشيرت قبل ما تطلب.',
     'seo.checkout.title': 'تأكيد الطلب | اشوز',
     'seo.checkout.description': 'كمل طلبك واستمتع بملابس مميزة.',
-
-    // New Sections
     'home.process.title': 'شلون نشتغل؟',
     'home.process.step1.title': 'اختار القطعة',
     'home.process.step1.desc': 'موديلاتنا قطن 100%، ثقيلة ومرتبة.',
@@ -202,10 +223,12 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'home.process.step3.title': 'طباعة وتوصيل',
     'home.process.step3.desc': 'نطبع بأحدث الأجهزة ونوصلك لباب البيت.',
     'home.quality.title': 'جودة، مو بس حجي',
-    'home.quality.desc': 'الخامات قطن ممشط يتحمل جونا الحار. والطباعة؟ انسى تتقشر او يروح لونها.',
+    'home.quality.desc':
+      'الخامات قطن ممشط يتحمل جونا الحار. والطباعة؟ انسى تتقشر او يروح لونها.',
     'home.reviews.title': 'ناس جربونا',
-    'home.reviews.1': '"الطباعة دقتها تخبل، والمعاينة بالموقع خلتني اعرف النتيجة قبل ما اطلب."',
+    'home.reviews.1':
+      '"الطباعة دقتها تخبل، والمعاينة بالموقع خلتني اعرف النتيجة قبل ما اطلب."',
     'home.reviews.2': '"خامة الهودي كلش قوية، وطباعتها نظيفة. طلبت وجبة ثانية فوراً."',
     'home.marquee': 'جودة عالية • صنع في بغداد • معاينة ثلاثية الأبعاد • توصيل سريع • ',
-  }
+  },
 };
