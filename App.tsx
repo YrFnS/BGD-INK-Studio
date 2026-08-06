@@ -1,15 +1,18 @@
-import React, { ReactNode, Suspense, useState } from 'react';
-import { Header } from './components/layout/Header';
+import React, { ReactNode, Suspense, useRef, useState } from 'react';
 import { Footer } from './components/layout/Footer';
+import { Header } from './components/layout/Header';
 import { PageTransition } from './components/layout/PageTransition';
 import { Cursor } from './components/ui/Cursor';
 import { Noise } from './components/ui/Noise';
 import { Preloader } from './components/ui/Preloader';
 import { PLATFORM_STATUS, getPlatformText } from './config/platform';
 import { AppProvider, useAppContext } from './contexts/AppContext';
-import { ToastProvider } from './contexts/ToastContext';
+import { ToastProvider, useToast } from './contexts/ToastContext';
 import { Hero } from './features/hero/Hero';
-import { OrderDetails, PendingOrder, ViewState } from './types';
+import { routeToPath, routes, useAppRouter } from './routing/appRouter';
+import { SubmitOrderResult } from './services/api';
+import { createDesignDraft } from './services/drafts';
+import { OrderDetails, PendingOrder, Product, ViewState } from './types';
 
 const Catalog = React.lazy(() =>
   import('./features/catalog/Catalog').then((module) => ({ default: module.Catalog })),
@@ -25,8 +28,8 @@ const Success = React.lazy(() =>
 );
 
 const LoadingSpinner = () => (
-  <div className="min-h-[50vh] flex items-center justify-center" role="status" aria-live="polite">
-    <div className="w-12 h-12 border-4 border-gray-200 dark:border-gray-800 border-t-black dark:border-t-white rounded-full animate-spin" />
+  <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-live="polite">
+    <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-black dark:border-gray-800 dark:border-t-white" />
     <span className="sr-only">Loading</span>
   </div>
 );
@@ -53,10 +56,10 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-[50vh] p-8 flex items-center justify-center text-center">
+        <div className="flex min-h-[50vh] items-center justify-center p-8 text-center">
           <div>
-            <h2 className="text-2xl font-bold mb-3">Something went wrong</h2>
-            <p className="text-gray-500 mb-6">Refresh the page to restart the studio.</p>
+            <h2 className="mb-3 text-2xl font-bold">Something went wrong</h2>
+            <p className="mb-6 text-gray-500">Refresh the page to restart the studio.</p>
             <button
               type="button"
               onClick={() => window.location.reload()}
@@ -73,82 +76,121 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
+interface LastSubmission {
+  result: SubmitOrderResult;
+  pendingOrder: PendingOrder;
+  details: OrderDetails;
+}
+
 const AppContent = () => {
   const { language } = useAppContext();
-  const [view, setView] = useState<ViewState>('HOME');
-  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
-  const [pendingOrder, setPendingOrder] = useState<PendingOrder | null>(null);
-  const [confirmedOrder, setConfirmedOrder] = useState<{
-    id: string;
-    details: OrderDetails;
-  } | null>(null);
+  const { showToast } = useToast();
+  const { route, view, navigate } = useAppRouter();
+  const [busyProductId, setBusyProductId] = useState<string | null>(null);
+  const [lastSubmission, setLastSubmission] = useState<LastSubmission | null>(null);
+  const creatingDraftRef = useRef(false);
 
-  const navigate = (nextView: ViewState) => {
-    setView(nextView);
-    window.scrollTo({ top: 0, behavior: 'auto' });
+  const handleProductSelect = async (product: Product) => {
+    if (creatingDraftRef.current) return;
+    creatingDraftRef.current = true;
+    setBusyProductId(product.id);
+
+    try {
+      const initialColor = product.colors[0];
+      if (!initialColor) throw new Error('The product has no available colors.');
+
+      const draft = await createDesignDraft({
+        productId: product.id,
+        color: initialColor,
+      });
+      navigate(routes.customizer(draft.id));
+    } catch {
+      showToast(
+        language === 'ar'
+          ? 'تعذر إنشاء مسودة تصميم على هذا الجهاز.'
+          : 'A recoverable design draft could not be created on this device.',
+        'error',
+      );
+    } finally {
+      creatingDraftRef.current = false;
+      setBusyProductId(null);
+    }
   };
 
-  const handleProductSelect = (productId: string) => {
-    setSelectedProduct(productId);
-    navigate('CUSTOMIZER');
-  };
-
-  const handleCheckout = (order: PendingOrder) => {
-    setPendingOrder(order);
-    navigate('CHECKOUT');
-  };
-
-  const handleOrderSuccess = (orderId: string, details: OrderDetails) => {
-    setConfirmedOrder({ id: orderId, details });
-    navigate('SUCCESS');
+  const handleOrderSuccess = (
+    result: SubmitOrderResult,
+    pendingOrder: PendingOrder,
+    details: OrderDetails,
+  ) => {
+    setLastSubmission({ result, pendingOrder, details });
+    navigate(routes.success(result.orderId));
   };
 
   const handleReset = () => {
-    setPendingOrder(null);
-    setConfirmedOrder(null);
-    setSelectedProduct(null);
-    navigate('HOME');
+    setLastSubmission(null);
+    navigate(routes.home());
   };
 
-  const renderView = () => {
-    switch (view) {
+  const handleHeaderNavigation = (nextView: ViewState) => {
+    if (nextView === 'CATALOG') {
+      navigate(routes.catalog());
+      return;
+    }
+
+    navigate(routes.home());
+  };
+
+  const renderRoute = () => {
+    switch (route.view) {
       case 'HOME':
-        return <Hero onStart={() => navigate('CATALOG')} />;
+        return <Hero onStart={() => navigate(routes.catalog())} />;
       case 'CATALOG':
-        return <Catalog onSelectProduct={handleProductSelect} />;
+        return (
+          <Catalog
+            onSelectProduct={handleProductSelect}
+            busyProductId={busyProductId}
+          />
+        );
       case 'CUSTOMIZER':
-        return <Customizer productId={selectedProduct} onCheckout={handleCheckout} />;
+        return (
+          <Customizer
+            draftId={route.draftId}
+            onCheckout={(draftId) => navigate(routes.checkout(draftId))}
+            onMissingDraft={() => navigate(routes.catalog(), { replace: true })}
+          />
+        );
       case 'CHECKOUT':
         return (
           <Checkout
-            order={pendingOrder}
-            onBack={() => navigate('CUSTOMIZER')}
+            draftId={route.draftId}
+            onBack={() => navigate(routes.customizer(route.draftId))}
+            onMissingDraft={() => navigate(routes.catalog(), { replace: true })}
             onSuccess={handleOrderSuccess}
           />
         );
-      case 'SUCCESS':
-        return pendingOrder && confirmedOrder ? (
+      case 'SUCCESS': {
+        const matchingSubmission =
+          lastSubmission?.result.orderId === route.orderId ? lastSubmission : null;
+
+        return (
           <Success
-            orderId={confirmedOrder.id}
-            orderDetails={confirmedOrder.details}
-            pendingOrder={pendingOrder}
+            orderId={route.orderId}
+            orderDetails={matchingSubmission?.details}
+            pendingOrder={matchingSubmission?.pendingOrder}
             onReset={handleReset}
           />
-        ) : (
-          <Hero onStart={() => navigate('CATALOG')} />
         );
-      default:
-        return <Hero onStart={() => navigate('CATALOG')} />;
+      }
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300 text-black dark:text-white font-sans selection:bg-accent selection:text-white relative">
+    <div className="relative flex min-h-screen flex-col bg-white font-sans text-black transition-colors duration-300 selection:bg-accent selection:text-white dark:bg-black dark:text-white">
       <Preloader />
       <Noise />
       <Cursor />
 
-      <Header currentView={view} onNavigate={navigate} />
+      <Header currentView={view} onNavigate={handleHeaderNavigation} />
 
       {PLATFORM_STATUS.phase === 'prototype' && (
         <div
@@ -159,10 +201,10 @@ const AppContent = () => {
         </div>
       )}
 
-      <main className="flex-grow relative">
+      <main className="relative flex-grow">
         <ErrorBoundary>
-          <PageTransition viewKey={view}>
-            <Suspense fallback={<LoadingSpinner />}>{renderView()}</Suspense>
+          <PageTransition viewKey={routeToPath(route)}>
+            <Suspense fallback={<LoadingSpinner />}>{renderRoute()}</Suspense>
           </PageTransition>
         </ErrorBoundary>
       </main>
