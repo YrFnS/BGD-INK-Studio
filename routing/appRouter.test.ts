@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { parseAppRoute, routeToPath, routes, useAppRouter } from './appRouter';
 
@@ -46,13 +46,15 @@ describe('useAppRouter', () => {
     expect(result.current.route).toEqual(routes.catalog());
   });
 
-  it('reacts to browser Back and Forward navigation', () => {
+  it('reacts to browser Back and Forward navigation', async () => {
     const { result } = renderHook(() => useAppRouter());
 
     window.history.pushState(null, '', '/checkout/draft-abc');
     act(() => window.dispatchEvent(new PopStateEvent('popstate')));
 
     expect(result.current.route).toEqual(routes.checkout('draft-abc'));
-    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'auto' });
+    await waitFor(() =>
+      expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'auto' }),
+    );
   });
 });
