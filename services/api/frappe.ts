@@ -148,6 +148,7 @@ export const createFrappePlatformApi = (baseUrl: string): PlatformApi => ({
         {
           method: 'POST',
           body: JSON.stringify({
+            design_draft_id: input.designDraftId,
             pending_order: input.pendingOrder,
             customer: input.details,
           }),
