@@ -5,13 +5,19 @@ import { OrderDetails, PendingOrder } from '../../types';
 export type OrderResult = SubmitOrderResult;
 
 export const submitOrder = (
+  designDraftId: string,
   pendingOrder: PendingOrder,
   details: OrderDetails,
+  signal?: AbortSignal,
 ): Promise<OrderResult> =>
-  platformApi.orders.submitOrder({
-    pendingOrder,
-    details,
-  });
+  platformApi.orders.submitOrder(
+    {
+      designDraftId,
+      pendingOrder,
+      details,
+    },
+    signal,
+  );
 
 export const generateWhatsAppLink = (
   orderId: string,
