@@ -1,0 +1,8 @@
+dist
+node_modules
+*.glb
+*.gltf
+*.png
+*.jpg
+*.jpeg
+*.webp
