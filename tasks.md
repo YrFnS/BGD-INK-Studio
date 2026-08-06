@@ -24,7 +24,7 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 
 - [x] Move Tailwind from the browser CDN into the compiled Vite pipeline.
 - [x] Enable strict TypeScript, Vite client types, ESLint flat config, and Prettier.
-- [x] Add a full `typecheck → lint → build` quality gate to Netlify and GitHub Actions configuration.
+- [x] Add a full `typecheck → lint → test → build` quality gate to Netlify and GitHub Actions.
 - [x] Implement a typed `PlatformApi` with local-prototype and Frappe adapters.
 - [x] Route catalog loading and order submission through the adapter boundary.
 - [x] Add catalog loading, retry, abort, validation, and accessible product-card states.
@@ -34,8 +34,12 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 - [x] Rehydrate temporary preview URLs safely and autosave ordered customizer changes.
 - [x] Add a bilingual recent-designs workspace with reopen, rename, duplicate, and permanent-delete actions.
 - [x] Duplicate drafts atomically with independent artwork blobs and reset checkout/submission state.
+- [x] Add Vitest route and IndexedDB lifecycle tests with fake IndexedDB.
+- [x] Add Testing Library component coverage and an axe accessibility scan for My Designs.
+- [x] Add a Playwright Chromium journey covering upload, refresh recovery, checkout recovery, submission, and workspace status.
+- [x] Run fast tests in the deployment gate and the Chromium journey as a dependent CI job.
 - [ ] Move application source under `src/` and enforce import boundaries.
-- [ ] Add unit, component, accessibility, and Playwright end-to-end tests.
+- [ ] Expand automated coverage across catalog errors, customizer failures, checkout validation, Arabic RTL, and mobile interaction.
 - [ ] Add deterministic dependency locking and CI dependency caching.
 - [ ] Add bundle-size and performance budgets.
 - [ ] Implement the documented Frappe catalog, asset, quote, and order endpoints.
