@@ -1,50 +1,17 @@
 import { BRAND, getConfiguredWhatsAppNumber } from '../../config/brand';
-import { PLATFORM_STATUS } from '../../config/platform';
-import { Order, OrderDetails, PendingOrder } from '../../types';
-import { saveOrder } from '../../utils/storage';
+import { platformApi, SubmitOrderResult } from '../../services/api';
+import { OrderDetails, PendingOrder } from '../../types';
 
-export interface OrderResult {
-  success: true;
-  orderId: string;
-  persistence: 'local-demo';
-}
+export type OrderResult = SubmitOrderResult;
 
-const createDraftId = (): string => {
-  const token =
-    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID().split('-')[0]
-      : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-
-  return `${BRAND.orderPrefix}-${token.toUpperCase()}`;
-};
-
-export const submitOrder = async (
+export const submitOrder = (
   pendingOrder: PendingOrder,
   details: OrderDetails,
-): Promise<OrderResult> => {
-  if (!PLATFORM_STATUS.localOrderStorageEnabled) {
-    throw new Error('Order storage is not configured.');
-  }
-
-  const orderId = createDraftId();
-  const draft: Order = {
-    ...pendingOrder,
-    ...details,
-    id: orderId,
-    date: new Date().toISOString(),
-    status: 'PENDING',
-  };
-
-  if (!saveOrder(draft)) {
-    throw new Error('The draft could not be saved in this browser.');
-  }
-
-  return {
-    success: true,
-    orderId,
-    persistence: 'local-demo',
-  };
-};
+): Promise<OrderResult> =>
+  platformApi.orders.submitOrder({
+    pendingOrder,
+    details,
+  });
 
 export const generateWhatsAppLink = (
   orderId: string,
