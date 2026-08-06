@@ -17,6 +17,9 @@ import { OrderDetails, PendingOrder, Product, ViewState } from './types';
 const Catalog = React.lazy(() =>
   import('./features/catalog/Catalog').then((module) => ({ default: module.Catalog })),
 );
+const Designs = React.lazy(() =>
+  import('./features/designs/Designs').then((module) => ({ default: module.Designs })),
+);
 const Customizer = React.lazy(() =>
   import('./features/customizer/Customizer').then((module) => ({ default: module.Customizer })),
 );
@@ -137,6 +140,11 @@ const AppContent = () => {
       return;
     }
 
+    if (nextView === 'DESIGNS') {
+      navigate(routes.designs());
+      return;
+    }
+
     navigate(routes.home());
   };
 
@@ -145,10 +153,12 @@ const AppContent = () => {
       case 'HOME':
         return <Hero onStart={() => navigate(routes.catalog())} />;
       case 'CATALOG':
+        return <Catalog onSelectProduct={handleProductSelect} busyProductId={busyProductId} />;
+      case 'DESIGNS':
         return (
-          <Catalog
-            onSelectProduct={handleProductSelect}
-            busyProductId={busyProductId}
+          <Designs
+            onOpenDraft={(draftId) => navigate(routes.customizer(draftId))}
+            onCreateNew={() => navigate(routes.catalog())}
           />
         );
       case 'CUSTOMIZER':
@@ -156,7 +166,7 @@ const AppContent = () => {
           <Customizer
             draftId={route.draftId}
             onCheckout={(draftId) => navigate(routes.checkout(draftId))}
-            onMissingDraft={() => navigate(routes.catalog(), { replace: true })}
+            onMissingDraft={() => navigate(routes.designs(), { replace: true })}
           />
         );
       case 'CHECKOUT':
@@ -164,7 +174,7 @@ const AppContent = () => {
           <Checkout
             draftId={route.draftId}
             onBack={() => navigate(routes.customizer(route.draftId))}
-            onMissingDraft={() => navigate(routes.catalog(), { replace: true })}
+            onMissingDraft={() => navigate(routes.designs(), { replace: true })}
             onSuccess={handleOrderSuccess}
           />
         );
