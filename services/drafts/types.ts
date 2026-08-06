@@ -26,6 +26,7 @@ export interface StoredDecalLayer {
 export interface DesignDraftRecord {
   version: typeof DESIGN_DRAFT_VERSION;
   id: string;
+  name: string;
   productId: string;
   color: string;
   size: Size;
@@ -38,10 +39,22 @@ export interface DesignDraftRecord {
   updatedAt: string;
 }
 
-export interface HydratedDesignDraft
-  extends Omit<DesignDraftRecord, 'decals'> {
+export interface HydratedDesignDraft extends Omit<DesignDraftRecord, 'decals'> {
   decals: DecalLayer[];
   missingAssetCount: number;
+}
+
+export interface DesignDraftSummary {
+  id: string;
+  name: string;
+  productId: string;
+  color: string;
+  size: Size;
+  layerCount: number;
+  previewUrl: string | null;
+  submittedOrderId: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateDesignDraftInput {
