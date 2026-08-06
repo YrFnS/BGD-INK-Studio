@@ -1,28 +1,33 @@
-
-import React, { useState, Suspense, ReactNode, Component } from 'react';
-import { AppProvider } from './contexts/AppContext';
-import { ToastProvider } from './contexts/ToastContext';
+import React, { ReactNode, Suspense, useState } from 'react';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { PageTransition } from './components/layout/PageTransition';
-import { ViewState, PendingOrder, OrderDetails } from './types';
-import { Noise } from './components/ui/Noise';
 import { Cursor } from './components/ui/Cursor';
+import { Noise } from './components/ui/Noise';
 import { Preloader } from './components/ui/Preloader';
-
-// Feature Imports
+import { PLATFORM_STATUS, getPlatformText } from './config/platform';
+import { AppProvider, useAppContext } from './contexts/AppContext';
+import { ToastProvider } from './contexts/ToastContext';
 import { Hero } from './features/hero/Hero';
+import { OrderDetails, PendingOrder, ViewState } from './types';
 
-// Lazy Load heavy components
-const Catalog = React.lazy(() => import('./features/catalog/Catalog').then(m => ({ default: m.Catalog })));
-const Customizer = React.lazy(() => import('./features/customizer/Customizer').then(m => ({ default: m.Customizer })));
-const Checkout = React.lazy(() => import('./features/checkout/Checkout').then(m => ({ default: m.Checkout })));
-const Success = React.lazy(() => import('./features/checkout/Success').then(m => ({ default: m.Success })));
-const Admin = React.lazy(() => import('./features/admin/Admin').then(m => ({ default: m.Admin })));
+const Catalog = React.lazy(() =>
+  import('./features/catalog/Catalog').then((module) => ({ default: module.Catalog })),
+);
+const Customizer = React.lazy(() =>
+  import('./features/customizer/Customizer').then((module) => ({ default: module.Customizer })),
+);
+const Checkout = React.lazy(() =>
+  import('./features/checkout/Checkout').then((module) => ({ default: module.Checkout })),
+);
+const Success = React.lazy(() =>
+  import('./features/checkout/Success').then((module) => ({ default: module.Success })),
+);
 
 const LoadingSpinner = () => (
-  <div className="min-h-[50vh] flex items-center justify-center">
-    <div className="w-12 h-12 border-4 border-gray-200 dark:border-gray-800 border-t-black dark:border-t-white rounded-full animate-spin"></div>
+  <div className="min-h-[50vh] flex items-center justify-center" role="status" aria-live="polite">
+    <div className="w-12 h-12 border-4 border-gray-200 dark:border-gray-800 border-t-black dark:border-t-white rounded-full animate-spin" />
+    <span className="sr-only">Loading</span>
   </div>
 );
 
@@ -34,86 +39,106 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-// Simple Error Boundary for 3D Context crashes
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = { hasError: false };
-  
-  public static getDerivedStateFromError(): ErrorBoundaryState { 
-    return { hasError: true }; 
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
   }
 
-  public componentDidCatch(error: any, errorInfo: any) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+  componentDidCatch(error: unknown, errorInfo: React.ErrorInfo) {
+    console.error('Application error:', error, errorInfo);
   }
-  
-  public render() {
+
+  render() {
     if (this.state.hasError) {
-      return <div className="p-8 text-center">Something went wrong. Please refresh.</div>;
+      return (
+        <div className="min-h-[50vh] p-8 flex items-center justify-center text-center">
+          <div>
+            <h2 className="text-2xl font-bold mb-3">Something went wrong</h2>
+            <p className="text-gray-500 mb-6">Refresh the page to restart the studio.</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded-full bg-black px-6 py-3 font-bold text-white dark:bg-white dark:text-black"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+      );
     }
+
     return this.props.children;
   }
 }
 
 const AppContent = () => {
+  const { language } = useAppContext();
   const [view, setView] = useState<ViewState>('HOME');
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [pendingOrder, setPendingOrder] = useState<PendingOrder | null>(null);
-  const [confirmedOrder, setConfirmedOrder] = useState<{ id: string; details: OrderDetails } | null>(null);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [confirmedOrder, setConfirmedOrder] = useState<{
+    id: string;
+    details: OrderDetails;
+  } | null>(null);
 
-  React.useEffect(() => {
-    const handleStatusChange = () => setIsOffline(!navigator.onLine);
-    window.addEventListener('online', handleStatusChange);
-    window.addEventListener('offline', handleStatusChange);
-    return () => {
-      window.removeEventListener('online', handleStatusChange);
-      window.removeEventListener('offline', handleStatusChange);
-    };
-  }, []);
+  const navigate = (nextView: ViewState) => {
+    setView(nextView);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  };
 
   const handleProductSelect = (productId: string) => {
     setSelectedProduct(productId);
-    setView('CUSTOMIZER');
-    window.scrollTo(0, 0);
+    navigate('CUSTOMIZER');
   };
 
   const handleCheckout = (order: PendingOrder) => {
     setPendingOrder(order);
-    setView('CHECKOUT');
-    window.scrollTo(0, 0);
+    navigate('CHECKOUT');
   };
 
   const handleOrderSuccess = (orderId: string, details: OrderDetails) => {
     setConfirmedOrder({ id: orderId, details });
-    setView('SUCCESS');
-    window.scrollTo(0, 0);
+    navigate('SUCCESS');
   };
 
   const handleReset = () => {
     setPendingOrder(null);
     setConfirmedOrder(null);
-    setView('HOME');
-    window.scrollTo(0, 0);
+    setSelectedProduct(null);
+    navigate('HOME');
   };
 
   const renderView = () => {
     switch (view) {
       case 'HOME':
-        return <Hero onStart={() => setView('CATALOG')} />;
+        return <Hero onStart={() => navigate('CATALOG')} />;
       case 'CATALOG':
         return <Catalog onSelectProduct={handleProductSelect} />;
       case 'CUSTOMIZER':
         return <Customizer productId={selectedProduct} onCheckout={handleCheckout} />;
       case 'CHECKOUT':
-        return <Checkout order={pendingOrder} onBack={() => setView('CUSTOMIZER')} onSuccess={handleOrderSuccess} />;
+        return (
+          <Checkout
+            order={pendingOrder}
+            onBack={() => navigate('CUSTOMIZER')}
+            onSuccess={handleOrderSuccess}
+          />
+        );
       case 'SUCCESS':
-         return pendingOrder && confirmedOrder ? (
-           <Success orderId={confirmedOrder.id} orderDetails={confirmedOrder.details} pendingOrder={pendingOrder} onReset={handleReset} />
-         ) : <Hero onStart={() => setView('CATALOG')} />;
-      case 'ADMIN':
-        return <Admin />;
+        return pendingOrder && confirmedOrder ? (
+          <Success
+            orderId={confirmedOrder.id}
+            orderDetails={confirmedOrder.details}
+            pendingOrder={pendingOrder}
+            onReset={handleReset}
+          />
+        ) : (
+          <Hero onStart={() => navigate('CATALOG')} />
+        );
       default:
-        return <Hero onStart={() => setView('CATALOG')} />;
+        return <Hero onStart={() => navigate('CATALOG')} />;
     }
   };
 
@@ -122,37 +147,35 @@ const AppContent = () => {
       <Preloader />
       <Noise />
       <Cursor />
-      
-      <Header currentView={view} onNavigate={(v) => { setView(v); window.scrollTo(0, 0); }} />
-      
-      {/* Offline Indicator */}
-      {isOffline && (
-        <div className="bg-red-600 text-white text-xs font-bold text-center py-1 mt-16 z-40 animate-pulse relative">
-          OFFLINE MODE - BROWSING CACHED CONTENT
+
+      <Header currentView={view} onNavigate={navigate} />
+
+      {PLATFORM_STATUS.phase === 'prototype' && (
+        <div
+          className="relative z-40 mt-16 border-b border-amber-300/40 bg-amber-50 px-4 py-2 text-center text-xs font-semibold text-amber-950 dark:border-amber-700/40 dark:bg-amber-950/40 dark:text-amber-100"
+          role="status"
+        >
+          {getPlatformText(PLATFORM_STATUS.notice, language)}
         </div>
       )}
 
-      <main className={`flex-grow relative ${isOffline ? '' : 'pt-0'}`}>
+      <main className="flex-grow relative">
         <ErrorBoundary>
           <PageTransition viewKey={view}>
-            <Suspense fallback={<LoadingSpinner />}>
-              {renderView()}
-            </Suspense>
+            <Suspense fallback={<LoadingSpinner />}>{renderView()}</Suspense>
           </PageTransition>
         </ErrorBoundary>
       </main>
-      
-      <Footer onAdminClick={() => setView('ADMIN')} />
+
+      <Footer />
     </div>
   );
 };
 
-export const App = () => {
-  return (
-    <AppProvider>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
-    </AppProvider>
-  );
-};
+export const App = () => (
+  <AppProvider>
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
+  </AppProvider>
+);
