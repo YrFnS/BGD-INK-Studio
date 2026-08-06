@@ -66,17 +66,18 @@ The storefront uses the browser History API without an additional routing depend
 | --- | --- |
 | `/` | Landing page |
 | `/catalog` | Product selection |
+| `/designs` | Recent designs workspace |
 | `/studio/:draftId` | Recoverable 3D design draft |
 | `/checkout/:draftId` | Checkout reconstructed from the same draft |
 | `/draft/:orderId` | Local draft or order confirmation |
 
-Browser Back and Forward navigation are supported. Netlify serves direct links through `public/_redirects`, so refreshing a studio or checkout URL returns to the application instead of a 404 page.
+Browser Back and Forward navigation are supported. Netlify serves direct links through `public/_redirects`, so refreshing a workspace, studio, or checkout URL returns to the application instead of a 404 page.
 
 ## Recoverable design drafts
 
 Selecting a product creates a draft ID before opening the customizer. The browser stores the following in IndexedDB:
 
-- Product ID, color, size, notes, and active layer
+- Draft name, product ID, color, size, notes, and active layer
 - Layer transforms and ordering
 - Original PNG, JPEG, or WebP artwork blobs
 - File names and MIME types
@@ -85,7 +86,15 @@ Selecting a product creates a draft ID before opening the customizer. The browse
 
 The customizer autosaves changes through an ordered, debounced queue. Artwork is stored before it is added to the scene. On refresh, new temporary object URLs are generated from the stored blobs and released again when the screen closes.
 
-IndexedDB recovery is **device- and browser-specific**. It is not a substitute for server storage, cross-device accounts, backups, or the future S3-compatible artwork service.
+The bilingual `/designs` workspace lists drafts by last modification time and allows the customer to:
+
+- Reopen a saved design
+- Rename it
+- Duplicate it with independent copies of every artwork blob
+- Permanently delete the draft and its local artwork
+- See product, size, layer count, submission state, and an artwork preview
+
+Duplicated drafts retain their design settings but reset checkout details and submission linkage. IndexedDB recovery is **device- and browser-specific**. It is not a substitute for server storage, cross-device accounts, backups, or the future S3-compatible artwork service.
 
 ## Data adapters
 
@@ -133,7 +142,7 @@ Do not use the current local prototype adapter for real customer orders or sensi
 components/          Shared layout and UI components
 config/              Brand, runtime, and capability configuration
 contexts/            Theme, language, and toast state
-features/            Catalog, customizer, checkout, and landing experiences
+features/            Catalog, designs, customizer, checkout, and landing experiences
 data/                Prototype product and 3D asset configuration
 docs/                Architecture and backend contracts
 hooks/                Shared hooks
@@ -149,4 +158,4 @@ Netlify deploy previews run `npm run check` before publishing. A GitHub Actions 
 
 ## Roadmap
 
-The implementation plan lives in `tasks.md` and is organized into P0–P4. P0 establishes the safe BGD/INK foundation. P1 adds the engineering pipeline, route recovery, and backend boundary. P2 rebuilds the production-grade customizer. P3 redesigns the storefront, and P4 adds operations, PWA, analytics, and growth features.
+The implementation plan lives in `tasks.md` and is organized into P0–P4. P0 establishes the safe BGD/INK foundation. P1 adds the engineering pipeline, recoverable workspace, route recovery, and backend boundary. P2 rebuilds the production-grade customizer. P3 redesigns the storefront, and P4 adds operations, PWA, analytics, and growth features.
