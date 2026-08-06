@@ -29,11 +29,14 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 - [x] Route catalog loading and order submission through the adapter boundary.
 - [x] Add catalog loading, retry, abort, validation, and accessible product-card states.
 - [x] Add documented environment-based adapter selection with a safe local fallback.
+- [x] Add URL-based navigation with browser Back/Forward support and direct-link fallbacks.
+- [x] Persist recoverable design drafts, artwork blobs, transforms, notes, and checkout details in IndexedDB.
+- [x] Rehydrate temporary preview URLs safely and autosave ordered customizer changes.
 - [ ] Move application source under `src/` and enforce import boundaries.
 - [ ] Add unit, component, accessibility, and Playwright end-to-end tests.
 - [ ] Add deterministic dependency locking and CI dependency caching.
 - [ ] Add bundle-size and performance budgets.
-- [ ] Add route-based navigation and recoverable design drafts.
+- [ ] Add a recent-drafts screen and explicit draft deletion controls.
 - [ ] Implement the documented Frappe catalog, asset, quote, and order endpoints.
 - [ ] Create authenticated staff access in Frappe rather than the storefront bundle.
 - [ ] Persist products, variants, stock, pricing, customers, and orders in Frappe.
@@ -57,7 +60,7 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 - [ ] Build accessible product cards, size guides, quantities, variants, and delivery estimates.
 - [ ] Complete Iraqi Arabic localization and RTL review.
 - [ ] Add truthful production, material, care, returns, privacy, and artwork policies.
-- [ ] Add draft recovery, cart behavior, clear totals, and order confirmation.
+- [ ] Add cart behavior, clear totals, and production-grade order confirmation.
 - [ ] Optimize the editor and checkout for touch-first mobile use.
 
 ## P4 — Operations, PWA, SEO, and growth
