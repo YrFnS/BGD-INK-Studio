@@ -48,7 +48,7 @@ describe('My Designs workspace', () => {
     const { container } = renderWorkspace(vi.fn(), onCreateNew);
 
     expect(await screen.findByRole('heading', { name: 'MY DESIGNS' })).toBeInTheDocument();
-    expect(screen.getByText('No saved designs yet')).toBeInTheDocument();
+    expect(await screen.findByText('No saved designs yet')).toBeInTheDocument();
 
     const createButtons = screen.getAllByRole('button', { name: 'Create new design' });
     expect(createButtons).toHaveLength(2);
