@@ -22,12 +22,19 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 
 ## P1 — Engineering and backend foundation
 
-- [ ] Move Tailwind from the browser CDN into PostCSS/Vite.
-- [ ] Introduce `src/`, strict TypeScript, ESLint, Prettier, and import boundaries.
+- [x] Move Tailwind from the browser CDN into the compiled Vite pipeline.
+- [x] Enable strict TypeScript, Vite client types, ESLint flat config, and Prettier.
+- [x] Add a full `typecheck → lint → build` quality gate to Netlify and GitHub Actions configuration.
+- [x] Implement a typed `PlatformApi` with local-prototype and Frappe adapters.
+- [x] Route catalog loading and order submission through the adapter boundary.
+- [x] Add catalog loading, retry, abort, validation, and accessible product-card states.
+- [x] Add documented environment-based adapter selection with a safe local fallback.
+- [ ] Move application source under `src/` and enforce import boundaries.
 - [ ] Add unit, component, accessibility, and Playwright end-to-end tests.
-- [ ] Add GitHub Actions for install, type-check, lint, test, build, and bundle budgets.
+- [ ] Add deterministic dependency locking and CI dependency caching.
+- [ ] Add bundle-size and performance budgets.
 - [ ] Add route-based navigation and recoverable design drafts.
-- [ ] Implement a typed API adapter with development mocks and a Frappe production implementation.
+- [ ] Implement the documented Frappe catalog, asset, quote, and order endpoints.
 - [ ] Create authenticated staff access in Frappe rather than the storefront bundle.
 - [ ] Persist products, variants, stock, pricing, customers, and orders in Frappe.
 - [ ] Store original artwork and generated previews in S3-compatible object storage.
