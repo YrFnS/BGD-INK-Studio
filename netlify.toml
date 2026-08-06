@@ -1,6 +1,7 @@
 [build]
-  command = "npm run build"
+  command = "npm run check"
   publish = "dist"
 
 [build.environment]
   GIT_LFS_ENABLED = "true"
+  NODE_VERSION = "22"
