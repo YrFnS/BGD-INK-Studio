@@ -32,11 +32,12 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 - [x] Add URL-based navigation with browser Back/Forward support and direct-link fallbacks.
 - [x] Persist recoverable design drafts, artwork blobs, transforms, notes, and checkout details in IndexedDB.
 - [x] Rehydrate temporary preview URLs safely and autosave ordered customizer changes.
+- [x] Add a bilingual recent-designs workspace with reopen, rename, duplicate, and permanent-delete actions.
+- [x] Duplicate drafts atomically with independent artwork blobs and reset checkout/submission state.
 - [ ] Move application source under `src/` and enforce import boundaries.
 - [ ] Add unit, component, accessibility, and Playwright end-to-end tests.
 - [ ] Add deterministic dependency locking and CI dependency caching.
 - [ ] Add bundle-size and performance budgets.
-- [ ] Add a recent-drafts screen and explicit draft deletion controls.
 - [ ] Implement the documented Frappe catalog, asset, quote, and order endpoints.
 - [ ] Create authenticated staff access in Frappe rather than the storefront bundle.
 - [ ] Persist products, variants, stock, pricing, customers, and orders in Frappe.
