@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '../../contexts/AppContext';
-import { ToastProvider } from '../../contexts/ToastContext';
 import {
   createDesignDraft,
   deleteDesignDraft,
@@ -12,6 +11,14 @@ import {
 } from '../../services/drafts';
 import { Size } from '../../types';
 import { Designs } from './Designs';
+
+const toastMocks = vi.hoisted(() => ({
+  showToast: vi.fn(),
+}));
+
+vi.mock('../../contexts/ToastContext', () => ({
+  useToast: () => ({ showToast: toastMocks.showToast }),
+}));
 
 const clearAllDrafts = async (): Promise<void> => {
   const summaries = await listDesignDrafts();
@@ -25,13 +32,14 @@ const clearAllDrafts = async (): Promise<void> => {
 const renderWorkspace = (onOpenDraft = vi.fn(), onCreateNew = vi.fn()) =>
   render(
     <AppProvider>
-      <ToastProvider>
-        <Designs onOpenDraft={onOpenDraft} onCreateNew={onCreateNew} />
-      </ToastProvider>
+      <Designs onOpenDraft={onOpenDraft} onCreateNew={onCreateNew} />
     </AppProvider>,
   );
 
-beforeEach(clearAllDrafts);
+beforeEach(async () => {
+  toastMocks.showToast.mockReset();
+  await clearAllDrafts();
+});
 afterEach(clearAllDrafts);
 
 describe('My Designs workspace', () => {
