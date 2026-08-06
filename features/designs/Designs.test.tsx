@@ -42,7 +42,9 @@ describe('My Designs workspace', () => {
     expect(await screen.findByRole('heading', { name: 'MY DESIGNS' })).toBeInTheDocument();
     expect(screen.getByText('No saved designs yet')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create new design' }));
+    const createButtons = screen.getAllByRole('button', { name: 'Create new design' });
+    expect(createButtons).toHaveLength(2);
+    fireEvent.click(createButtons[1]);
     expect(onCreateNew).toHaveBeenCalledOnce();
 
     const results = await axe(container, {
