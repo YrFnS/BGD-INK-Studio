@@ -1,53 +1,48 @@
-
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 
 interface MagneticProps {
   children: React.ReactNode;
-  strength?: number; // How far it moves (default 0.5)
+  strength?: number;
 }
 
 export const Magnetic: React.FC<MagneticProps> = ({ children, strength = 0.5 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    const element = containerRef.current;
+    if (!element) return undefined;
 
-    // Use quickTo for high performance mouse tracking
-    const xTo = gsap.quickTo(el, "x", { duration: 1, ease: "elastic.out(1, 0.3)" });
-    const yTo = gsap.quickTo(el, "y", { duration: 1, ease: "elastic.out(1, 0.3)" });
+    const canAnimate =
+      window.matchMedia('(pointer: fine)').matches &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!canAnimate) return undefined;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const { clientX, clientY } = e;
-      const { height, width, left, top } = el.getBoundingClientRect();
-      
-      // Calculate distance from center
-      const x = clientX - (left + width / 2);
-      const y = clientY - (top + height / 2);
-      
-      // Move element towards mouse
-      xTo(x * strength);
-      yTo(y * strength);
+    const moveX = gsap.quickTo(element, 'x', { duration: 0.8, ease: 'elastic.out(1, 0.35)' });
+    const moveY = gsap.quickTo(element, 'y', { duration: 0.8, ease: 'elastic.out(1, 0.35)' });
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const bounds = element.getBoundingClientRect();
+      moveX((event.clientX - (bounds.left + bounds.width / 2)) * strength);
+      moveY((event.clientY - (bounds.top + bounds.height / 2)) * strength);
     };
 
     const handleMouseLeave = () => {
-      // Spring back to center
-      xTo(0);
-      yTo(0);
+      moveX(0);
+      moveY(0);
     };
 
-    el.addEventListener("mousemove", handleMouseMove);
-    el.addEventListener("mouseleave", handleMouseLeave);
+    element.addEventListener('mousemove', handleMouseMove);
+    element.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
-      el.removeEventListener("mousemove", handleMouseMove);
-      el.removeEventListener("mouseleave", handleMouseLeave);
+      element.removeEventListener('mousemove', handleMouseMove);
+      element.removeEventListener('mouseleave', handleMouseLeave);
     };
   }, [strength]);
 
   return (
-    <div ref={containerRef} className="inline-block cursor-pointer">
+    <div ref={containerRef} className="inline-block">
       {children}
     </div>
   );
