@@ -7,12 +7,16 @@ import { isAbortError, platformApi } from '../../services/api';
 import { Product } from '../../types';
 
 interface CatalogProps {
-  onSelectProduct: (productId: string) => void;
+  onSelectProduct: (product: Product) => void | Promise<void>;
+  busyProductId?: string | null;
 }
 
 type CatalogStatus = 'loading' | 'ready' | 'error';
 
-export const Catalog: React.FC<CatalogProps> = ({ onSelectProduct }) => {
+export const Catalog: React.FC<CatalogProps> = ({
+  onSelectProduct,
+  busyProductId = null,
+}) => {
   const { t, language } = useAppContext();
   const [products, setProducts] = useState<Product[]>([]);
   const [status, setStatus] = useState<CatalogStatus>('loading');
@@ -85,6 +89,7 @@ export const Catalog: React.FC<CatalogProps> = ({ onSelectProduct }) => {
       ? 'تعذر تحميل الموديلات. تحقق من الاتصال وحاول مرة ثانية.'
       : 'Products could not be loaded. Check the connection and try again.';
   const retryText = language === 'ar' ? 'إعادة المحاولة' : 'Try again';
+  const preparingText = language === 'ar' ? 'جاري تجهيز المسودة…' : 'Preparing draft…';
 
   return (
     <div
@@ -149,15 +154,18 @@ export const Catalog: React.FC<CatalogProps> = ({ onSelectProduct }) => {
               language === 'ar'
                 ? `${product.colors.length} لون`
                 : `${product.colors.length} Color${product.colors.length === 1 ? '' : 's'}`;
+            const isBusy = busyProductId === product.id;
+            const isDisabled = !product.inStock || isBusy;
 
             return (
               <button
                 type="button"
                 key={product.id}
-                disabled={!product.inStock}
-                onClick={() => onSelectProduct(product.id)}
-                className={`group relative text-start bg-white dark:bg-zinc-900 border ${product.inStock ? 'border-gray-200 dark:border-zinc-800 hover:border-accent dark:hover:border-accent' : 'border-gray-100 dark:border-zinc-800 opacity-70 cursor-not-allowed'} rounded-2xl overflow-hidden transition-all duration-500 flex flex-col hover:shadow-2xl enabled:hover:-translate-y-2 disabled:pointer-events-none`}
+                disabled={isDisabled}
+                onClick={() => void onSelectProduct(product)}
+                className={`group relative text-start bg-white dark:bg-zinc-900 border ${product.inStock ? 'border-gray-200 dark:border-zinc-800 hover:border-accent dark:hover:border-accent' : 'border-gray-100 dark:border-zinc-800 opacity-70 cursor-not-allowed'} rounded-2xl overflow-hidden transition-all duration-500 flex flex-col hover:shadow-2xl enabled:hover:-translate-y-2 disabled:cursor-wait`}
                 aria-label={`${t(product.name)} — ${formatPrice(product.basePrice)} ${t('common.price')}`}
+                aria-busy={isBusy}
               >
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-gray-100 dark:bg-zinc-800">
                   <ImageReveal
@@ -180,9 +188,11 @@ export const Catalog: React.FC<CatalogProps> = ({ onSelectProduct }) => {
                   )}
 
                   {product.inStock && (
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-6 pointer-events-none">
+                    <div
+                      className={`absolute inset-0 bg-black/40 transition-opacity duration-300 flex items-center justify-center p-6 pointer-events-none ${isBusy ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                    >
                       <span className="w-full bg-accent text-white font-bold py-3 rounded-full translate-y-4 group-hover:translate-y-0 transition-transform duration-300 shadow-xl text-center">
-                        {t('catalog.startDesign')}
+                        {isBusy ? preparingText : t('catalog.startDesign')}
                       </span>
                     </div>
                   )}
