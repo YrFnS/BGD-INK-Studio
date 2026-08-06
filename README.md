@@ -2,7 +2,7 @@
 
 BGD/INK Studio is a bilingual English/Arabic web experience for designing and previewing custom-printed apparel in 3D.
 
-> **Current status: prototype foundation.** By default, submitted designs are stored only in the visitor's browser. They are not sent to a shop, shared between devices, or written to a production database yet.
+> **Current status: prototype foundation.** By default, submitted designs stay on the visitor's device. They are not sent to a shop, shared between devices, or written to a production database yet.
 
 ## Brand
 
@@ -21,6 +21,7 @@ Brand values, contact destinations, storage namespaces, and order prefixes are c
 - React Three Fiber, Drei, and Three.js
 - GSAP
 - Zod runtime validation
+- IndexedDB for recoverable local design drafts and binary artwork
 - ESLint flat configuration and Prettier
 
 ## Local development
@@ -57,13 +58,42 @@ npm run build
 npm run preview
 ```
 
+## URL routes
+
+The storefront uses the browser History API without an additional routing dependency:
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Landing page |
+| `/catalog` | Product selection |
+| `/studio/:draftId` | Recoverable 3D design draft |
+| `/checkout/:draftId` | Checkout reconstructed from the same draft |
+| `/draft/:orderId` | Local draft or order confirmation |
+
+Browser Back and Forward navigation are supported. Netlify serves direct links through `public/_redirects`, so refreshing a studio or checkout URL returns to the application instead of a 404 page.
+
+## Recoverable design drafts
+
+Selecting a product creates a draft ID before opening the customizer. The browser stores the following in IndexedDB:
+
+- Product ID, color, size, notes, and active layer
+- Layer transforms and ordering
+- Original PNG, JPEG, or WebP artwork blobs
+- File names and MIME types
+- Checkout contact and address fields
+- Submission linkage after a local draft or real order is created
+
+The customizer autosaves changes through an ordered, debounced queue. Artwork is stored before it is added to the scene. On refresh, new temporary object URLs are generated from the stored blobs and released again when the screen closes.
+
+IndexedDB recovery is **device- and browser-specific**. It is not a substitute for server storage, cross-device accounts, backups, or the future S3-compatible artwork service.
+
 ## Data adapters
 
 The storefront depends on a typed `PlatformApi` rather than reading products or writing orders directly from feature components.
 
 Two adapters currently exist:
 
-- `local-prototype`: reads the prototype catalog and stores clearly labeled design drafts in browser storage.
+- `local-prototype`: reads the prototype catalog and stores clearly labeled submitted drafts in browser storage.
 - `frappe`: calls the documented Frappe methods, validates responses with Zod, normalizes errors, includes credentials, and refuses to create a real order while artwork still uses temporary `blob:` URLs.
 
 The local adapter is the safe default. Copy `.env.example` to `.env.local` only when changing the data source.
@@ -89,12 +119,13 @@ The current branch deliberately removes misleading production behavior:
 - There is no public browser-only admin dashboard.
 - No API key is injected into the client bundle.
 - A locally submitted design is called a **draft**, not a confirmed order.
-- Drafts use namespaced browser storage and migrate legacy `ashus_*` keys without deleting them.
+- Active designs and artwork use IndexedDB; submitted local draft summaries use namespaced browser storage.
+- Legacy `ashus_*` summary keys are migrated without deleting the originals.
 - WhatsApp appears only after a real number is configured.
 - Service-worker/offline claims remain disabled until a real PWA implementation exists.
-- The Frappe order adapter blocks temporary artwork URLs until durable asset uploads are implemented.
+- The Frappe order adapter blocks temporary artwork URLs until durable server uploads are implemented.
 
-Do not use the current local-storage adapter for real customer orders or personal data.
+Do not use the current local prototype adapter for real customer orders or sensitive production data.
 
 ## Repository structure
 
@@ -106,8 +137,10 @@ features/            Catalog, customizer, checkout, and landing experiences
 data/                Prototype product and 3D asset configuration
 docs/                Architecture and backend contracts
 hooks/                Shared hooks
+routing/              History API route parsing and navigation
 services/api/         Typed local and Frappe data adapters
-utils/                Prototype browser persistence helpers
+services/drafts/      IndexedDB draft and artwork repository
+utils/                Legacy/prototype summary persistence helpers
 ```
 
 ## Validation
@@ -116,4 +149,4 @@ Netlify deploy previews run `npm run check` before publishing. A GitHub Actions 
 
 ## Roadmap
 
-The implementation plan lives in `tasks.md` and is organized into P0–P4. P0 establishes the safe BGD/INK foundation. P1 adds the engineering pipeline and backend boundary. P2 rebuilds the production-grade customizer. P3 redesigns the storefront, and P4 adds operations, PWA, analytics, and growth features.
+The implementation plan lives in `tasks.md` and is organized into P0–P4. P0 establishes the safe BGD/INK foundation. P1 adds the engineering pipeline, route recovery, and backend boundary. P2 rebuilds the production-grade customizer. P3 redesigns the storefront, and P4 adds operations, PWA, analytics, and growth features.
