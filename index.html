@@ -22,92 +22,11 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&family=Cairo:wght@300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
-
-    <!-- Temporary runtime Tailwind setup. P1 moves this into the Vite build. -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              background: '#050505',
-              surface: '#111111',
-              primary: '#FFFFFF',
-              secondary: '#A1A1AA',
-              accent: '#DC2626',
-            },
-            fontFamily: {
-              sans: ['Plus Jakarta Sans', 'sans-serif'],
-              display: ['Syne', 'sans-serif'],
-              arabic: ['Cairo', 'sans-serif'],
-            },
-            animation: {
-              'fade-in': 'fadeIn 0.5s ease-out forwards',
-              'slide-up': 'slideUp 0.5s ease-out forwards',
-            },
-            keyframes: {
-              fadeIn: {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
-              },
-              slideUp: {
-                '0%': { opacity: '0', transform: 'translateY(20px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
-              },
-            },
-          },
-        },
-      };
-    </script>
-
-    <style>
-      body {
-        margin: 0;
-        background-color: #ffffff;
-        color: #000000;
-        -webkit-tap-highlight-color: transparent;
-      }
-
-      .dark body {
-        background-color: #050505;
-        color: #ffffff;
-      }
-
-      @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
-        body,
-        a,
-        button,
-        input,
-        select,
-        textarea {
-          cursor: none;
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-          scroll-behavior: auto !important;
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-        }
-      }
-
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-    </style>
   </head>
 
-  <body class="bg-white dark:bg-background text-black dark:text-white overflow-x-hidden antialiased selection:bg-accent selection:text-white">
+  <body
+    class="scheme-light dark:scheme-dark bg-white dark:bg-background text-black dark:text-white overflow-x-hidden antialiased selection:bg-accent selection:text-white"
+  >
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
