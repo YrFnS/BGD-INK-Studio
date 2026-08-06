@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-background: #050505;
+  --color-surface: #111111;
+  --color-primary: #ffffff;
+  --color-secondary: #a1a1aa;
+  --color-accent: #dc2626;
+
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Syne", ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: "Cairo", ui-sans-serif, system-ui, sans-serif;
+
+  --animate-fade-in: fade-in 500ms ease-out forwards;
+  --animate-slide-up: slide-up 500ms ease-out forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    font-family: var(--font-sans);
+  }
+
+  :root.dark {
+    color-scheme: dark;
+  }
+
+  html {
+    min-width: 320px;
+    background: #ffffff;
+    scroll-behavior: smooth;
+  }
+
+  html.dark {
+    background: var(--color-background);
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background: #ffffff;
+    color: #000000;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+  }
+
+  .dark body {
+    background: var(--color-background);
+    color: #ffffff;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+}
+
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  body,
+  a,
+  button,
+  input,
+  select,
+  textarea {
+    cursor: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
