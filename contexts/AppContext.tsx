@@ -1,46 +1,33 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AppContextType, Language, Theme } from '../types';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { translations } from '../translations';
+import { AppContextType, Language, Theme } from '../types';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Default to Light mode and English
   const [theme, setTheme] = useState<Theme>('light');
   const [language, setLanguage] = useState<Language>('en');
 
-  // Handle Theme Changes
   useEffect(() => {
     const root = window.document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    root.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
-  // Handle Language/Direction Changes
   useEffect(() => {
     const root = window.document.documentElement;
-    const dir = language === 'ar' ? 'rtl' : 'ltr';
-    root.setAttribute('dir', dir);
+    root.setAttribute('dir', language === 'ar' ? 'rtl' : 'ltr');
     root.setAttribute('lang', language);
-
-    // Switch font based on language
-    if (language === 'ar') {
-      root.style.fontFamily = "'Cairo', sans-serif";
-    } else {
-      root.style.fontFamily = "'Plus Jakarta Sans', sans-serif";
-    }
+    root.style.fontFamily =
+      language === 'ar' ? "'Cairo', sans-serif" : "'Plus Jakarta Sans', sans-serif";
   }, [language]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    setTheme((currentTheme) => (currentTheme === 'light' ? 'dark' : 'light'));
   };
 
   const t = (key: string): string => {
-    // @ts-ignore - Dynamic key access
-    return translations[language][key] || key;
+    const dictionary = translations[language] as Readonly<Record<string, string>>;
+    return dictionary[key] ?? key;
   };
 
   const value: AppContextType = {
@@ -55,7 +42,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
-export const useAppContext = () => {
+export const useAppContext = (): AppContextType => {
   const context = useContext(AppContext);
   if (context === undefined) {
     throw new Error('useAppContext must be used within an AppProvider');
