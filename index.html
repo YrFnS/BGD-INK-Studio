@@ -1,154 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>BGD/INK Studio | Custom Printing Baghdad</title>
+    <meta
+      name="description"
+      content="Design and preview custom-printed apparel in Baghdad with the BGD/INK 3D studio."
+    />
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ASHUS | Custom Printing Baghdad</title>
-  <meta name="description"
-    content="Premium custom clothing printing in Baghdad. Design your own T-shirts and Hoodies in 3D." />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="BGD/INK" />
 
-  <!-- PWA Settings -->
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#ffffff" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="ASHUS" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&family=Cairo:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Readex+Pro:wght@200;300;400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Cairo:wght@300;400;500;600;700;800;900&display=swap"
-    rel="stylesheet">
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            background: '#050505',
-            surface: '#111111',
-            primary: '#FFFFFF',
-            secondary: '#A1A1AA',
-            accent: '#DC2626',
-          },
-          fontFamily: {
-            sans: ['Plus Jakarta Sans', 'sans-serif'],
-            display: ['Syne', 'sans-serif'],
-            arabic: ['Cairo', 'sans-serif'],
-          },
-          animation: {
-            'fade-in': 'fadeIn 0.5s ease-out forwards',
-            'slide-up': 'slideUp 0.5s ease-out forwards',
-          },
-          keyframes: {
-            fadeIn: {
-              '0%': { opacity: '0' },
-              '100%': { opacity: '1' },
+    <!-- Temporary runtime Tailwind setup. P1 moves this into the Vite build. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              background: '#050505',
+              surface: '#111111',
+              primary: '#FFFFFF',
+              secondary: '#A1A1AA',
+              accent: '#DC2626',
             },
-            slideUp: {
-              '0%': { opacity: '0', transform: 'translateY(20px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            }
-          }
+            fontFamily: {
+              sans: ['Plus Jakarta Sans', 'sans-serif'],
+              display: ['Syne', 'sans-serif'],
+              arabic: ['Cairo', 'sans-serif'],
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'slide-up': 'slideUp 0.5s ease-out forwards',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideUp: {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      body {
+        margin: 0;
+        background-color: #ffffff;
+        color: #000000;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .dark body {
+        background-color: #050505;
+        color: #ffffff;
+      }
+
+      @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+        body,
+        a,
+        button,
+        input,
+        select,
+        textarea {
+          cursor: none;
         }
       }
-    }
-  </script>
 
-  <style>
-    body {
-      background-color: #ffffff;
-      color: #000000;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .dark body {
-      background-color: #050505;
-      color: #ffffff;
-    }
-
-    /* Hide default cursor on desktops */
-    @media (pointer: fine) {
-
-      body,
-      a,
-      button,
-      input,
-      select,
-      textarea {
-        cursor: none;
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
       }
-    }
 
-    /* Page Transition Classes */
-    .page-enter {
-      opacity: 0;
-      transform: translateY(10px);
-    }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
 
-    .page-enter-active {
-      opacity: 1;
-      transform: translateY(0);
-      transition: opacity 300ms, transform 300ms;
-    }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  </head>
 
-    .page-exit {
-      opacity: 1;
-    }
-
-    .page-exit-active {
-      opacity: 0;
-      transition: opacity 200ms;
-    }
-
-    body,
-    div,
-    nav,
-    button,
-    input,
-    textarea {
-      transition-property: background-color, border-color, color;
-      transition-duration: 300ms;
-      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react/": "https://esm.sh/react@18.2.0/",
-    "react-dom": "https://esm.sh/react-dom@18.2.0",
-    "react-dom/": "https://esm.sh/react-dom@18.2.0/",
-    "three": "https://esm.sh/three@0.160.0",
-    "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.14?external=react,react-dom,three",
-    "@react-three/drei": "https://esm.sh/@react-three/drei@9.96.1?external=react,react-dom,three,@react-three/fiber",
-    "gsap": "https://esm.sh/gsap@3.12.5",
-    "gsap/ScrollTrigger": "https://esm.sh/gsap@3.12.5/ScrollTrigger?external=gsap",
-    "zod": "https://esm.sh/zod@3.22.4",
-    "gsap/": "https://esm.sh/gsap@^3.14.2/"
-  }
-}
-</script>
-</head>
-
-<body
-  class="bg-white dark:bg-background text-black dark:text-white overflow-x-hidden antialiased selection:bg-accent selection:text-white">
-  <div id="root"></div>
-  <script type="module" src="index.tsx"></script>
-</body>
-
+  <body class="bg-white dark:bg-background text-black dark:text-white overflow-x-hidden antialiased selection:bg-accent selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>
