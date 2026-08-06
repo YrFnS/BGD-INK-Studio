@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   validate:
-    name: Typecheck and build
+    name: Typecheck, lint, and build
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -28,12 +28,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Build
-        run: npm run build
+      - name: Validate application
+        run: npm run check
