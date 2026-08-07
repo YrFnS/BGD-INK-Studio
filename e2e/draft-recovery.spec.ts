@@ -72,7 +72,7 @@ test('recovers artwork, quantity, and draft-detail fields across refreshes', asy
   await expect(page).toHaveURL(/\/draft\/BGD-/);
   await expect(page.getByRole('heading', { name: 'Design draft saved' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'My Designs' }).click();
+  await page.getByRole('button', { name: 'Open My Designs', exact: true }).click();
   await expect(page).toHaveURL('/designs');
   await expect(page.getByText('Submitted', { exact: true })).toBeVisible();
 });
