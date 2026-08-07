@@ -1,12 +1,17 @@
-import React, { ReactNode } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { ReactNode, useEffect } from 'react';
 import { OrbitControls } from '@react-three/drei';
-import { ProductType, Theme, DecalLayer } from '@/types';
+import { Canvas, useThree } from '@react-three/fiber';
+import {
+  getPrintSurface,
+  type PrintSurfaceDefinition,
+  type ReadyProductModelConfig,
+} from '@/data/assets3d';
+import { DecalLayer, PrintSurfaceId, Theme } from '@/types';
 import { ProceduralFallback, ShirtModel } from './ShirtModel';
 
 interface SceneProps {
-  productId: string;
-  productType: ProductType;
+  modelConfig: ReadyProductModelConfig;
+  selectedSurfaceId: PrintSurfaceId;
   color: string;
   theme: Theme;
   decals: DecalLayer[];
@@ -43,9 +48,21 @@ class ModelErrorBoundary extends React.Component<ModelErrorBoundaryProps, ModelE
   }
 }
 
+const CameraRig = ({ surface }: { surface: PrintSurfaceDefinition }) => {
+  const { camera } = useThree();
+
+  useEffect(() => {
+    camera.position.set(...surface.cameraPosition);
+    camera.lookAt(...surface.cameraTarget);
+    camera.updateProjectionMatrix();
+  }, [camera, surface]);
+
+  return null;
+};
+
 export const Scene: React.FC<SceneProps> = ({
-  productId,
-  productType,
+  modelConfig,
+  selectedSurfaceId,
   color,
   theme,
   decals,
@@ -55,16 +72,19 @@ export const Scene: React.FC<SceneProps> = ({
   setDraggingDecal,
 }) => {
   const isDark = theme === 'dark';
+  const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
 
   return (
     <Canvas
       shadows
       dpr={[1, 1.5]}
-      camera={{ position: [0, 0, 4], fov: 45 }}
+      camera={{ position: selectedSurface.cameraPosition, fov: 45 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       style={{ background: 'transparent' }}
       onPointerMissed={() => setDraggingDecal(false)}
     >
+      <CameraRig surface={selectedSurface} />
+
       <ambientLight intensity={isDark ? 0.7 : 1.1} />
       <hemisphereLight
         intensity={isDark ? 0.55 : 0.8}
@@ -82,8 +102,8 @@ export const Scene: React.FC<SceneProps> = ({
 
       <ModelErrorBoundary fallback={<ProceduralFallback color={color} />}>
         <ShirtModel
-          productId={productId}
-          type={productType}
+          modelConfig={modelConfig}
+          selectedSurfaceId={selectedSurfaceId}
           color={color}
           decals={decals}
           activeDecalId={activeDecalId}
@@ -93,7 +113,9 @@ export const Scene: React.FC<SceneProps> = ({
       </ModelErrorBoundary>
 
       <OrbitControls
+        key={selectedSurface.id}
         makeDefault
+        target={selectedSurface.cameraTarget}
         minPolarAngle={Math.PI / 4}
         maxPolarAngle={Math.PI / 1.8}
         enablePan={false}
