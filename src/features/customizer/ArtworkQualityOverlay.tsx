@@ -52,19 +52,19 @@ export const ArtworkQualityOverlay: React.FC<ArtworkQualityOverlayProps> = ({
   );
 
   const copy = {
-    title: language === 'ar' ? 'جودة ملف الطباعة' : 'Artwork quality',
-    printSize: language === 'ar' ? 'حجم الطباعة' : 'Print size',
-    source: language === 'ar' ? 'دقة الملف' : 'Source resolution',
-    estimatedDpi: language === 'ar' ? 'الدقة المتوقعة' : 'Estimated DPI',
-    transparent: language === 'ar' ? 'خلفية شفافة' : 'Transparent background',
+    title: language === 'ar' ? 'جودة التصميم للطباعة' : 'Artwork quality',
+    printSize: language === 'ar' ? 'حجم التصميم على القطعة' : 'Print size',
+    source: language === 'ar' ? 'أبعاد الملف الأصلي' : 'Source resolution',
+    estimatedDpi: language === 'ar' ? 'الدقة المقدّرة للطباعة' : 'Estimated DPI',
+    transparent: language === 'ar' ? 'الملف يحتوي شفافية' : 'Transparent background',
     analysisUnavailable:
       language === 'ar'
-        ? 'تعذر قراءة دقة هذا الملف القديم. ارفعه من جديد حتى نحسب الجودة بدقة.'
+        ? 'ما گدرنا نقرأ أبعاد هذا الملف القديم بدقة. ارفع الملف من جديد حتى نحدّث فحص الجودة.'
         : 'Exact source analysis is unavailable for this older layer. Re-upload it for precise quality guidance.',
   };
 
   const levelLabels: Record<ArtworkDpiLevel, string> = {
-    unknown: language === 'ar' ? 'غير معروف' : 'Unknown',
+    unknown: language === 'ar' ? 'غير محسوبة' : 'Unknown',
     excellent: language === 'ar' ? 'ممتازة' : 'Excellent',
     good: language === 'ar' ? 'جيدة' : 'Good',
     acceptable: language === 'ar' ? 'مقبولة' : 'Acceptable',
@@ -75,23 +75,23 @@ export const ArtworkQualityOverlay: React.FC<ArtworkQualityOverlayProps> = ({
   const warningLabels: Record<ArtworkQualityWarning, string> = {
     'very-low-resolution':
       language === 'ar'
-        ? 'الدقة منخفضة جداً وقد تظهر الصورة مشوشة بالطباعة.'
+        ? 'دقة الملف منخفضة جداً، وممكن يطلع التصميم مشوش بالطباعة. صغّر حجمه أو استخدم ملف أوضح.'
         : 'Resolution is very low and may look visibly blurry in print.',
     'low-resolution':
       language === 'ar'
-        ? 'الدقة أقل من المفضل. صغّر حجم الطباعة أو استخدم ملف أكبر.'
+        ? 'دقة الملف أقل من المفضّل. صغّر حجم الطباعة أو استخدم نسخة أكبر.'
         : 'Resolution is below the preferred range. Reduce the print size or use a larger source file.',
     'extreme-aspect-ratio':
       language === 'ar'
-        ? 'نسبة أبعاد الصورة غير اعتيادية؛ راجع القص والمساحة قبل المتابعة.'
+        ? 'نسبة أبعاد التصميم غير اعتيادية. راجع القص والمساحة قبل ما تكمل.'
         : 'The artwork has an unusual aspect ratio; review its crop and placement.',
     'transparent-padding':
       language === 'ar'
-        ? 'الملف يحتوي فراغاً شفافاً كبيراً حول التصميم وقد يصعّب ضبط الحجم.'
+        ? 'أكو فراغ شفاف كبير حول التصميم، وهذا ممكن يصعّب ضبط حجمه ومكانه.'
         : 'The file has substantial transparent padding around the visible artwork.',
     'near-print-edge':
       language === 'ar'
-        ? 'التصميم قريب جداً من حد الطباعة الآمن.'
+        ? 'التصميم قريب كلش من الحد الآمن للطباعة. حرّكه للداخل قبل التسليم.'
         : 'The artwork is very close to the safe print boundary.',
   };
 
@@ -99,10 +99,12 @@ export const ArtworkQualityOverlay: React.FC<ArtworkQualityOverlayProps> = ({
 
   return (
     <aside
-      className="pointer-events-none absolute bottom-32 start-4 z-10 max-h-[calc(100%-12rem)] w-[min(24rem,calc(100%-2rem))] overflow-y-auto rounded-2xl border border-white/60 bg-white/90 p-4 text-xs shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/75"
+      className="pointer-events-none absolute bottom-32 start-4 z-10 max-h-[min(46vh,23rem)] w-[min(24rem,calc(100%-2rem))] overflow-y-auto rounded-2xl border border-white/60 bg-white/90 p-4 text-xs shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/75"
       aria-label={copy.title}
       role="status"
       aria-live="polite"
+      data-testid="artwork-quality-overlay"
+      dir={language === 'ar' ? 'rtl' : 'ltr'}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="font-bold uppercase tracking-wider">{copy.title}</h3>
@@ -111,27 +113,46 @@ export const ArtworkQualityOverlay: React.FC<ArtworkQualityOverlayProps> = ({
         </span>
       </div>
 
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-gray-600 dark:text-gray-300">
+      <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1.5 text-gray-600 dark:text-gray-300">
         <dt>{copy.printSize}</dt>
         <dd className="text-end font-mono font-bold text-black dark:text-white">
-          {dimensions.widthCm.toFixed(1)} × {dimensions.heightCm.toFixed(1)} cm
+          <bdi className="technical-ltr" dir="ltr">
+            {dimensions.widthCm.toFixed(1)} × {dimensions.heightCm.toFixed(1)} cm
+          </bdi>
         </dd>
         <dt>{copy.source}</dt>
         <dd className="text-end font-mono font-bold text-black dark:text-white">
-          {hasSourceDimensions ? `${layer.pixelWidth} × ${layer.pixelHeight} px` : '—'}
+          {hasSourceDimensions ? (
+            <bdi className="technical-ltr" dir="ltr">
+              {layer.pixelWidth} × {layer.pixelHeight} px
+            </bdi>
+          ) : (
+            '—'
+          )}
         </dd>
         <dt>{copy.estimatedDpi}</dt>
         <dd className="text-end font-mono font-bold text-black dark:text-white">
-          {report.dpi === null ? '—' : `${Math.round(report.dpi)} DPI`}
+          {report.dpi === null ? (
+            '—'
+          ) : (
+            <bdi className="technical-ltr" dir="ltr">
+              {Math.round(report.dpi)} DPI
+            </bdi>
+          )}
         </dd>
       </dl>
 
       {layer.hasTransparency && (
         <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 font-medium text-blue-800 dark:bg-blue-950/70 dark:text-blue-200">
           {copy.transparent}
-          {typeof layer.transparentPixelRatio === 'number'
-            ? ` · ${Math.round(layer.transparentPixelRatio * 100)}%`
-            : ''}
+          {typeof layer.transparentPixelRatio === 'number' ? (
+            <>
+              {' · '}
+              <bdi className="technical-ltr" dir="ltr">
+                {Math.round(layer.transparentPixelRatio * 100)}%
+              </bdi>
+            </>
+          ) : null}
         </p>
       )}
 
