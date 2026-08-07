@@ -12,7 +12,7 @@ if (!classicProduct) throw new Error('Classic T-shirt test product is missing.')
 const quantity = 4;
 const formatPrice = (value: number): string => new Intl.NumberFormat('en-US').format(value);
 
-test('recovers artwork, quantity, and draft-detail fields across refreshes', async ({ page }) => {
+test('recovers artwork, quantity, and draft-preparation fields across refreshes', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/catalog');
 
@@ -39,7 +39,7 @@ test('recovers artwork, quantity, and draft-detail fields across refreshes', asy
   await expect(page.getByRole('button', { name: 'Selected layer 1' })).toBeVisible();
   await expect(page.getByLabel('Draft Notes')).toHaveValue('Front center launch logo');
 
-  await page.getByRole('button', { name: 'Continue to Draft Details' }).click();
+  await page.getByRole('button', { name: 'Continue to Draft Preparation' }).click();
   await expect(page).toHaveURL(/\/checkout\/draft-/);
 
   await page.getByLabel('Local quantity').fill(String(quantity));
@@ -74,5 +74,6 @@ test('recovers artwork, quantity, and draft-detail fields across refreshes', asy
 
   await page.getByRole('button', { name: 'Open My Designs', exact: true }).click();
   await expect(page).toHaveURL('/designs');
-  await expect(page.getByText('Submitted', { exact: true })).toBeVisible();
+  await expect(page.getByText('Prepared locally', { exact: true })).toBeVisible();
+  await expect(page.getByText('Quantity').locator('..')).toContainText(String(quantity));
 });
