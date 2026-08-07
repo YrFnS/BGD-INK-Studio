@@ -70,8 +70,13 @@ requirePattern(
 );
 requirePattern(
   files.anchorNavigation,
-  /scrollIntoView\([\s\S]*prefers-reduced-motion/,
-  'same-page navigation must scroll explicitly and respect reduced motion',
+  /prefers-reduced-motion:\s*reduce/,
+  'same-page navigation must respect the reduced-motion preference',
+);
+requirePattern(
+  files.anchorNavigation,
+  /scrollIntoView\(/,
+  'same-page navigation must scroll explicitly to its destination',
 );
 requirePattern(
   files.anchorNavigation,
