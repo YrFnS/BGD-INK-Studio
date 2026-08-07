@@ -43,6 +43,7 @@ const renderReceipt = (
   );
 
 beforeEach(() => {
+  window.localStorage.clear();
   Object.defineProperty(navigator, 'clipboard', {
     configurable: true,
     value: { writeText: vi.fn().mockResolvedValue(undefined) },
@@ -58,7 +59,7 @@ describe('local draft receipt', () => {
 
     expect(screen.getByRole('heading', { name: 'Design draft saved' })).toBeInTheDocument();
     expect(screen.getByText('Classic T-Shirt')).toBeInTheDocument();
-    expect(screen.getByText('Local quantity').parentElement).toHaveTextContent('4');
+    expect(screen.getByText('Quantity').parentElement).toHaveTextContent('4');
     expect(screen.getByText('Local estimate').parentElement).toHaveTextContent('100,000 IQD');
 
     fireEvent.click(screen.getByRole('button', { name: 'Open My Designs' }));
