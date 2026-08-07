@@ -87,7 +87,14 @@ export interface Order extends PendingOrder, OrderDetails {
   designDraftId?: string;
 }
 
-export type ViewState = 'HOME' | 'CATALOG' | 'DESIGNS' | 'CUSTOMIZER' | 'CHECKOUT' | 'SUCCESS';
+export type ViewState =
+  | 'HOME'
+  | 'CATALOG'
+  | 'GUIDE'
+  | 'DESIGNS'
+  | 'CUSTOMIZER'
+  | 'CHECKOUT'
+  | 'SUCCESS';
 
 export interface AppContextType {
   language: Language;
