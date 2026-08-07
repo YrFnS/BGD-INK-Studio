@@ -29,12 +29,10 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
     getLocalizedBrandText(text, language);
 
   useEffect(() => {
-    const title =
+    document.title =
       language === 'ar'
         ? `دليل الستوديو | ${BRAND.displayName}`
         : `Studio Guide | ${BRAND.displayName}`;
-    const description = localized(copy.hero.description);
-    document.title = title;
 
     let metaDescription = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (!metaDescription) {
@@ -42,7 +40,7 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
       metaDescription.name = 'description';
       document.head.appendChild(metaDescription);
     }
-    metaDescription.content = description;
+    metaDescription.content = getLocalizedBrandText(copy.hero.description, language);
   }, [copy.hero.description, language]);
 
   const verifiedLabel = language === 'ar' ? 'مؤكد بالنسخة الحالية' : 'Verified in this build';
@@ -51,7 +49,7 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
   const tradeoffLabel = language === 'ar' ? 'انتبه إلى' : 'Important trade-off';
 
   return (
-    <div className="bg-[#f4f1ea] text-[#111111] dark:bg-[#050505] dark:text-[#f5f1e8]">
+    <div className="bg-paper text-ink dark:bg-background dark:text-primary">
       <section className="relative isolate overflow-hidden px-4 pb-20 pt-28 sm:px-6 sm:pb-28 sm:pt-36 lg:px-8">
         <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_80%_20%,rgba(225,59,45,.18),transparent_30%),radial-gradient(circle_at_15%_78%,rgba(17,17,17,.08),transparent_34%)] dark:bg-[radial-gradient(circle_at_80%_20%,rgba(225,59,45,.22),transparent_28%),radial-gradient(circle_at_15%_78%,rgba(255,255,255,.06),transparent_32%)]" />
         <div className="pointer-events-none absolute inset-0 -z-10 opacity-45 [background-image:linear-gradient(to_right,rgba(17,17,17,.055)_1px,transparent_1px),linear-gradient(to_bottom,rgba(17,17,17,.055)_1px,transparent_1px)] [background-size:48px_48px] dark:opacity-25 dark:[background-image:linear-gradient(to_right,rgba(255,255,255,.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.06)_1px,transparent_1px)]" />
@@ -75,7 +73,7 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
               <button
                 type="button"
                 onClick={onOpenCatalog}
-                className="inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[#111111] px-7 text-sm font-black uppercase tracking-[0.13em] text-white shadow-[0_18px_45px_rgba(0,0,0,.18)] transition-transform hover:-translate-y-0.5 dark:bg-[#f4f1ea] dark:text-black sm:w-auto"
+                className="inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-ink px-7 text-sm font-black uppercase tracking-[0.13em] text-white shadow-[0_18px_45px_rgba(0,0,0,.18)] transition-transform hover:-translate-y-0.5 dark:bg-paper dark:text-ink sm:w-auto"
               >
                 {localized(copy.hero.primaryCta)}
                 <span className={language === 'ar' ? 'rotate-180' : ''} aria-hidden="true">
@@ -94,19 +92,16 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
         </div>
       </section>
 
-      <section className="border-y border-black/10 bg-[#111111] px-4 py-20 text-[#f5f1e8] dark:border-white/10 sm:px-6 sm:py-28 lg:px-8">
+      <section className="border-y border-black/10 bg-ink px-4 py-20 text-primary dark:border-white/10 sm:px-6 sm:py-28 lg:px-8">
         <div className="mx-auto max-w-[1450px]">
           <p className="text-[10px] font-black uppercase tracking-[0.28em] text-accent">
             {localized(copy.expectations.eyebrow)}
           </p>
           <h2
-            className={`mt-5 max-w-5xl text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${
-              language === 'en' ? 'font-display' : 'leading-[1.18]'
-            }`}
+            className={`mt-5 max-w-5xl text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${language === 'en' ? 'font-display' : 'leading-[1.18]'}`}
           >
             {localized(copy.expectations.title)}
           </h2>
-
           <div className="mt-12 grid gap-4 md:grid-cols-2">
             {copy.expectations.items.map((item) => (
               <article
@@ -140,72 +135,67 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
       </section>
 
       <section id="sizing" className="px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
-        <div className="mx-auto max-w-[1450px]">
-          <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:gap-20">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-accent">
-                {localized(copy.sizing.eyebrow)}
+        <div className="mx-auto grid max-w-[1450px] gap-10 lg:grid-cols-[.8fr_1.2fr] lg:gap-20">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-accent">
+              {localized(copy.sizing.eyebrow)}
+            </p>
+            <h2
+              className={`mt-5 text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${language === 'en' ? 'font-display' : 'leading-[1.18]'}`}
+            >
+              {localized(copy.sizing.title)}
+            </h2>
+            <p className="mt-6 text-base leading-8 text-black/58 dark:text-white/50">
+              {localized(copy.sizing.description)}
+            </p>
+            <div className="mt-8 rounded-[1.6rem] border border-amber-500/30 bg-amber-500/[0.08] p-5">
+              <p className="text-sm font-black uppercase tracking-[-0.02em] text-amber-900 dark:text-amber-100">
+                {localized(copy.sizing.pendingTitle)}
               </p>
-              <h2
-                className={`mt-5 text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${
-                  language === 'en' ? 'font-display' : 'leading-[1.18]'
-                }`}
-              >
-                {localized(copy.sizing.title)}
-              </h2>
-              <p className="mt-6 text-base leading-8 text-black/58 dark:text-white/50">
-                {localized(copy.sizing.description)}
+              <p className="mt-3 text-sm leading-7 text-black/55 dark:text-white/48">
+                {localized(copy.sizing.pendingDescription)}
               </p>
-              <div className="mt-8 rounded-[1.6rem] border border-amber-500/30 bg-amber-500/[0.08] p-5">
-                <p className="text-sm font-black uppercase tracking-[-0.02em] text-amber-900 dark:text-amber-100">
-                  {localized(copy.sizing.pendingTitle)}
-                </p>
-                <p className="mt-3 text-sm leading-7 text-black/55 dark:text-white/48">
-                  {localized(copy.sizing.pendingDescription)}
-                </p>
-              </div>
             </div>
-
-            <ol className="divide-y divide-black/10 border-y border-black/10 dark:divide-white/10 dark:border-white/10">
-              {copy.sizing.steps.map((step) => (
-                <li key={step.id} className="grid gap-4 py-7 sm:grid-cols-[64px_1fr] sm:py-8">
-                  <span className="font-mono text-sm font-black text-accent">{step.index}</span>
-                  <div>
-                    <h3 className="text-xl font-black uppercase tracking-[-0.03em]">
-                      {localized(step.title)}
-                    </h3>
-                    <p className="mt-3 max-w-2xl text-sm leading-7 text-black/55 dark:text-white/48">
-                      {localized(step.description)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
           </div>
+          <ol className="divide-y divide-black/10 border-y border-black/10 dark:divide-white/10 dark:border-white/10">
+            {copy.sizing.steps.map((step) => (
+              <li key={step.id} className="grid gap-4 py-7 sm:grid-cols-[64px_1fr] sm:py-8">
+                <span className="font-mono text-sm font-black text-accent">{step.index}</span>
+                <div>
+                  <h3 className="text-xl font-black uppercase tracking-[-0.03em]">
+                    {localized(step.title)}
+                  </h3>
+                  <p className="mt-3 max-w-2xl text-sm leading-7 text-black/55 dark:text-white/48">
+                    {localized(step.description)}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
-      <section id="methods" className="border-y border-black/10 bg-[#e9e3d8] px-4 py-20 dark:border-white/10 dark:bg-[#0e0e0e] sm:px-6 sm:py-28 lg:px-8">
+      <section
+        id="methods"
+        className="border-y border-black/10 bg-[#e9e3d8] px-4 py-20 dark:border-white/10 dark:bg-[#0e0e0e] sm:px-6 sm:py-28 lg:px-8"
+      >
         <div className="mx-auto max-w-[1450px]">
           <p className="text-[10px] font-black uppercase tracking-[0.28em] text-accent">
             {localized(copy.methods.eyebrow)}
           </p>
           <h2
-            className={`mt-5 text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${
-              language === 'en' ? 'font-display' : 'leading-[1.18]'
-            }`}
+            className={`mt-5 text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${language === 'en' ? 'font-display' : 'leading-[1.18]'}`}
           >
             {localized(copy.methods.title)}
           </h2>
           <p className="mt-6 max-w-3xl text-base leading-8 text-black/58 dark:text-white/50">
             {localized(copy.methods.description)}
           </p>
-
           <div className="mt-12 grid gap-5 lg:grid-cols-3">
             {copy.methods.items.map((method, index) => (
               <article
                 key={method.id}
-                className="rounded-[2rem] border border-black/10 bg-[#f4f1ea] p-6 shadow-sm dark:border-white/10 dark:bg-[#070707] sm:p-8"
+                className="rounded-[2rem] border border-black/10 bg-paper p-6 shadow-sm dark:border-white/10 dark:bg-[#070707] sm:p-8"
               >
                 <div className="flex items-center justify-between gap-4">
                   <span className="font-mono text-xs font-black text-black/30 dark:text-white/28">
@@ -250,9 +240,7 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
               {localized(copy.preparation.eyebrow)}
             </p>
             <h2
-              className={`mt-5 text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${
-                language === 'en' ? 'font-display' : 'leading-[1.18]'
-              }`}
+              className={`mt-5 text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${language === 'en' ? 'font-display' : 'leading-[1.18]'}`}
             >
               {localized(copy.preparation.title)}
             </h2>
@@ -263,7 +251,7 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
                 key={item.en}
                 className="flex gap-4 rounded-2xl border border-black/10 bg-white/50 px-5 py-4 dark:border-white/10 dark:bg-white/[0.035]"
               >
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#111111] font-mono text-[10px] font-black text-white dark:bg-[#f4f1ea] dark:text-black">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink font-mono text-[10px] font-black text-white dark:bg-paper dark:text-ink">
                   {(index + 1).toString().padStart(2, '0')}
                 </span>
                 <p className="pt-1 text-sm leading-7 text-black/58 dark:text-white/50">
@@ -275,22 +263,22 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
         </div>
       </section>
 
-      <section id="policies" className="border-y border-black/10 bg-[#111111] px-4 py-20 text-[#f5f1e8] dark:border-white/10 sm:px-6 sm:py-28 lg:px-8">
+      <section
+        id="policies"
+        className="border-y border-black/10 bg-ink px-4 py-20 text-primary dark:border-white/10 sm:px-6 sm:py-28 lg:px-8"
+      >
         <div className="mx-auto max-w-[1450px]">
           <p className="text-[10px] font-black uppercase tracking-[0.28em] text-accent">
             {localized(copy.policies.eyebrow)}
           </p>
           <h2
-            className={`mt-5 text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${
-              language === 'en' ? 'font-display' : 'leading-[1.18]'
-            }`}
+            className={`mt-5 text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${language === 'en' ? 'font-display' : 'leading-[1.18]'}`}
           >
             {localized(copy.policies.title)}
           </h2>
-
           <div className="mt-12 grid gap-px overflow-hidden rounded-[2rem] border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
             {copy.policies.items.map((policy, index) => (
-              <article key={policy.id} className="bg-[#111111] p-6 sm:p-8">
+              <article key={policy.id} className="bg-ink p-6 sm:p-8">
                 <span className="font-mono text-xs font-black text-white/25">
                   {(index + 1).toString().padStart(2, '0')}
                 </span>
@@ -313,14 +301,11 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
               {localized(copy.faq.eyebrow)}
             </p>
             <h2
-              className={`mt-5 text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${
-                language === 'en' ? 'font-display' : 'leading-[1.18]'
-              }`}
+              className={`mt-5 text-4xl font-black uppercase leading-[.92] tracking-[-0.055em] sm:text-6xl ${language === 'en' ? 'font-display' : 'leading-[1.18]'}`}
             >
               {localized(copy.faq.title)}
             </h2>
           </div>
-
           <div className="divide-y divide-black/10 border-y border-black/10 dark:divide-white/10 dark:border-white/10">
             {copy.faq.items.map((item, index) => (
               <details key={item.id} className="group py-1">
@@ -331,7 +316,10 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
                   <span className="flex-1 text-base font-black leading-6 sm:text-lg">
                     {localized(item.question)}
                   </span>
-                  <span className="grid h-8 w-8 place-items-center rounded-full border border-black/10 text-lg transition-transform group-open:rotate-45 dark:border-white/10" aria-hidden="true">
+                  <span
+                    className="grid h-8 w-8 place-items-center rounded-full border border-black/10 text-lg transition-transform group-open:rotate-45 dark:border-white/10"
+                    aria-hidden="true"
+                  >
                     +
                   </span>
                 </summary>
@@ -352,9 +340,7 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
               {localized(copy.finalCta.eyebrow)}
             </p>
             <h2
-              className={`mt-5 max-w-5xl text-5xl font-black uppercase leading-[.88] tracking-[-0.065em] sm:text-7xl lg:text-8xl ${
-                language === 'en' ? 'font-display' : 'leading-[1.14]'
-              }`}
+              className={`mt-5 max-w-5xl text-5xl font-black uppercase leading-[.88] tracking-[-0.065em] sm:text-7xl lg:text-8xl ${language === 'en' ? 'font-display' : 'leading-[1.14]'}`}
             >
               {localized(copy.finalCta.title)}
             </h2>
