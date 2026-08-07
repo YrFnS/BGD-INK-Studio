@@ -2,11 +2,23 @@ import React, { createContext, ReactNode, useContext, useEffect, useState } from
 import { translations } from '@/translations';
 import { AppContextType, Language, Theme } from '@/types';
 
+const LANGUAGE_STORAGE_KEY = 'bgd-ink-language';
+
+const getInitialLanguage = (): Language => {
+  if (typeof window === 'undefined') return 'en';
+
+  try {
+    return window.localStorage.getItem(LANGUAGE_STORAGE_KEY) === 'ar' ? 'ar' : 'en';
+  } catch {
+    return 'en';
+  }
+};
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>('light');
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>(getInitialLanguage);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -17,8 +29,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const root = window.document.documentElement;
     root.setAttribute('dir', language === 'ar' ? 'rtl' : 'ltr');
     root.setAttribute('lang', language);
-    root.style.fontFamily =
-      language === 'ar' ? "'Cairo', sans-serif" : "'Plus Jakarta Sans', sans-serif";
+    root.dataset.language = language;
+
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    } catch {
+      // Browser storage can be blocked. Direction and language still update for this session.
+    }
   }, [language]);
 
   const toggleTheme = () => {
