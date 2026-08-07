@@ -13,7 +13,9 @@ export const StudioWorkbench: React.FC = () => {
           dimensions: '٣٠ × ٣٨ سم',
           layer: 'طبقة التصميم',
           quality: 'جودة المصدر',
+          qualityValue: 'جيدة',
           dpi: 'DPI تقديري',
+          physicalSize: '١٢ × ٨ سم',
           saved: 'محفوظ على الجهاز',
           unverified: 'القياس غير مؤكد للإنتاج',
         }
@@ -25,7 +27,9 @@ export const StudioWorkbench: React.FC = () => {
           dimensions: '30 × 38 cm',
           layer: 'Artwork layer',
           quality: 'Source quality',
+          qualityValue: 'Good',
           dpi: 'Estimated DPI',
+          physicalSize: '12 × 8 cm',
           saved: 'Saved on device',
           unverified: 'Production size unverified',
         };
@@ -56,7 +60,7 @@ export const StudioWorkbench: React.FC = () => {
         </div>
 
         <div className="relative min-h-0 flex-1">
-          <div className="absolute inset-x-[13%] bottom-[8%] top-[4%] studio-garment-drift">
+          <div className="studio-garment-drift absolute inset-x-[13%] bottom-[8%] top-[4%]">
             <svg viewBox="0 0 520 650" className="h-full w-full" aria-hidden="true">
               <defs>
                 <linearGradient id="workbench-shirt" x1="0" y1="0" x2="1" y2="1">
@@ -147,7 +151,7 @@ export const StudioWorkbench: React.FC = () => {
                 {copy.quality}
               </p>
               <div className="mt-2 flex items-end justify-between gap-2">
-                <span className="text-xl font-black sm:text-2xl">GOOD</span>
+                <span className="text-xl font-black uppercase sm:text-2xl">{copy.qualityValue}</span>
                 <span className="rounded-full bg-emerald-400/15 px-2 py-1 text-[9px] font-black text-emerald-300">
                   01
                 </span>
@@ -157,7 +161,7 @@ export const StudioWorkbench: React.FC = () => {
               <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/45">{copy.dpi}</p>
               <div className="mt-2 flex items-end justify-between gap-2">
                 <span className="font-mono text-xl font-black sm:text-2xl">254</span>
-                <span className="text-[9px] font-bold text-white/40">12 × 8 cm</span>
+                <span className="text-[9px] font-bold text-white/40">{copy.physicalSize}</span>
               </div>
             </div>
           </div>
