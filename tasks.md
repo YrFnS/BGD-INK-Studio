@@ -155,10 +155,14 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Keep phone fields, number inputs, prices, sizes, draft IDs, file formats, and collection codes readable inside RTL layouts.
 - [x] Replace misleading submitted/sent workspace status with truthful prepared-locally status and expose each saved draft's quantity.
 - [x] Add a permanent localization/RTL CI gate plus mobile Chromium coverage for persisted Arabic, RTL navigation, and horizontal-overflow prevention.
+- [x] Complete the Iraqi-Arabic terminology and dense RTL review for customizer controls, interaction modes, artwork quality, 2D recovery, and local handoff tools.
+- [x] Keep range controls, centimeters, pixels, DPI, degrees, 2D/3D labels, layer positions, and mixed-direction names stable inside the RTL editor.
+- [x] Keep the retry action outside image semantics in the safe 2D fallback and cover the recovery surface with accessibility tests.
+- [x] Add a GPU-portable Pixel 5 Arabic customizer journey covering upload, quality guidance, 2D recovery, handoff tools, and horizontal-overflow prevention.
 - [ ] Add official contact information after verification.
 - [ ] Add approved business policies, care guidance, and returns information.
-- [ ] Complete the remaining Iraqi-Arabic editorial and terminology review in the Studio Guide, editor controls, quality overlays, export tools, and draft-preparation edge states.
-- [ ] Complete the remaining contextual RTL review in the Studio Guide, editor controls, quality overlays, export tools, and draft-preparation edge states.
+- [ ] Complete the remaining human Iraqi-Arabic editorial review in the Studio Guide's long-form educational content and draft-preparation failure/edge states.
+- [ ] Complete the remaining contextual RTL review in the Studio Guide's dense long-form sections and draft-preparation failure/edge states.
 - [ ] Validate the complete journey on representative physical phones and tablets.
 - [ ] Link future reviews to verifiable customer work or keep the review section absent.
 
