@@ -39,14 +39,14 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
     language === 'ar'
       ? {
           label: 'معاينة التصميم ثنائية الأبعاد',
-          title: 'المعاينة الثنائية الآمنة',
-          manual: 'أنت تستخدم المعاينة ثنائية الأبعاد. كل طبقاتك وتعديلاتك ما زالت محفوظة.',
-          unsupported: 'هذا الجهاز لا يوفر WebGL حالياً، لذلك تم فتح معاينة آمنة ثنائية الأبعاد.',
-          lost: 'توقفت المعاينة ثلاثية الأبعاد مؤقتاً بعد فقدان اتصال WebGL. التصميم لم يضيع.',
-          model: 'تعذر عرض موديل القطعة ثلاثي الأبعاد، لكن يمكنك متابعة مراجعة التصميم محلياً.',
-          retry: 'جرّب 3D مرة ثانية',
+          title: 'المعاينة الآمنة 2D',
+          manual: 'معاينة 2D مفعّلة. كل الطبقات وتعديلات المسودة بعدها محفوظة على هذا الجهاز.',
+          unsupported: 'هذا الجهاز ما يدعم WebGL حالياً، لذلك فتحنا معاينة 2D آمنة.',
+          lost: 'توقفت معاينة 3D مؤقتاً بعد فقدان اتصال WebGL، لكن تصميمك ما ضاع.',
+          model: 'ما گدرنا نعرض موديل القطعة 3D، وتگدر تكمل مراجعة التصميم محلياً بمعاينة 2D.',
+          retry: 'جرّب معاينة 3D من جديد',
           surface: 'مساحة الطباعة',
-          noArtwork: 'لا توجد طبقة ظاهرة على هذه الجهة.',
+          noArtwork: 'ماكو طبقة ظاهرة على هذه الجهة.',
         }
       : {
           label: '2D design preview',
@@ -66,28 +66,41 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
     'context-lost': copy.lost,
     'model-error': copy.model,
   }[reason];
+  const visualLabel = `${productName} — ${copy.surface}: ${t(surface.labelKey)}`;
 
   return (
-    <div
+    <section
       className="relative flex h-full min-h-[45vh] items-center justify-center overflow-hidden bg-gradient-to-b from-white to-gray-200 p-6 dark:from-zinc-800 dark:to-zinc-950"
-      role="img"
-      aria-label={copy.label}
+      aria-labelledby="fallback-preview-title"
+      aria-describedby="fallback-preview-description"
+      dir={language === 'ar' ? 'rtl' : 'ltr'}
     >
-      <div className="absolute inset-x-4 top-24 z-20 mx-auto max-w-lg rounded-2xl border border-black/10 bg-white/90 p-3 text-center shadow-lg backdrop-blur dark:border-white/10 dark:bg-black/75">
-        <p className="text-sm font-bold">{copy.title}</p>
-        <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">{reasonText}</p>
+      <div
+        className="absolute inset-x-4 top-20 z-20 mx-auto max-w-lg rounded-2xl border border-black/10 bg-white/90 p-3 text-center shadow-lg backdrop-blur dark:border-white/10 dark:bg-black/75 sm:top-24"
+        role="status"
+      >
+        <p id="fallback-preview-title" className="text-sm font-bold">
+          {copy.title}
+        </p>
+        <p id="fallback-preview-description" className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+          {reasonText}
+        </p>
         {canRetry3d && (
           <button
             type="button"
             onClick={onRetry3d}
-            className="mt-3 rounded-full bg-black px-4 py-2 text-xs font-bold text-white dark:bg-white dark:text-black"
+            className="mt-3 min-h-11 rounded-full bg-black px-4 py-2 text-xs font-bold text-white dark:bg-white dark:text-black"
           >
             {copy.retry}
           </button>
         )}
       </div>
 
-      <div className="relative mt-24 h-[68%] min-h-80 w-full max-w-md">
+      <div
+        className="relative mt-24 h-[68%] min-h-80 w-full max-w-md"
+        role="img"
+        aria-label={visualLabel}
+      >
         <svg
           viewBox="0 0 500 620"
           className="absolute inset-0 h-full w-full drop-shadow-2xl"
@@ -152,10 +165,12 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
         </div>
 
         <div className="absolute inset-x-0 bottom-0 text-center">
-          <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{productName}</p>
+          <p className="text-sm font-bold text-gray-700 dark:text-gray-200" dir="auto">
+            {productName}
+          </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{t(surface.labelKey)}</p>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
