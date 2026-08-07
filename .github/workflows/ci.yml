@@ -51,6 +51,7 @@ jobs:
           else
             echo "P0/P1 source migration is already present."
           fi
+          node scripts/patch-p0-p1.mjs
 
       - name: Format generated changes
         run: npm run format
@@ -66,7 +67,7 @@ jobs:
 
       - name: Remove migration-only files
         run: |
-          rm -f scripts/finish-p0-p1.mjs finish-p0-p1-error.log
+          rm -f scripts/finish-p0-p1.mjs scripts/patch-p0-p1.mjs finish-p0-p1-error.log
           python - <<'PY'
           from pathlib import Path
 
