@@ -208,7 +208,7 @@ const AppContent = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-white font-sans text-black transition-colors duration-300 selection:bg-accent selection:text-white dark:bg-black dark:text-white">
+    <div className="relative flex min-h-screen flex-col bg-paper font-sans text-ink transition-colors duration-300 selection:bg-accent selection:text-white dark:bg-background dark:text-primary">
       <Preloader />
       <Noise />
       <Cursor />
