@@ -156,7 +156,12 @@ const AppContent = () => {
   const renderRoute = () => {
     switch (route.view) {
       case 'HOME':
-        return <Hero onStart={() => navigate(routes.catalog())} />;
+        return (
+          <Hero
+            onStart={() => navigate(routes.catalog())}
+            onOpenDesigns={() => navigate(routes.designs())}
+          />
+        );
       case 'CATALOG':
         return <Catalog onSelectProduct={handleProductSelect} busyProductId={busyProductId} />;
       case 'DESIGNS':
@@ -212,7 +217,7 @@ const AppContent = () => {
 
       {PLATFORM_STATUS.phase === 'prototype' && (
         <div
-          className="relative z-40 mt-16 border-b border-amber-300/40 bg-amber-50 px-4 py-2 text-center text-xs font-semibold text-amber-950 dark:border-amber-700/40 dark:bg-amber-950/40 dark:text-amber-100"
+          className="relative z-40 mt-16 border-b border-black/10 bg-[#e9e3d8] px-4 py-2.5 text-center text-[10px] font-black uppercase tracking-[0.16em] text-black/65 dark:border-white/10 dark:bg-[#101010] dark:text-white/55"
           role="status"
         >
           {getPlatformText(PLATFORM_STATUS.notice, language)}
