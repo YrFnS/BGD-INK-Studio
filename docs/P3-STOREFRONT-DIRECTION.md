@@ -102,13 +102,13 @@ This is deliberately not presented as ecommerce stock or a quotation:
 
 - the quantity is planning data stored in IndexedDB draft version 5
 - older drafts safely normalize to quantity 1
-- duplicated drafts preserve quantity while clearing contact information and submitted state
+- duplicated drafts preserve quantity while clearing contact information and prepared-receipt state
 - the displayed estimate uses the locally configured unit price
 - the UI states that no stock is reserved and the estimate is not a confirmed quotation or order
 - legacy browser summaries also normalize missing quantities
 - a future configured WhatsApp handoff includes quantity without turning WhatsApp into the database
 
-The browser test uncovered a real lost-update race when contact details and quantity were saved as competing whole-record updates. The draft-preparation route now serializes those writes through one ordered queue. Every snapshot completes before the next starts, and submit waits for the latest queued state.
+The browser test uncovered a real lost-update race when contact details and quantity were saved as competing whole-record updates. The draft-preparation route now serializes those writes through one ordered queue. Every snapshot completes before the next starts, and saving the receipt waits for the latest queued state.
 
 The recovery journey verifies quantity, customer fields, configured unit price, and the local estimate after a full page refresh.
 
@@ -127,7 +127,27 @@ It provides:
 - English/Iraqi-Arabic copy
 - automated accessibility coverage
 
-The receipt does not imply payment, stock reservation, shop receipt, delivery, or production acceptance.
+The receipt does not imply payment, stock reservation, shop receipt, delivery, transmission, or production acceptance.
+
+## Iraqi-Arabic and RTL foundation
+
+P3 now treats Arabic as a persistent product state rather than a temporary component toggle.
+
+Implemented behavior includes:
+
+- browser-local language persistence
+- synchronized document `lang`, `dir`, and `data-language`
+- Arabic typography selected by document language
+- Iraqi-Arabic editorial review for the homepage, catalog, prototype notices, footer, My Designs, and local receipt
+- localized homepage trust badges instead of embedded English status words
+- direction isolation for phone numbers, number inputs, prices, quantities, sizes, draft identifiers, file formats, and collection codes
+- truthful `Prepared locally` / `مجهّزة محلياً` status in My Designs instead of `Submitted`
+- visible recoverable quantity on each saved-design card
+- mobile Chromium coverage for Arabic persistence after reload, RTL menu navigation, and horizontal-overflow prevention
+
+A permanent `npm run check:localization` gate protects these boundaries inside `npm run check`.
+
+See [P3 Iraqi-Arabic and RTL Sweep](P3-ARABIC-RTL-SWEEP.md) for the implementation details, regression rules, and deliberately unfinished review areas.
 
 ## Performance decisions
 
@@ -135,12 +155,19 @@ P3 originally caused the homepage to import the model manifest from a module tha
 
 The preload side effect was removed from the lightweight model configuration module. Three.js is lazy again, and the initial JavaScript measurement remains below 100 KiB gzip.
 
-The editorial storefront, guide, draft-preparation view, and receipt produce approximately 15.30 KiB gzip of CSS. The reviewed CSS gates remain narrow:
+The editorial storefront, guide, draft-preparation view, receipt, and RTL foundation remain within the reviewed limits:
 
-- initial CSS: 16 KiB gzip
-- total CSS: 16.5 KiB gzip
+| Metric | Current | Limit |
+| --- | ---: | ---: |
+| Initial JavaScript, gzip | 97.56 KiB | 140 KiB |
+| Initial CSS, gzip | 15.48 KiB | 16 KiB |
+| Largest async JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
+| Largest JavaScript chunk, raw | 651.42 KiB | 800 KiB |
+| Total JavaScript, gzip | 400.60 KiB | 410 KiB |
+| Total JavaScript, raw | 1,365.58 KiB | 1,400 KiB |
+| Total CSS, gzip | 15.48 KiB | 16.5 KiB |
 
-This records the deliberate visual-system cost with limited headroom. It is not permission to raise future budgets automatically.
+No performance budget was raised for the Iraqi-Arabic and RTL work.
 
 ## Remaining P3 work
 
@@ -161,8 +188,10 @@ These should be added only after the business supplies or confirms them.
 ### Customer journey
 
 - contact and handoff flow once official contact details are configured
-- complete Iraqi Arabic editorial and terminology review
-- complete RTL review across homepage, catalog, guide, editor, draft details, and receipt
+- final human Iraqi-Arabic review of the Studio Guide’s longer educational content
+- editor-control, quality-overlay, fallback-preview, and export-tool terminology review
+- draft-preparation failure and edge-state editorial review
+- contextual RTL review for dense editor and production-tool layouts
 - representative physical phone and tablet validation
 - future review or completed-work sections only when evidence is verifiable
 
@@ -173,5 +202,5 @@ P3 is complete only when:
 1. Every customer-facing asset is owned, licensed, or clearly marked as a placeholder.
 2. Every business claim has an approved source or is visibly marked pending.
 3. All bilingual content is reviewed in context.
-4. The catalog, guide, editor, draft details, and receipt journey are touch-first and accessible.
-5. Unit, accessibility, browser, trust, asset, build, and performance gates pass.
+4. The catalog, guide, editor, draft preparation, and receipt journey are touch-first and accessible.
+5. Unit, accessibility, browser, trust, localization, asset, build, and performance gates pass.
