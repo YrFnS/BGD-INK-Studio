@@ -1,13 +1,13 @@
 import gsap from 'gsap';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ImageReveal } from '@/components/ui/ImageReveal';
-import { getLocalizedBrandText } from '@/config/brand';
+import { getLocalizedBrandText, type LocalizedText } from '@/config/brand';
 import { useAppContext } from '@/contexts/AppContext';
 import { isProductCustomizerReady } from '@/data/assets3d';
 import { STOREFRONT_CONTENT, getProductPresentation } from '@/data/storefront';
 import { useSEO } from '@/hooks/useSEO';
 import { isAbortError, platformApi, type CatalogApi } from '@/services/api';
-import { Product } from '@/types';
+import { Product, ProductType } from '@/types';
 
 interface CatalogProps {
   onSelectProduct: (product: Product) => void | Promise<void>;
@@ -16,6 +16,12 @@ interface CatalogProps {
 }
 
 type CatalogStatus = 'loading' | 'ready' | 'error';
+
+const PRODUCT_TYPE_LABELS: Record<ProductType, LocalizedText> = {
+  [ProductType.TSHIRT]: { en: 'T-Shirt', ar: 'تيشيرت' },
+  [ProductType.HOODIE]: { en: 'Hoodie', ar: 'هودي' },
+  [ProductType.VEST]: { en: 'Vest', ar: 'فيست' },
+};
 
 export const Catalog: React.FC<CatalogProps> = ({
   onSelectProduct,
@@ -33,8 +39,7 @@ export const Catalog: React.FC<CatalogProps> = ({
   const titleRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const catalogCopy = STOREFRONT_CONTENT.catalog;
-  const localized = (text: { en: string; ar: string }): string =>
-    getLocalizedBrandText(text, language);
+  const localized = (text: LocalizedText): string => getLocalizedBrandText(text, language);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -96,18 +101,15 @@ export const Catalog: React.FC<CatalogProps> = ({
   const formatPrice = (price: number): string =>
     new Intl.NumberFormat(language === 'ar' ? 'ar-IQ' : 'en-US').format(price);
 
-  const loadingText = language === 'ar' ? 'جاري تحميل الموديلات…' : 'Loading products…';
+  const loadingText = language === 'ar' ? 'جاري تحميل القطع…' : 'Loading products…';
   const errorText =
     language === 'ar'
-      ? 'تعذر تحميل الموديلات من الإعدادات المحلية. حاول مرة ثانية.'
+      ? 'تعذر تحميل القطع من الإعدادات المحلية. حاول مرة ثانية.'
       : 'Products could not be loaded from local configuration. Try again.';
-  const retryText = language === 'ar' ? 'إعادة المحاولة' : 'Try again';
+  const retryText = language === 'ar' ? 'حاول مرة ثانية' : 'Try again';
   const preparingText = language === 'ar' ? 'جاري تجهيز المسودة…' : 'Preparing draft…';
   const sizeLabel = language === 'ar' ? 'قياسات المحرر' : 'Editor sizes';
-  const readyCountText =
-    language === 'ar'
-      ? `${readyProductCount} ${localized(catalogCopy.readyCount)}`
-      : `${readyProductCount} ${localized(catalogCopy.readyCount)}`;
+  const readyCountText = `${readyProductCount} ${localized(catalogCopy.readyCount)}`;
 
   return (
     <div
@@ -135,8 +137,11 @@ export const Catalog: React.FC<CatalogProps> = ({
 
           {status === 'ready' && (
             <div className="w-fit rounded-full border border-black/10 bg-white/55 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] text-black/60 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.04] dark:text-white/55">
-              <span className="me-2 inline-block h-2 w-2 rounded-full bg-emerald-500" />
-              {readyCountText}
+              <span
+                className="me-2 inline-block h-2 w-2 rounded-full bg-emerald-500"
+                aria-hidden="true"
+              />
+              <bdi dir="auto">{readyCountText}</bdi>
             </div>
           )}
         </div>
@@ -201,6 +206,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                 const statusNote = isModelReady
                   ? localized(presentation.readyNote)
                   : localized(presentation.pendingNote);
+                const productTypeLabel = localized(PRODUCT_TYPE_LABELS[product.type]);
 
                 return (
                   <button
@@ -238,9 +244,11 @@ export const Catalog: React.FC<CatalogProps> = ({
                       <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-4 text-white">
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/52">
-                            {presentation.collectionCode}
+                            <bdi dir="ltr">{presentation.collectionCode}</bdi>
                           </p>
-                          <p className="mt-1 font-mono text-sm font-black">{presentation.index}</p>
+                          <p className="mt-1 font-mono text-sm font-black">
+                            <bdi dir="ltr">{presentation.index}</bdi>
+                          </p>
                         </div>
                         <p className="max-w-[12rem] text-end text-[9px] font-bold uppercase leading-4 tracking-[0.12em] text-white/60">
                           {statusNote}
@@ -252,15 +260,18 @@ export const Catalog: React.FC<CatalogProps> = ({
                       <div className="flex items-start justify-between gap-5">
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-[0.2em] text-black/38 dark:text-white/34">
-                            {product.type}
+                            {productTypeLabel}
                           </p>
                           <h2 className="mt-3 text-2xl font-black uppercase tracking-[-0.045em] sm:text-3xl">
                             {t(product.name)}
                           </h2>
                         </div>
-                        <span className="font-mono text-xs font-black text-black/35 dark:text-white/32">
+                        <bdi
+                          dir="ltr"
+                          className="font-mono text-xs font-black text-black/35 dark:text-white/32"
+                        >
                           {presentation.index}
-                        </span>
+                        </bdi>
                       </div>
 
                       <p className="mt-5 text-sm leading-7 text-black/55 dark:text-white/48">
@@ -273,14 +284,18 @@ export const Catalog: React.FC<CatalogProps> = ({
                             {localized(catalogCopy.startingAt)}
                           </p>
                           <p className="mt-2 font-mono text-lg font-black">
-                            {formatPrice(product.basePrice)} {t('common.price')}
+                            <bdi dir="auto">
+                              {formatPrice(product.basePrice)} {t('common.price')}
+                            </bdi>
                           </p>
                         </div>
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-[0.16em] text-black/35 dark:text-white/32">
                             {sizeLabel}
                           </p>
-                          <p className="mt-2 font-mono text-sm font-black">S / M / L / XL / XXL</p>
+                          <p className="mt-2 font-mono text-sm font-black">
+                            <bdi dir="ltr">S / M / L / XL / XXL</bdi>
+                          </p>
                         </div>
                       </div>
 
@@ -289,9 +304,12 @@ export const Catalog: React.FC<CatalogProps> = ({
                           <p className="text-[9px] font-black uppercase tracking-[0.16em] text-black/35 dark:text-white/32">
                             {localized(catalogCopy.configuredColors)}
                           </p>
-                          <span className="font-mono text-[10px] text-black/38 dark:text-white/34">
+                          <bdi
+                            dir="ltr"
+                            className="font-mono text-[10px] text-black/38 dark:text-white/34"
+                          >
                             {product.colors.length.toString().padStart(2, '0')}
-                          </span>
+                          </bdi>
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2">
                           {product.colors.map((color) => (
