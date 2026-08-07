@@ -47,7 +47,7 @@ test('validates and saves an Iraqi-Arabic local draft preparation without RTL ov
   await page.getByRole('button', { name: 'احفظ المسودة محلياً' }).click();
   await expect(page).toHaveURL(/\/draft\/BGD-/);
   await expect(page.getByRole('heading', { name: 'انحفظت مسودة التصميم' })).toBeVisible();
-  await expect(page.getByText('الكمية المحلية').locator('..')).toContainText('3');
+  await expect(page.getByText('الكمية', { exact: true }).locator('..')).toContainText('3');
 
   await page.getByRole('button', { name: 'افتح تصاميمي' }).click();
   await expect(page).toHaveURL('/designs');
