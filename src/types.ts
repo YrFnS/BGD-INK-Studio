@@ -1,5 +1,6 @@
 export type Language = 'en' | 'ar';
 export type Theme = 'light' | 'dark';
+export type PrintSurfaceId = 'front' | 'back' | 'left-sleeve' | 'right-sleeve';
 
 export enum ProductType {
   TSHIRT = 'T-Shirt',
@@ -31,6 +32,7 @@ export interface DecalLayer {
   assetId?: string;
   fileName?: string;
   mimeType?: string;
+  surfaceId: PrintSurfaceId;
   position: [number, number, number];
   rotation: [number, number, number];
   userRotation: number;
