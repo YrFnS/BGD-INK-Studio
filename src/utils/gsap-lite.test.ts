@@ -1,13 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import gsap from './gsap-lite';
 
-afterEach(() => {
-  vi.useRealTimers();
-});
-
 describe('lightweight motion compatibility layer', () => {
-  it('supports the combined translate and opacity fromTo animation used by toasts', () => {
-    vi.useFakeTimers();
+  it('supports the combined translate and opacity fromTo animation used by toasts', async () => {
     const element = document.createElement('div');
     const onComplete = vi.fn();
     Object.defineProperty(element, 'animate', {
@@ -18,13 +13,15 @@ describe('lightweight motion compatibility layer', () => {
     gsap.fromTo(
       element,
       { x: 50, opacity: 0 },
-      { x: 0, opacity: 1, duration: 0.4, ease: 'back.out(1.2)', onComplete },
+      { x: 0, opacity: 1, duration: 0, ease: 'back.out(1.2)', onComplete },
     );
 
     expect(element.style.getPropertyValue('translate')).toBe('50px 0px');
     expect(element.style.opacity).toBe('0');
 
-    vi.runAllTimers();
+    await new Promise<void>((resolve) => {
+      window.setTimeout(resolve, 0);
+    });
 
     expect(element.style.getPropertyValue('translate')).toBe('0px 0px');
     expect(element.style.opacity).toBe('1');
