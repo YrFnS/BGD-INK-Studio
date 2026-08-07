@@ -1,4 +1,5 @@
 import type { PrintSurfaceDefinition } from '@/data/assets3d';
+import { normalizeArtworkAspectRatio } from './artworkAnalysis';
 
 const clamp = (value: number, minimum: number, maximum: number): number =>
   Math.min(Math.max(value, minimum), maximum);
@@ -19,9 +20,35 @@ export const scaleToArtworkWidthCm = (
   surface: PrintSurfaceDefinition,
 ): number => scale / getHorizontalModelUnitsPerCm(surface);
 
+export const getArtworkPhysicalDimensions = (
+  scale: number,
+  surface: PrintSurfaceDefinition,
+  aspectRatio = 1,
+): { widthCm: number; heightCm: number } => {
+  const widthCm = scaleToArtworkWidthCm(scale, surface);
+  return {
+    widthCm,
+    heightCm: widthCm / normalizeArtworkAspectRatio(aspectRatio),
+  };
+};
+
+export const getArtworkModelDimensions = (
+  scale: number,
+  surface: PrintSurfaceDefinition,
+  aspectRatio = 1,
+): { width: number; height: number } => {
+  const physical = getArtworkPhysicalDimensions(scale, surface, aspectRatio);
+  return {
+    width: scale,
+    height: physical.heightCm * getVerticalModelUnitsPerCm(surface),
+  };
+};
+
 export const getSurfaceScaleLimits = (
   surface: PrintSurfaceDefinition,
+  aspectRatio = 1,
 ): { minimum: number; maximum: number } => {
+  const normalizedAspectRatio = normalizeArtworkAspectRatio(aspectRatio);
   const horizontalUnitsPerCm = getHorizontalModelUnitsPerCm(surface);
   const verticalUnitsPerCm = getVerticalModelUnitsPerCm(surface);
   const safeHorizontalMargin = surface.safeMarginCm * horizontalUnitsPerCm;
@@ -30,19 +57,30 @@ export const getSurfaceScaleLimits = (
     surface.modelBounds.maxX - surface.modelBounds.minX - safeHorizontalMargin * 2;
   const availableHeight =
     surface.modelBounds.maxY - surface.modelBounds.minY - safeVerticalMargin * 2;
+  const availableHeightCm = availableHeight / verticalUnitsPerCm;
+  const maximumWidthFromHeight = artworkWidthCmToScale(
+    availableHeightCm * normalizedAspectRatio,
+    surface,
+  );
   const configuredMaximum = artworkWidthCmToScale(surface.maximumArtworkWidthCm, surface);
+  const maximum = Math.max(
+    0.001,
+    Math.min(configuredMaximum, availableWidth, maximumWidthFromHeight),
+  );
+  const configuredMinimum = artworkWidthCmToScale(surface.minimumArtworkWidthCm, surface);
 
   return {
-    minimum: artworkWidthCmToScale(surface.minimumArtworkWidthCm, surface),
-    maximum: Math.min(configuredMaximum, availableWidth, availableHeight),
+    minimum: Math.min(configuredMinimum, maximum),
+    maximum,
   };
 };
 
 export const clampScaleToSurface = (
   scale: number,
   surface: PrintSurfaceDefinition,
+  aspectRatio = 1,
 ): number => {
-  const limits = getSurfaceScaleLimits(surface);
+  const limits = getSurfaceScaleLimits(surface, aspectRatio);
   return clamp(scale, limits.minimum, limits.maximum);
 };
 
@@ -50,17 +88,20 @@ export const clampPositionToSurface = (
   position: [number, number, number],
   surface: PrintSurfaceDefinition,
   scale: number,
+  aspectRatio = 1,
 ): [number, number, number] => {
-  const safeScale = clampScaleToSurface(scale, surface);
+  const safeScale = clampScaleToSurface(scale, surface, aspectRatio);
   const horizontalUnitsPerCm = getHorizontalModelUnitsPerCm(surface);
   const verticalUnitsPerCm = getVerticalModelUnitsPerCm(surface);
   const safeHorizontalMargin = surface.safeMarginCm * horizontalUnitsPerCm;
   const safeVerticalMargin = surface.safeMarginCm * verticalUnitsPerCm;
-  const halfScale = safeScale / 2;
-  const minimumX = surface.modelBounds.minX + safeHorizontalMargin + halfScale;
-  const maximumX = surface.modelBounds.maxX - safeHorizontalMargin - halfScale;
-  const minimumY = surface.modelBounds.minY + safeVerticalMargin + halfScale;
-  const maximumY = surface.modelBounds.maxY - safeVerticalMargin - halfScale;
+  const dimensions = getArtworkModelDimensions(safeScale, surface, aspectRatio);
+  const halfWidth = dimensions.width / 2;
+  const halfHeight = dimensions.height / 2;
+  const minimumX = surface.modelBounds.minX + safeHorizontalMargin + halfWidth;
+  const maximumX = surface.modelBounds.maxX - safeHorizontalMargin - halfWidth;
+  const minimumY = surface.modelBounds.minY + safeVerticalMargin + halfHeight;
+  const maximumY = surface.modelBounds.maxY - safeVerticalMargin - halfHeight;
 
   return [
     minimumX <= maximumX ? clamp(position[0], minimumX, maximumX) : 0,
@@ -69,8 +110,32 @@ export const clampPositionToSurface = (
   ];
 };
 
+export const getArtworkEdgeClearanceCm = (
+  position: [number, number, number],
+  surface: PrintSurfaceDefinition,
+  scale: number,
+  aspectRatio = 1,
+): number => {
+  const horizontalUnitsPerCm = getHorizontalModelUnitsPerCm(surface);
+  const verticalUnitsPerCm = getVerticalModelUnitsPerCm(surface);
+  const safeHorizontalMargin = surface.safeMarginCm * horizontalUnitsPerCm;
+  const safeVerticalMargin = surface.safeMarginCm * verticalUnitsPerCm;
+  const dimensions = getArtworkModelDimensions(scale, surface, aspectRatio);
+  const safeMinimumX = surface.modelBounds.minX + safeHorizontalMargin;
+  const safeMaximumX = surface.modelBounds.maxX - safeHorizontalMargin;
+  const safeMinimumY = surface.modelBounds.minY + safeVerticalMargin;
+  const safeMaximumY = surface.modelBounds.maxY - safeVerticalMargin;
+  const left = (position[0] - dimensions.width / 2 - safeMinimumX) / horizontalUnitsPerCm;
+  const right = (safeMaximumX - (position[0] + dimensions.width / 2)) / horizontalUnitsPerCm;
+  const bottom = (position[1] - dimensions.height / 2 - safeMinimumY) / verticalUnitsPerCm;
+  const top = (safeMaximumY - (position[1] + dimensions.height / 2)) / verticalUnitsPerCm;
+
+  return Math.min(left, right, bottom, top);
+};
+
 export const createDefaultSurfaceTransform = (
   surface: PrintSurfaceDefinition,
+  aspectRatio = 1,
 ): {
   position: [number, number, number];
   rotation: [number, number, number];
@@ -79,10 +144,11 @@ export const createDefaultSurfaceTransform = (
   const scale = clampScaleToSurface(
     artworkWidthCmToScale(surface.defaultArtworkWidthCm, surface),
     surface,
+    aspectRatio,
   );
 
   return {
-    position: clampPositionToSurface(surface.defaultPosition, surface, scale),
+    position: clampPositionToSurface(surface.defaultPosition, surface, scale, aspectRatio),
     rotation: [...surface.defaultRotation],
     scale,
   };
