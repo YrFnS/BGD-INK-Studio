@@ -183,7 +183,7 @@ IndexedDB draft version 4 stores:
 
 The My Designs workspace can reopen, rename, duplicate, and permanently delete local designs. Duplicate designs receive independent artwork blobs.
 
-The original artwork blob remains separate from generated object URLs, Three.js preview textures, PNG proofs, and JSON specifications. Preview URLs are recreated when a design is restored and revoked when the relevant screen closes.
+The original artwork blob remains separate from generated object URLs, Three.js preview textures, PNG proofs, and JSON specifications. Export generation reads the original local preview data but never replaces or mutates the IndexedDB artwork blob. Preview URLs are recreated when a design is restored and revoked when the relevant screen closes.
 
 IndexedDB is browser-local persistence, not production storage. Clearing browser data can permanently remove designs, and there is no server backup or cross-device recovery.
 
@@ -242,7 +242,7 @@ The JSON specification contains:
 - Estimated DPI, quality level, and warnings
 - An explicit `unverified` calibration status requiring physical confirmation
 
-Temporary `blob:` preview URLs are never included. Generated files are new browser outputs and do not modify the original IndexedDB artwork.
+Temporary `blob:` preview URLs are never included. Generated files are independent browser outputs and do not modify the original IndexedDB artwork.
 
 These files are planning and handoff aids, not authorization to print. The physical print areas must still be confirmed against the exact garment blank and production method.
 
