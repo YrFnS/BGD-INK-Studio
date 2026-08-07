@@ -99,9 +99,9 @@ The paused infrastructure work is listed near the end of this file so it does no
 
 ### Local output and asset completion
 
-- [ ] Generate downloadable front/back/surface proofs.
-- [ ] Generate a machine-readable local production specification.
-- [ ] Keep generated proof assets separate from the original artwork blob.
+- [x] Generate a downloadable multi-surface PNG proof for every configured print surface.
+- [x] Generate a machine-readable local production specification with centimeter placement and quality data.
+- [x] Keep generated proof assets separate from the original artwork blob and omit temporary preview URLs from specifications.
 - [ ] Optimize final GLB assets and preview textures with measured limits.
 
 ## P3 — Premium storefront and customer journey
