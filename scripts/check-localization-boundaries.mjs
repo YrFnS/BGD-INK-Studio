@@ -11,6 +11,10 @@ const files = [
   'src/components/layout/Footer.tsx',
   'src/features/hero/Hero.tsx',
   'src/features/designs/Designs.tsx',
+  'src/data/studioGuide.ts',
+  'src/features/guide/Guide.tsx',
+  'src/features/checkout/Checkout.tsx',
+  'src/features/checkout/validation.ts',
   'src/features/customizer/Controls.tsx',
   'src/features/customizer/InteractionModeToolbar.tsx',
   'src/features/customizer/ArtworkQualityOverlay.tsx',
@@ -96,6 +100,74 @@ requirePattern(
   /contactNavigation/,
   'the footer contact navigation must have localized accessibility copy',
 );
+
+requirePattern(
+  'src/data/studioGuide.ts',
+  /navigation:\s*\{/,
+  'the long-form Guide must retain its mobile-friendly section navigator',
+);
+requirePattern(
+  'src/data/studioGuide.ts',
+  /هل حفظ المسودة يرسل طلب حقيقي؟/,
+  'the Guide FAQ must describe saving a local draft rather than checkout transmission',
+);
+requirePattern(
+  'src/data/studioGuide.ts',
+  /مرجع عام/,
+  'print-method cards must retain the reviewed reference-only Iraqi-Arabic label',
+);
+requirePattern(
+  'src/features/guide/Guide.tsx',
+  /data-guide-section=['"]methods['"]/,
+  'dense Guide sections must expose stable anchors for mobile navigation',
+);
+requirePattern(
+  'src/features/guide/Guide.tsx',
+  /<bdi className=['"][^'"]*technical-ltr/,
+  'Guide indices and technical values must remain direction-isolated',
+);
+requirePattern(
+  'src/features/guide/Guide.tsx',
+  /overflow-x-clip/,
+  'the long-form Guide must guard against page-level RTL overflow',
+);
+
+requirePattern(
+  'src/features/checkout/validation.ts',
+  /ar:\s*['"]المنصور['"]/,
+  'Baghdad area options must include reviewed Arabic labels',
+);
+requirePattern(
+  'src/features/checkout/Checkout.tsx',
+  /BAGHDAD_AREA_OPTIONS\.map/,
+  'draft preparation must render localized Baghdad area labels',
+);
+requirePattern(
+  'src/features/checkout/Checkout.tsx',
+  /data-testid=['"]preparation-validation-summary['"]/,
+  'draft preparation must expose an accessible validation summary',
+);
+requirePattern(
+  'src/features/checkout/Checkout.tsx',
+  /data-testid=['"]preparation-save-warning['"]/,
+  'draft preparation must expose a recoverable browser-storage warning',
+);
+requirePattern(
+  'src/features/checkout/Checkout.tsx',
+  /retryLoad/,
+  'draft preparation load failures must provide a retry path',
+);
+requirePattern(
+  'src/features/checkout/Checkout.tsx',
+  /dir=['"]ltr['"][\s\S]{0,120}placeholder=['"]07xxxxxxxxx['"]/,
+  'the Iraqi phone field must remain left-to-right in Arabic',
+);
+requirePattern(
+  'src/features/checkout/Checkout.tsx',
+  /<bdi className=['"][^'"]*technical-ltr/,
+  'prices, sizes, quantities, and colour codes must remain direction-isolated',
+);
+
 requirePattern(
   'src/features/customizer/Controls.tsx',
   /layersTitle:\s*['"]طبقات التصميم['"]/,
@@ -163,6 +235,16 @@ forbidPattern(
   'prototype copy should consistently refer to the studio, not an unconfigured store operation',
 );
 forbidPattern(
+  'src/data/studioGuide.ts',
+  /Does checkout send a real order|marks the design as submitted|تعلّم التصميم كمرسل|صفحة الطلب ترسل طلب حقيقي/,
+  'the Guide must not imply that a browser-local receipt is transmitted or submitted',
+);
+forbidPattern(
+  'src/features/checkout/Checkout.tsx',
+  /BAGHDAD_AREAS\.map|تعذر حفظ آخر تغييرات المعلومات أو الكمية تلقائياً/,
+  'draft preparation must keep localized area labels and the actionable storage-retry state',
+);
+forbidPattern(
   'src/features/customizer/Controls.tsx',
   /الطبقة المحددة|جاري حفظ الصورة/,
   'obsolete literal editor wording must not return',
@@ -180,5 +262,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  'Localization and RTL validation passed: language persistence, Iraqi-Arabic terminology, truthful local-draft status, dense editor guidance, localized handoff tools, and direction-isolation primitives are present.',
+  'Localization and RTL validation passed: language persistence, Iraqi-Arabic storefront and Guide copy, truthful local-draft preparation, recoverable edge states, dense editor guidance, localized handoff tools, and direction-isolation primitives are present.',
 );
