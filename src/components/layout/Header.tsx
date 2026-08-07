@@ -35,12 +35,17 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
     setIsMobileMenuOpen(false);
   };
 
+  const guideLabel = language === 'ar' ? 'الدليل' : 'Guide';
+  const studioLabel = language === 'ar' ? 'ستوديو بغداد' : 'Baghdad studio';
   const navigationItems: Array<{ view: ViewState; label: string; index: string }> = [
     { view: 'HOME', label: t('nav.home'), index: '01' },
     { view: 'CATALOG', label: t('nav.catalog'), index: '02' },
-    { view: 'DESIGNS', label: t('nav.designs'), index: '03' },
+    { view: 'GUIDE', label: guideLabel, index: '03' },
+    { view: 'DESIGNS', label: t('nav.designs'), index: '04' },
   ];
   const startLabel = language === 'ar' ? 'ابدأ تصميم' : 'Start design';
+  const primaryNavigationLabel = language === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation';
+  const mobileNavigationLabel = language === 'ar' ? 'تنقل الموبايل' : 'Mobile navigation';
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-black/10 bg-[#f4f1ea]/90 backdrop-blur-xl transition-colors duration-300 dark:border-white/10 dark:bg-[#050505]/90">
@@ -51,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
               type="button"
               className="group flex shrink-0 items-center gap-3 rounded-full py-1 pe-2 text-black transition-opacity hover:opacity-80 dark:text-white"
               onClick={() => handleNavigate('HOME')}
-              aria-label={`${BRAND.displayName} home`}
+              aria-label={language === 'ar' ? `الصفحة الرئيسية لـ ${BRAND.displayName}` : `${BRAND.displayName} home`}
             >
               <span className="grid h-9 w-9 place-items-center rounded-full bg-[#111111] font-display text-[10px] font-black tracking-[-0.05em] text-white shadow-sm transition-transform group-hover:-rotate-6 dark:bg-[#f4f1ea] dark:text-black">
                 B/I
@@ -61,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                   {BRAND.displayName}
                 </span>
                 <span className="block text-[8px] font-black uppercase tracking-[0.2em] text-black/38 dark:text-white/34">
-                  Baghdad studio
+                  {studioLabel}
                 </span>
               </span>
             </button>
@@ -69,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
 
           <nav
             className="hidden items-center rounded-full border border-black/10 bg-white/45 p-1 dark:border-white/10 dark:bg-white/[0.035] md:flex"
-            aria-label="Primary navigation"
+            aria-label={primaryNavigationLabel}
           >
             {navigationItems.map((item) => (
               <button
@@ -95,7 +100,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 type="button"
                 onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
                 className="grid h-9 min-w-9 place-items-center rounded-full border border-black/10 bg-white/35 px-2 text-black transition-colors hover:border-black/30 hover:bg-white dark:border-white/10 dark:bg-white/[0.035] dark:text-white dark:hover:border-white/30"
-                aria-label={language === 'en' ? 'Switch to Arabic' : 'Switch to English'}
+                aria-label={language === 'en' ? 'Switch to Arabic' : 'التبديل إلى الإنكليزية'}
               >
                 <span className="text-[10px] font-black tracking-[0.08em]">
                   {language === 'en' ? 'AR' : 'EN'}
@@ -108,7 +113,15 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 type="button"
                 onClick={toggleTheme}
                 className="grid h-9 w-9 place-items-center rounded-full border border-black/10 bg-white/35 text-black transition-colors hover:border-black/30 hover:bg-white dark:border-white/10 dark:bg-white/[0.035] dark:text-white dark:hover:border-white/30"
-                aria-label={theme === 'dark' ? 'Use light theme' : 'Use dark theme'}
+                aria-label={
+                  theme === 'dark'
+                    ? language === 'ar'
+                      ? 'استخدام المظهر الفاتح'
+                      : 'Use light theme'
+                    : language === 'ar'
+                      ? 'استخدام المظهر الداكن'
+                      : 'Use dark theme'
+                }
               >
                 {theme === 'dark' ? (
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -134,7 +147,15 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
               type="button"
               onClick={() => setIsMobileMenuOpen((open) => !open)}
               className="grid h-9 w-9 place-items-center rounded-full border border-black/10 bg-white/35 text-black transition-colors hover:border-black/30 hover:bg-white dark:border-white/10 dark:bg-white/[0.035] dark:text-white dark:hover:border-white/30 md:hidden"
-              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-label={
+                isMobileMenuOpen
+                  ? language === 'ar'
+                    ? 'إغلاق القائمة'
+                    : 'Close menu'
+                  : language === 'ar'
+                    ? 'فتح القائمة'
+                    : 'Open menu'
+              }
               aria-expanded={isMobileMenuOpen}
               aria-controls="mobile-navigation"
             >
@@ -154,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
 
       <nav
         id="mobile-navigation"
-        aria-label="Mobile navigation"
+        aria-label={mobileNavigationLabel}
         aria-hidden={!isMobileMenuOpen}
         className={`fixed inset-x-0 top-16 flex h-[calc(100dvh-4rem)] flex-col bg-[#f4f1ea] px-5 py-8 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] dark:bg-[#050505] md:hidden ${
           isMobileMenuOpen
@@ -170,7 +191,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
               onClick={() => handleNavigate(item.view)}
               aria-current={currentView === item.view ? 'page' : undefined}
               tabIndex={isMobileMenuOpen ? 0 : -1}
-              className="group flex items-center justify-between py-6 text-start"
+              className="group flex items-center justify-between py-5 text-start"
             >
               <span className="font-mono text-xs font-black text-black/30 dark:text-white/28">{item.index}</span>
               <span
