@@ -29,6 +29,8 @@ export interface Product {
 
 export interface DecalLayer {
   id: string;
+  name: string;
+  visible: boolean;
   url: string;
   assetId?: string;
   fileName?: string;
