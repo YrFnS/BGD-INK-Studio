@@ -5,10 +5,7 @@ import { BRAND, getLocalizedBrandText } from '@/config/brand';
 import { useAppContext } from '@/contexts/AppContext';
 import { isProductCustomizerReady } from '@/data/assets3d';
 import { PRODUCTS } from '@/data/products';
-import {
-  STOREFRONT_CONTENT,
-  getProductPresentation,
-} from '@/data/storefront';
+import { STOREFRONT_CONTENT, getProductPresentation } from '@/data/storefront';
 import { useSEO } from '@/hooks/useSEO';
 import { StudioIcon } from './StudioIcon';
 import { StudioWorkbench } from './StudioWorkbench';
@@ -86,7 +83,10 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
         <div className="mx-auto grid w-full max-w-[1450px] items-center gap-12 lg:grid-cols-[minmax(0,1.02fr)_minmax(430px,.98fr)] lg:gap-16 xl:gap-24">
           <div className="relative z-10 text-center lg:text-start">
             <div className="p3-hero-copy mb-7 inline-flex items-center gap-3 rounded-full border border-black/10 bg-white/55 px-4 py-2 text-[10px] font-black uppercase tracking-[0.23em] shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.04]">
-              <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_16px_rgba(225,59,45,.8)]" />
+              <span
+                className="h-2 w-2 rounded-full bg-accent shadow-[0_0_16px_rgba(225,59,45,.8)]"
+                aria-hidden="true"
+              />
               {localized(STOREFRONT_CONTENT.hero.eyebrow)}
             </div>
 
@@ -98,7 +98,9 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
               }`}
             >
               <span className="block overflow-hidden pb-[0.08em]">
-                <span className="p3-hero-line block">{localized(STOREFRONT_CONTENT.hero.titlePrimary)}</span>
+                <span className="p3-hero-line block">
+                  {localized(STOREFRONT_CONTENT.hero.titlePrimary)}
+                </span>
               </span>
               <span className="block overflow-hidden pb-[0.12em]">
                 <span className="p3-hero-line block text-accent">
@@ -137,7 +139,14 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
             </div>
 
             <p className="p3-hero-copy mt-6 flex items-center justify-center gap-2 text-xs font-semibold text-black/48 dark:text-white/42 lg:justify-start">
-              <svg className="h-4 w-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <svg
+                className="h-4 w-4 text-accent"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                aria-hidden="true"
+              >
                 <path d="M7 10V8a5 5 0 0 1 10 0v2M5 10h14v10H5z" />
                 <path d="M12 14v2" />
               </svg>
@@ -165,7 +174,9 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
                 <StudioIcon icon={item.icon} className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-sm font-black sm:text-base">{localized(item.value)}</p>
+                <p className="text-sm font-black sm:text-base">
+                  <bdi dir={item.id === 'handoff' ? 'ltr' : 'auto'}>{localized(item.value)}</bdi>
+                </p>
                 <p className="mt-1 text-xs leading-5 text-black/48 dark:text-white/42">
                   {localized(item.label)}
                 </p>
@@ -198,7 +209,9 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
                   key={step.id}
                   className="group grid gap-5 py-7 sm:grid-cols-[70px_72px_1fr] sm:items-start sm:gap-6 sm:py-9"
                 >
-                  <span className="font-mono text-sm font-black text-white/30">{step.index}</span>
+                  <bdi dir="ltr" className="font-mono text-sm font-black text-white/30">
+                    {step.index}
+                  </bdi>
                   <span className="grid h-14 w-14 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-accent transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105">
                     <StudioIcon icon={step.icon} className="h-7 w-7" />
                   </span>
@@ -240,13 +253,19 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
                   {localized(evidence.readyTitle)}
                 </h3>
                 <span className="rounded-full bg-emerald-500/12 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                  Live
+                  {localized(evidence.readyBadge)}
                 </span>
               </div>
               <ul className="mt-7 space-y-5">
                 {evidence.readyItems.map((item) => (
-                  <li key={item.en} className="flex gap-4 text-sm leading-7 text-black/60 dark:text-white/54 sm:text-base">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                  <li
+                    key={item.en}
+                    className="flex gap-4 text-sm leading-7 text-black/60 dark:text-white/54 sm:text-base"
+                  >
+                    <span
+                      className="mt-2 h-2 w-2 shrink-0 rounded-full bg-emerald-500"
+                      aria-hidden="true"
+                    />
                     {localized(item)}
                   </li>
                 ))}
@@ -259,13 +278,19 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
                   {localized(evidence.guardrailTitle)}
                 </h3>
                 <span className="rounded-full bg-accent/12 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-accent">
-                  Honest
+                  {localized(evidence.guardrailBadge)}
                 </span>
               </div>
               <ul className="mt-7 space-y-5">
                 {evidence.guardrailItems.map((item) => (
-                  <li key={item.en} className="flex gap-4 text-sm leading-7 text-black/60 dark:text-white/54 sm:text-base">
-                    <span className="mt-2 grid h-3 w-3 shrink-0 place-items-center rounded-sm border border-accent/60">
+                  <li
+                    key={item.en}
+                    className="flex gap-4 text-sm leading-7 text-black/60 dark:text-white/54 sm:text-base"
+                  >
+                    <span
+                      className="mt-2 grid h-3 w-3 shrink-0 place-items-center rounded-sm border border-accent/60"
+                      aria-hidden="true"
+                    >
                       <span className="h-1 w-1 bg-accent" />
                     </span>
                     {localized(item)}
@@ -296,7 +321,9 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
               className="inline-flex min-h-12 w-fit items-center gap-3 rounded-full border border-black/15 px-5 text-xs font-black uppercase tracking-[0.13em] transition-colors hover:border-black hover:bg-black hover:text-white dark:border-white/15 dark:hover:border-white dark:hover:bg-white dark:hover:text-black"
             >
               {t('nav.catalog')}
-              <span className={language === 'ar' ? 'rotate-180' : ''} aria-hidden="true">→</span>
+              <span className={language === 'ar' ? 'rotate-180' : ''} aria-hidden="true">
+                →
+              </span>
             </button>
           </div>
 
@@ -333,8 +360,8 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
                   </div>
                   <div className="p-5">
                     <div className="flex items-center justify-between gap-4 text-[9px] font-black uppercase tracking-[0.16em] text-black/38 dark:text-white/34">
-                      <span>{presentation.collectionCode}</span>
-                      <span>{presentation.index}</span>
+                      <bdi dir="ltr">{presentation.collectionCode}</bdi>
+                      <bdi dir="ltr">{presentation.index}</bdi>
                     </div>
                     <h3 className="mt-4 text-xl font-black uppercase tracking-[-0.035em]">
                       {t(product.name)}
@@ -377,7 +404,7 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
           </Magnetic>
         </div>
         <p className="relative mx-auto mt-14 max-w-[1450px] border-t border-white/25 pt-5 text-[10px] font-black uppercase tracking-[0.22em] text-white/50">
-          {BRAND.displayName} · {getLocalizedBrandText(BRAND.location, language)}
+          <bdi dir="ltr">{BRAND.displayName}</bdi> · {getLocalizedBrandText(BRAND.location, language)}
         </p>
       </section>
     </div>
