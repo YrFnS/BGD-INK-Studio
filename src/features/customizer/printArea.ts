@@ -44,6 +44,50 @@ export const getArtworkModelDimensions = (
   };
 };
 
+export interface ArtworkPlacementCm {
+  centerXcm: number;
+  centerYcm: number;
+  leftCm: number;
+  topCm: number;
+  rightCm: number;
+  bottomCm: number;
+}
+
+export const getArtworkPlacementCm = (
+  position: [number, number, number],
+  surface: PrintSurfaceDefinition,
+  scale: number,
+  aspectRatio = 1,
+): ArtworkPlacementCm => {
+  const horizontalUnitsPerCm = getHorizontalModelUnitsPerCm(surface);
+  const verticalUnitsPerCm = getVerticalModelUnitsPerCm(surface);
+  const dimensions = getArtworkModelDimensions(scale, surface, aspectRatio);
+  const rawLeftCm =
+    (position[0] - dimensions.width / 2 - surface.modelBounds.minX) /
+    horizontalUnitsPerCm;
+  const rawRightCm =
+    (surface.modelBounds.maxX - (position[0] + dimensions.width / 2)) /
+    horizontalUnitsPerCm;
+  const leftCm = surface.side === 'front' ? rawLeftCm : rawRightCm;
+  const rightCm = surface.side === 'front' ? rawRightCm : rawLeftCm;
+  const topCm =
+    (surface.modelBounds.maxY - (position[1] + dimensions.height / 2)) /
+    verticalUnitsPerCm;
+  const bottomCm =
+    (position[1] - dimensions.height / 2 - surface.modelBounds.minY) /
+    verticalUnitsPerCm;
+  const physical = getArtworkPhysicalDimensions(scale, surface, aspectRatio);
+
+  return {
+    centerXcm: leftCm + physical.widthCm / 2 - surface.physicalWidthCm / 2,
+    centerYcm: surface.physicalHeightCm / 2 - (topCm + physical.heightCm / 2),
+    leftCm,
+    topCm,
+    rightCm,
+    bottomCm,
+  };
+};
+
 export const getSurfaceScaleLimits = (
   surface: PrintSurfaceDefinition,
   aspectRatio = 1,
