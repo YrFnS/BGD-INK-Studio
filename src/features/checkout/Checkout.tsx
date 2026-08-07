@@ -1,5 +1,5 @@
 import gsap from 'gsap';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   calculateLocalDraftEstimate,
   MAX_DRAFT_QUANTITY,
@@ -55,6 +55,22 @@ export const Checkout: React.FC<CheckoutProps> = ({
   const formRef = useRef<HTMLFormElement>(null);
   const restoredDraftRef = useRef<HydratedDesignDraft | null>(null);
   const submitControllerRef = useRef<AbortController | null>(null);
+  const preparationSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
+
+  const queuePreparationSave = useCallback(
+    (nextDetails: OrderDetails, nextQuantity: number): Promise<void> => {
+      const task = preparationSaveQueueRef.current
+        .catch(() => undefined)
+        .then(async () => {
+          await saveCheckoutDetails(draftId, nextDetails);
+          await saveDraftQuantity(draftId, nextQuantity);
+        });
+
+      preparationSaveQueueRef.current = task;
+      return task;
+    },
+    [draftId],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -110,14 +126,11 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
     setFormSaveFailed(false);
     const timer = window.setTimeout(() => {
-      void Promise.all([
-        saveCheckoutDetails(draftId, formData),
-        saveDraftQuantity(draftId, quantity),
-      ]).catch(() => setFormSaveFailed(true));
+      void queuePreparationSave(formData, quantity).catch(() => setFormSaveFailed(true));
     }, 500);
 
     return () => window.clearTimeout(timer);
-  }, [draftId, formData, loadStatus, quantity]);
+  }, [formData, loadStatus, quantity, queuePreparationSave]);
 
   useEffect(() => {
     if (loadStatus !== 'ready' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -199,10 +212,8 @@ export const Checkout: React.FC<CheckoutProps> = ({
     submitControllerRef.current = controller;
 
     try {
-      await Promise.all([
-        saveCheckoutDetails(draftId, normalizedDetails),
-        saveDraftQuantity(draftId, pendingOrder.quantity),
-      ]);
+      await preparationSaveQueueRef.current.catch(() => undefined);
+      await queuePreparationSave(normalizedDetails, pendingOrder.quantity);
       const result = await submitOrder(draftId, pendingOrder, normalizedDetails, controller.signal);
       await markDesignDraftSubmitted(draftId, result.orderId);
       onSuccess(result, pendingOrder, normalizedDetails);
