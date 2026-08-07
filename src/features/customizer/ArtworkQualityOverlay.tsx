@@ -101,7 +101,6 @@ export const ArtworkQualityOverlay: React.FC<ArtworkQualityOverlayProps> = ({
     <aside
       className="pointer-events-none absolute bottom-32 start-4 z-10 max-h-[min(46vh,23rem)] w-[min(24rem,calc(100%-2rem))] overflow-y-auto rounded-2xl border border-white/60 bg-white/90 p-4 text-xs shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/75"
       aria-label={copy.title}
-      role="status"
       aria-live="polite"
       data-testid="artwork-quality-overlay"
       dir={language === 'ar' ? 'rtl' : 'ltr'}
