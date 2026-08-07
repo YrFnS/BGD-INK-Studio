@@ -3,6 +3,16 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
+const manualChunks = (id: string): string | undefined => {
+  const normalizedId = id.replaceAll('\\', '/');
+
+  if (normalizedId.includes('/node_modules/three/')) {
+    return 'three-core';
+  }
+
+  return undefined;
+};
+
 export default defineConfig({
   server: {
     port: 3000,
@@ -11,10 +21,15 @@ export default defineConfig({
   plugins: [tailwindcss(), react()],
   build: {
     manifest: true,
+    rollupOptions: {
+      output: {
+        manualChunks,
+      },
+    },
   },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('.', import.meta.url)),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
 });

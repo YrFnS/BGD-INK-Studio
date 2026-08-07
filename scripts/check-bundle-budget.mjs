@@ -6,7 +6,7 @@ import { gzipSync } from 'node:zlib';
 const rootDirectory = process.cwd();
 const distDirectory = path.join(rootDirectory, 'dist');
 const manifestPath = path.join(distDirectory, '.vite', 'manifest.json');
-const budgetPath = path.join(rootDirectory, 'config', 'bundle-budgets.json');
+const budgetPath = path.join(rootDirectory, 'src', 'config', 'bundle-budgets.json');
 
 const readJson = async (filePath) => JSON.parse(await readFile(filePath, 'utf8'));
 const toKiB = (bytes) => bytes / 1024;
@@ -25,9 +25,7 @@ const [manifest, budgets] = await Promise.all([
 ]);
 
 const manifestEntries = Object.entries(manifest);
-const entryKeys = manifestEntries
-  .filter(([, chunk]) => chunk.isEntry)
-  .map(([key]) => key);
+const entryKeys = manifestEntries.filter(([, chunk]) => chunk.isEntry).map(([key]) => key);
 
 if (entryKeys.length === 0) {
   throw new Error('The Vite manifest does not contain an application entry chunk.');

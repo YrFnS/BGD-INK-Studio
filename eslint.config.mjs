@@ -12,7 +12,6 @@ export default tseslint.config(
       'coverage/**',
       'playwright-report/**',
       'test-results/**',
-      'scripts/finish-p0-p1.mjs',
     ],
   },
   eslint.configs.recommended,
@@ -59,7 +58,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['contexts/**/*.{ts,tsx}'],
+    files: ['src/contexts/**/*.{ts,tsx}'],
     rules: {
       'react-refresh/only-export-components': 'off',
     },

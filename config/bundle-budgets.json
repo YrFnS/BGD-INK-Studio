@@ -1,9 +1,0 @@
-{
-  "initialJavaScriptGzipKiB": 140,
-  "initialCssGzipKiB": 13,
-  "maximumAsyncJavaScriptChunkGzipKiB": 290,
-  "maximumJavaScriptChunkKiB": 1024,
-  "totalJavaScriptGzipKiB": 425,
-  "totalJavaScriptKiB": 1450,
-  "totalCssGzipKiB": 15
-}

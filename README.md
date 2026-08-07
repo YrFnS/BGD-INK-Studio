@@ -1,60 +1,91 @@
 # BGD/INK Studio
 
-BGD/INK Studio is a bilingual English/Arabic web experience for designing and previewing custom-printed apparel in 3D.
+BGD/INK Studio is a bilingual English/Arabic local prototype for designing and previewing custom-printed apparel in 3D.
 
-> **Current status: local prototype foundation.** Designs and submitted draft summaries stay on the visitor's device. They are not sent to a shop, shared between devices, or written to a production database.
+> Designs, artwork, checkout fields, and submitted draft summaries stay on the current device. They are not sent to a shop, synchronized between devices, or written to a production database.
+
+## P0 and P1 status
+
+P0 and P1 are complete on `agent/bgd-ink-p0-foundation`:
+
+- Central BGD/INK brand configuration and enforced brand source of truth
+- Removed public prototype admin access, hardcoded PINs, client-side secrets, and false offline claims
+- Compiled Tailwind CSS, strict TypeScript, warning-free ESLint, and Prettier
+- Source code under `src/` with the `@/` alias and enforced import boundaries
+- Recoverable URL routes, IndexedDB artwork and drafts, checkout recovery, and My Designs
+- Unit, component, accessibility, desktop Chromium, mobile touch, and Arabic RTL coverage
+- Pinned Node/npm, locked `npm ci`, CI caching, and route-aware bundle budgets
+- Troubleshooting and prototype-safety documentation
+
+P2 is the next phase and will rebuild the customizer around accurate product models, physical print areas, richer layer operations, artwork quality checks, and production proofs.
 
 ## Brand
+
+Brand values live only in `src/config/brand.ts`:
 
 - Customer-facing name: **BGD/INK**
 - Product name: **BGD/INK Studio**
 - Tagline: **Design it. Wear it.** / **صمّمها والبسها**
 - Primary market: Baghdad, Iraq
 
-Brand values, contact destinations, storage namespaces, and draft prefixes are centralized in `config/brand.ts`. Prototype capability flags are centralized in `config/platform.ts`.
+`npm run check:brand` prevents customer-facing source files from reintroducing old or hardcoded brand literals.
 
 ## Technology
 
 - React 18 and strict TypeScript
-- Vite
-- Tailwind CSS 4 compiled through the Vite plugin
+- Vite and compiled Tailwind CSS 4
 - React Three Fiber, Drei, and Three.js
 - GSAP
-- Zod form validation
-- IndexedDB for recoverable local design drafts and binary artwork
-- Vitest, Testing Library, fake IndexedDB, and axe accessibility checks
-- Playwright for Chromium browser journeys
-- ESLint flat configuration and Prettier
+- IndexedDB for local drafts and original artwork blobs
+- Vitest, Testing Library, fake IndexedDB, and axe
+- Playwright for desktop and mobile Chromium journeys
+- ESLint and Prettier
+
+## Requirements
+
+- Node.js **22.23.1**
+- npm **10.9.8**
+- Git LFS for GLB assets
 
 ## Local development
 
-### Requirements
-
-- Node.js **22.23.1**, pinned in `.nvmrc`
-- npm **10.9.8**, declared through `packageManager`
-- Git LFS for the GLB assets
-
-### Commands
-
 ```bash
+git lfs install
 nvm use
 npm ci
 npm run dev
 ```
 
-Before opening a pull request:
+No application secret or remote-backend environment variable is required.
+
+## Validation
 
 ```bash
 npm run check
+npm run test:e2e
 ```
 
-`npm run check` performs strict TypeScript validation, warning-free ESLint validation, the fast unit/component test suite, a production Vite build, and route-aware bundle-budget enforcement.
+The fast gate performs:
+
+```text
+environment validation
+→ strict TypeScript
+→ warning-free ESLint
+→ brand source-of-truth validation
+→ import-boundary validation
+→ unit, component, and accessibility tests
+→ production build
+→ bundle budgets
+```
 
 Additional commands:
 
 ```bash
 npm run typecheck
 npm run lint
+npm run check:environment
+npm run check:brand
+npm run check:boundaries
 npm run test
 npm run test:unit
 npm run test:coverage
@@ -67,139 +98,74 @@ npm run check:bundle
 npm run preview
 ```
 
-## Reproducible installs
+## Routes
 
-`package-lock.json` is committed with lockfile version 3. Local validation and GitHub Actions use `npm ci`, so dependency resolution must match the reviewed lockfile exactly. GitHub Actions caches npm's download cache by the lockfile hash; it does not cache `node_modules`.
+| Route                | Purpose                   |
+| -------------------- | ------------------------- |
+| `/`                  | Landing page              |
+| `/catalog`           | Product selection         |
+| `/designs`           | Recent local designs      |
+| `/studio/:draftId`   | Recoverable 3D editor     |
+| `/checkout/:draftId` | Recoverable delivery form |
+| `/draft/:draftId`    | Local draft confirmation  |
 
-Runtime consistency is enforced in four places:
+Browser Back/Forward navigation is supported. Netlify direct-route fallback is provided through `public/_redirects`.
 
-- `.nvmrc` pins Node.js 22.23.1.
-- `package.json` declares npm 10.9.8 and compatible engine ranges.
-- GitHub Actions reads `.nvmrc` and installs with `npm ci`.
-- Netlify uses the same pinned Node.js version and runs the full validation command before publishing.
+## Local draft model
 
-When dependencies change, update both `package.json` and `package-lock.json` in the same review.
+IndexedDB stores:
 
-## Performance budgets
-
-Vite emits `.vite/manifest.json`, and `scripts/check-bundle-budget.mjs` uses that graph to distinguish initial assets from lazy route chunks. It calculates gzip sizes and fails the build when a reviewed ceiling is exceeded.
-
-Current production baseline and enforced limits:
-
-| Metric | Current baseline | Limit |
-| --- | ---: | ---: |
-| Initial JavaScript, gzip | 107.21 KiB | 140 KiB |
-| Initial CSS, gzip | 9.86 KiB | 13 KiB |
-| Largest lazy JavaScript chunk, gzip | 262.42 KiB | 290 KiB |
-| Largest JavaScript chunk, raw | 943.74 KiB | 1,024 KiB |
-| Total JavaScript, gzip | 395.61 KiB | 425 KiB |
-| Total JavaScript, raw | 1,336.28 KiB | 1,450 KiB |
-| Total CSS, gzip | 9.86 KiB | 15 KiB |
-
-The thresholds live in `config/bundle-budgets.json`. A budget increase should be an intentional review decision with a documented reason. The large lazy customizer chunk remains an optimization target even though it is not part of the initial page load.
-
-## Automated testing
-
-The fast Vitest suite runs in jsdom with fake IndexedDB and currently covers:
-
-- Route parsing, path generation, History API navigation, and Back/Forward behavior
-- Draft creation, naming, checkout persistence, artwork restoration, duplication, and independent deletion
-- The My Designs empty state and populated card actions
-- An axe accessibility scan of the My Designs workspace
-
-The Playwright Chromium journey exercises the customer path in a real browser:
-
-1. Select a product and create a recoverable draft.
-2. Upload artwork and edit design notes.
-3. Refresh the studio and verify artwork and notes are restored.
-4. Continue to checkout and enter delivery information.
-5. Refresh checkout and verify the form is restored.
-6. Submit a local draft and confirm it appears as submitted in My Designs.
-
-Coverage reports can be generated with `npm run test:coverage`. Generated coverage, Playwright reports, and browser test results are ignored by Git.
-
-## URL routes
-
-The storefront uses the browser History API without an additional routing dependency:
-
-| Route | Purpose |
-| --- | --- |
-| `/` | Landing page |
-| `/catalog` | Product selection |
-| `/designs` | Recent designs workspace |
-| `/studio/:draftId` | Recoverable 3D design draft |
-| `/checkout/:draftId` | Checkout reconstructed from the same draft |
-| `/draft/:orderId` | Local draft confirmation |
-
-Browser Back and Forward navigation are supported. Netlify serves direct links through `public/_redirects`, so refreshing a workspace, studio, or checkout URL returns to the application instead of a 404 page.
-
-## Recoverable design drafts
-
-Selecting a product creates a draft ID before opening the customizer. The browser stores the following in IndexedDB:
-
-- Draft name, product ID, color, size, notes, and active layer
-- Layer transforms and ordering
+- Draft name, product, color, size, and notes
 - Original PNG, JPEG, or WebP artwork blobs
-- File names and MIME types
+- Layer position, rotation, scale, ordering, and active selection
 - Checkout contact and address fields
 - Local submission linkage
 
-The customizer autosaves changes through an ordered, debounced queue. Artwork is stored before it is added to the scene. On refresh, new temporary object URLs are generated from stored blobs and released when the screen closes.
+The My Designs workspace can reopen, rename, duplicate, and permanently delete local designs. Duplicate designs receive independent artwork blobs.
 
-The bilingual `/designs` workspace allows the customer to:
+## Source architecture
 
-- Reopen a saved design
-- Rename it
-- Duplicate it with independent copies of every artwork blob
-- Permanently delete the draft and its local artwork
-- See product, size, layer count, submission state, and an artwork preview
+```text
+src/
+  components/       shared presentation
+  config/           brand, capability, and budget configuration
+  contexts/         language, theme, and toast state
+  data/             prototype products and 3D asset metadata
+  features/         route-level customer experiences
+  hooks/            shared React hooks
+  routing/          History API routing
+  services/         local application and IndexedDB services
+  utils/            browser prototype helpers
+  App.tsx           feature composition root
+  main.tsx          browser entry point
+  translations.ts   English and Iraqi Arabic copy
+  types.ts          shared domain types
+```
 
-Duplicated drafts retain their design settings but reset checkout details and submission linkage. IndexedDB recovery is **device- and browser-specific**. It is not a substitute for server storage, cross-device accounts, or backups.
+Cross-area imports use `@/`. Features cannot import another feature's internals, and lower-level modules cannot depend on feature or UI layers. `npm run check:boundaries` enforces these rules.
 
-## Local application service
+## Performance budgets
 
-Feature components use a typed `PlatformApi` facade instead of directly reading and writing storage. The current implementation has one source only:
+The build manifest is measured for initial assets, lazy assets, total JavaScript, and CSS. The limits are stored in `src/config/bundle-budgets.json`. The 3D ecosystem is split into dedicated lazy vendor chunks rather than one monolithic customizer file.
 
-- `local-prototype`: reads the prototype catalog and stores clearly labelled draft summaries in browser storage.
-
-There is no remote commerce integration configured. A production data architecture should be selected later from the actual business, hosting, staff, inventory, and order-processing requirements rather than being assumed by the frontend.
+A budget change must be intentional and reviewed; it should not be the automatic response to a regression.
 
 ## Prototype safety boundaries
 
-The current branch deliberately avoids misleading production behavior:
+- There is no public admin portal.
+- There are no browser-exposed API keys.
+- Local submission creates a draft, not a confirmed order.
+- Clearing browser storage can permanently remove local designs.
+- There is no account recovery or cross-device synchronization.
+- WhatsApp actions appear only when a real destination is configured.
+- PWA/offline claims remain disabled until reliable caching is implemented.
 
-- There is no public browser-only admin dashboard.
-- No API key is injected into the client bundle.
-- A submitted design is called a **draft**, not a confirmed order.
-- Active designs and artwork use IndexedDB; submitted draft summaries use namespaced browser storage.
-- Legacy `ashus_*` summary keys are migrated without deleting the originals.
-- WhatsApp appears only after a real number is configured.
-- Service-worker and offline claims remain disabled until a reliable PWA implementation exists.
+Do not use the local prototype for real customer orders or sensitive production data.
 
-Do not use the current local prototype for real customer orders or sensitive production data.
+## Troubleshooting
 
-## Repository structure
-
-```text
-components/          Shared layout and UI components
-config/              Brand, prototype capability, and bundle-budget configuration
-contexts/            Theme, language, and toast state
-e2e/                 Playwright browser journeys
-features/            Catalog, designs, customizer, checkout, and landing experiences
-data/                Prototype product and 3D asset configuration
-hooks/                Shared hooks
-routing/              History API route parsing and navigation
-scripts/              Build-time quality and performance checks
-services/api/         Typed local application facade
-services/drafts/      IndexedDB draft and artwork repository
-test/                 Shared Vitest and browser-environment setup
-utils/                Legacy and prototype summary persistence helpers
-```
-
-## Validation
-
-Netlify deploy previews run `npm run check` before publishing. GitHub Actions restores the npm cache, runs a locked `npm ci`, executes the same fast validation and bundle-budget gate, and then runs the Playwright Chromium recovery journey. A failed browser job uploads its Playwright report for diagnosis.
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for Git LFS, IndexedDB, artwork upload, WebGL, deployment routing, Playwright, runtime, and bundle-budget guidance.
 
 ## Roadmap
 
-The implementation plan lives in `tasks.md` and is organized into P0-P4. P0 establishes the safe BGD/INK foundation. P1 adds engineering quality, recoverable local workflows, testing, reproducible builds, and performance budgets. P2 rebuilds the production-grade customizer. P3 redesigns the storefront, and P4 adds production operations, PWA, analytics, and growth features.
+The maintained P0-P4 checklist lives in [tasks.md](tasks.md).

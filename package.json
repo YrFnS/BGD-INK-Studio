@@ -21,8 +21,11 @@
     "test:e2e:ui": "playwright test --ui",
     "build": "vite build",
     "check:bundle": "node scripts/check-bundle-budget.mjs",
-    "check": "npm run typecheck && npm run lint && npm run test:unit && npm run build && npm run check:bundle",
-    "preview": "vite preview"
+    "check": "npm run check:environment && npm run typecheck && npm run lint && npm run check:brand && npm run check:boundaries && npm run test:unit && npm run build && npm run check:bundle",
+    "preview": "vite preview",
+    "check:environment": "node scripts/check-environment.mjs",
+    "check:brand": "node scripts/check-brand-boundaries.mjs",
+    "check:boundaries": "node scripts/check-import-boundaries.mjs"
   },
   "dependencies": {
     "@react-three/drei": "9.96.1",

@@ -15,8 +15,5 @@ declare module 'jest-axe' {
     rules?: Record<string, { enabled: boolean }>;
   }
 
-  export const axe: (
-    html: Element | string,
-    options?: AxeOptions,
-  ) => Promise<AxeResults>;
+  export const axe: (html: Element | string, options?: AxeOptions) => Promise<AxeResults>;
 }

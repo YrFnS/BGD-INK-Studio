@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('.', import.meta.url)),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
   test: {
@@ -17,7 +17,7 @@ export default defineConfig({
       },
     },
     setupFiles: ['./test/setup.ts'],
-    include: ['**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}'],
     clearMocks: true,
     restoreMocks: true,
     coverage: {
@@ -25,9 +25,13 @@ export default defineConfig({
       reporter: ['text', 'json-summary', 'html'],
       reportsDirectory: 'coverage',
       include: [
-        'routing/**/*.ts',
-        'services/drafts/**/*.ts',
-        'features/designs/**/*.tsx',
+        'src/routing/**/*.ts',
+        'src/services/drafts/**/*.ts',
+        'src/features/designs/**/*.tsx',
+        'src/features/catalog/**/*.tsx',
+        'src/features/checkout/validation.ts',
+        'src/features/customizer/artworkValidation.ts',
+        'src/contexts/AppContext.tsx',
       ],
       exclude: ['**/*.test.{ts,tsx}', '**/index.ts'],
       thresholds: {
