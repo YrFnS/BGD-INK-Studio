@@ -67,11 +67,11 @@ export const Success: React.FC<SuccessProps> = ({
       ? {
           eyebrow: 'إيصال مسودة محلية',
           copyId: 'انسخ رقم المسودة',
-          copied: 'تم النسخ',
-          summary: 'ملخص التحضير',
+          copied: 'اننسخ الرقم',
+          summary: 'ملخص التجهيز',
           garment: 'القطعة',
           variant: 'القياس واللون',
-          quantity: 'الكمية المحلية',
+          quantity: 'الكمية',
           estimate: 'التقدير المحلي',
           estimateNote: 'مو عرض سعر أو طلب مؤكد',
           detailsUnavailable:
@@ -88,7 +88,7 @@ export const Success: React.FC<SuccessProps> = ({
           summary: 'Preparation summary',
           garment: 'Garment',
           variant: 'Size and colour',
-          quantity: 'Local quantity',
+          quantity: 'Quantity',
           estimate: 'Local estimate',
           estimateNote: 'Not a quote or confirmed order',
           detailsUnavailable:
@@ -122,13 +122,19 @@ export const Success: React.FC<SuccessProps> = ({
 
             <div className="relative">
               <div className="receipt-mark grid h-16 w-16 place-items-center rounded-full border border-white/15 bg-white/[0.06]">
-                <svg className="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <svg
+                  className="h-8 w-8 text-accent"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m5 13 4 4L19 7" />
                 </svg>
               </div>
 
               <p className="receipt-reveal mt-8 text-[10px] font-black uppercase tracking-[0.24em] text-white/42">
-                {copy.eyebrow} / {BRAND.displayName}
+                {copy.eyebrow} / <bdi dir="ltr">{BRAND.displayName}</bdi>
               </p>
               <h1 className="receipt-reveal mt-4 text-4xl font-black tracking-[-0.05em] sm:text-5xl">
                 {title}
@@ -143,14 +149,18 @@ export const Success: React.FC<SuccessProps> = ({
                     <span className="block text-[9px] font-black uppercase tracking-[0.18em] text-white/38">
                       {identifierLabel}
                     </span>
-                    <span className="mt-2 block break-all font-mono text-sm font-black text-white">
+                    <bdi
+                      dir="ltr"
+                      className="mt-2 block break-all font-mono text-sm font-black text-white"
+                    >
                       {orderId}
-                    </span>
+                    </bdi>
                   </div>
                   <button
                     type="button"
                     onClick={handleCopyId}
                     className="min-h-11 shrink-0 rounded-full border border-white/15 bg-white/[0.06] px-4 text-xs font-black transition-colors hover:bg-white hover:text-black"
+                    aria-live="polite"
                   >
                     {copied ? copy.copied : copy.copyId}
                   </button>
@@ -182,23 +192,32 @@ export const Success: React.FC<SuccessProps> = ({
                       {copy.variant}
                     </span>
                     <span className="mt-2 flex items-center gap-2 text-lg font-black">
-                      {pendingOrder.size}
-                      <span className="h-4 w-4 rounded-full border border-black/20 dark:border-white/20" style={{ backgroundColor: pendingOrder.color }} />
+                      <bdi dir="ltr">{pendingOrder.size}</bdi>
+                      <span
+                        className="h-4 w-4 rounded-full border border-black/20 dark:border-white/20"
+                        style={{ backgroundColor: pendingOrder.color }}
+                        aria-label={pendingOrder.color}
+                        role="img"
+                      />
                     </span>
                   </div>
                   <div className="rounded-2xl border border-black/10 bg-white/55 p-4 dark:border-white/10 dark:bg-white/[0.035]">
                     <span className="text-[9px] font-black uppercase tracking-[0.15em] text-black/38 dark:text-white/34">
                       {copy.quantity}
                     </span>
-                    <span className="mt-2 block font-mono text-2xl font-black">{pendingOrder.quantity}</span>
+                    <bdi dir="auto" className="mt-2 block font-mono text-2xl font-black">
+                      {pendingOrder.quantity}
+                    </bdi>
                   </div>
                   <div className="rounded-2xl border border-black/10 bg-white/55 p-4 dark:border-white/10 dark:bg-white/[0.035]">
                     <span className="text-[9px] font-black uppercase tracking-[0.15em] text-black/38 dark:text-white/34">
                       {copy.estimate}
                     </span>
-                    <span className="mt-2 block text-lg font-black">
-                      {localEstimate === null ? '—' : `${formatPrice(localEstimate)} ${t('common.price')}`}
-                    </span>
+                    <bdi dir="auto" className="mt-2 block text-lg font-black">
+                      {localEstimate === null
+                        ? '—'
+                        : `${formatPrice(localEstimate)} ${t('common.price')}`}
+                    </bdi>
                     <span className="mt-1 block text-[9px] text-black/42 dark:text-white/38">
                       {copy.estimateNote}
                     </span>
