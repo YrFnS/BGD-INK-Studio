@@ -138,15 +138,21 @@ export const analyzeArtworkUrl = async (url: string): Promise<ArtworkSourceMetad
 
 export const analyzeArtworkFile = async (file: File): Promise<ArtworkSourceMetadata> => {
   if (typeof createImageBitmap === 'function') {
-    const bitmap = await createImageBitmap(file);
     try {
-      return analyzeCanvasSource(bitmap, bitmap.width, bitmap.height);
-    } finally {
-      bitmap.close();
+      const bitmap = await createImageBitmap(file);
+      try {
+        return analyzeCanvasSource(bitmap, bitmap.width, bitmap.height);
+      } finally {
+        bitmap.close();
+      }
+    } catch {
+      // Some Chromium and mobile implementations expose createImageBitmap but reject
+      // otherwise valid uploaded files. The HTML image path is slower but more compatible.
     }
   }
 
-  const objectUrl = URL.createObjectURL(file);
+  const copiedBlob = file.slice(0, file.size, file.type);
+  const objectUrl = URL.createObjectURL(copiedBlob);
   try {
     return await analyzeArtworkUrl(objectUrl);
   } finally {
