@@ -1,9 +1,16 @@
 import { expect, test } from '@playwright/test';
+import { PRODUCTS } from '../src/data/products';
 
 const tinyPng = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Wl8sAAAAASUVORK5CYII=',
   'base64',
 );
+
+const classicProduct = PRODUCTS.find((product) => product.id === 'tshirt-classic');
+if (!classicProduct) throw new Error('Classic T-shirt test product is missing.');
+
+const quantity = 4;
+const formatPrice = (value: number): string => new Intl.NumberFormat('en-US').format(value);
 
 test('recovers artwork, quantity, and draft-detail fields across refreshes', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -35,7 +42,7 @@ test('recovers artwork, quantity, and draft-detail fields across refreshes', asy
   await page.getByRole('button', { name: 'Continue to Draft Details' }).click();
   await expect(page).toHaveURL(/\/checkout\/draft-/);
 
-  await page.getByLabel('Local quantity').fill('4');
+  await page.getByLabel('Local quantity').fill(String(quantity));
   await page.getByLabel('Full Name').fill('Yasser Test');
   await page.getByLabel('Phone Number (07...)').fill('07701234567');
   await page.getByLabel('Area / District').selectOption('Al-Mansour');
@@ -44,7 +51,7 @@ test('recovers artwork, quantity, and draft-detail fields across refreshes', asy
   await page.waitForTimeout(700);
   await page.reload();
 
-  await expect(page.getByLabel('Local quantity')).toHaveValue('4');
+  await expect(page.getByLabel('Local quantity')).toHaveValue(String(quantity));
   await expect(page.getByLabel('Full Name')).toHaveValue('Yasser Test');
   await expect(page.getByLabel('Phone Number (07...)')).toHaveValue('07701234567');
   await expect(page.getByLabel('Area / District')).toHaveValue('Al-Mansour');
@@ -53,8 +60,13 @@ test('recovers artwork, quantity, and draft-detail fields across refreshes', asy
   );
 
   const configuredPriceRow = page.getByText('Configured unit price').locator('..');
-  await expect(configuredPriceRow).toContainText('25,000');
-  await expect(configuredPriceRow).toContainText('× 4');
+  await expect(configuredPriceRow).toContainText(formatPrice(classicProduct.basePrice));
+  await expect(configuredPriceRow).toContainText(`× ${quantity}`);
+
+  const configuredEstimateRow = page.getByText('Configured estimate').locator('..');
+  await expect(configuredEstimateRow).toContainText(
+    formatPrice(classicProduct.basePrice * quantity),
+  );
 
   await page.getByRole('button', { name: 'SAVE LOCAL DRAFT' }).click();
   await expect(page).toHaveURL(/\/draft\/BGD-/);
