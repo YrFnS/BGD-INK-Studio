@@ -67,6 +67,24 @@ Physical dimensions, source width and height, aspect ratio, and effective DPI re
 
 The quality card is positioned above the bottom interaction toolbar and has a bounded scroll area. Very small browser heights can still make the preview crowded; increasing viewport height or using the controls panel provides more room without changing the saved design.
 
+## A PNG proof or JSON specification does not download
+
+Open the **Production files** section below the customizer and confirm that the draft contains at least one visible artwork layer.
+
+The export system waits briefly for IndexedDB autosave to stabilize before reading the draft. Keep the studio page open while the file is generated, and allow downloads for the site if the browser blocks them.
+
+The PNG proof requires the browser to decode every visible artwork file and create a local canvas. A corrupt image, insufficient device memory, disabled canvas support, or a restrictive browser download policy can prevent generation.
+
+The JSON specification does not include temporary `blob:` URLs. It uses the artwork metadata stored in IndexedDB draft version 4. Older drafts are analyzed and upgraded when they are opened in the current customizer; reopen and save an older design before exporting when source dimensions are missing.
+
+## The exported placement or dimensions do not match production equipment
+
+The exported coordinates use centimeters relative to the center of each configured print surface, viewed from that surface. The specification also records left, top, right, and bottom offsets.
+
+Current Classic T-shirt print areas are planning values. The export deliberately marks calibration as `unverified` and requires confirmation against the exact garment blank, print method, platen, and production workflow before use.
+
+Generated proofs are review and handoff aids; they are not automatic print authorization.
+
 ## A direct route returns 404 after deployment
 
 The host must route unknown application paths to `index.html`. Netlify uses `public/_redirects`. Other hosts need an equivalent single-page application fallback.
