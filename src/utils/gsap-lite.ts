@@ -93,6 +93,12 @@ const resolveTargets = (target: AnimationTarget): Element[] => {
   return [];
 };
 
+const resolveHtmlTargets = (target: AnimationTarget): HTMLElement[] =>
+  resolveTargets(target).filter(
+    (element): element is HTMLElement =>
+      typeof HTMLElement !== 'undefined' && element instanceof HTMLElement,
+  );
+
 const rememberInlineStyle = (element: HTMLElement): void => {
   const context = activeContext;
   if (context && !context.snapshots.has(element)) {
@@ -118,6 +124,13 @@ const getComputed = (element: Element): CSSStyleDeclaration | null => {
 const hasTransformVars = (vars: MotionVars): boolean =>
   vars.x !== undefined ||
   vars.y !== undefined ||
+  vars.xPercent !== undefined ||
+  vars.yPercent !== undefined ||
+  vars.scale !== undefined ||
+  vars.scaleX !== undefined ||
+  vars.rotate !== undefined;
+
+const hasNonPixelTransformVars = (vars: MotionVars): boolean =>
   vars.xPercent !== undefined ||
   vars.yPercent !== undefined ||
   vars.scale !== undefined ||
@@ -156,6 +169,20 @@ const writeTranslate = (element: HTMLElement, x: number, y: number): void => {
   element.style.setProperty('translate', `${x}px ${y}px`);
 };
 
+const applyVarsImmediately = (element: HTMLElement, vars: MotionVars): void => {
+  rememberInlineStyle(element);
+  const current = readTranslate(element);
+
+  if (vars.x !== undefined || vars.y !== undefined) {
+    writeTranslate(element, vars.x ?? current.x, vars.y ?? current.y);
+  }
+  if (vars.opacity !== undefined) element.style.opacity = String(vars.opacity);
+  if (vars.color !== undefined) element.style.color = vars.color;
+  if (hasNonPixelTransformVars(vars)) {
+    element.style.transform = buildTransform(vars, false) || 'none';
+  }
+};
+
 const createKeyframes = (
   element: HTMLElement,
   vars: MotionVars,
@@ -164,9 +191,8 @@ const createKeyframes = (
   const computed = getComputed(element);
   const currentOpacity = computed?.opacity ?? '1';
   const currentColor = computed?.color ?? '';
-  const currentTransform = computed?.transform && computed.transform !== 'none'
-    ? computed.transform
-    : 'none';
+  const currentTransform =
+    computed?.transform && computed.transform !== 'none' ? computed.transform : 'none';
   const transform = hasTransformVars(vars) ? buildTransform(vars, false) || 'none' : currentTransform;
 
   const start: Keyframe = {};
@@ -177,9 +203,8 @@ const createKeyframes = (
     if (vars.color !== undefined) start.color = vars.color;
     if (hasTransformVars(vars)) {
       const offsetTransform = buildTransform(vars);
-      start.transform = currentTransform === 'none'
-        ? offsetTransform
-        : `${offsetTransform} ${currentTransform}`;
+      start.transform =
+        currentTransform === 'none' ? offsetTransform : `${offsetTransform} ${currentTransform}`;
     }
 
     end.opacity = currentOpacity;
@@ -197,10 +222,7 @@ const createKeyframes = (
 
   const applyFinal = () => {
     if (direction !== 'to') return;
-    rememberInlineStyle(element);
-    if (vars.opacity !== undefined) element.style.opacity = String(vars.opacity);
-    if (vars.color !== undefined) element.style.color = vars.color;
-    if (hasTransformVars(vars)) element.style.transform = transform;
+    applyVarsImmediately(element, vars);
   };
 
   return { frames: [start, end], applyFinal };
@@ -216,29 +238,41 @@ const animateElement = (
   const delayMs = Math.max(0, (vars.delay ?? 0) + extraDelaySeconds) * 1000;
   const hasPixelTranslation = vars.x !== undefined || vars.y !== undefined;
 
-  if (direction === 'to' && hasPixelTranslation && !hasTransformVars({ ...vars, x: undefined, y: undefined })) {
+  if (direction === 'to' && hasPixelTranslation && !hasNonPixelTransformVars(vars)) {
     const current = readTranslate(element);
     const next = { x: vars.x ?? current.x, y: vars.y ?? current.y };
+    const computed = getComputed(element);
+    const currentOpacity = computed?.opacity ?? element.style.opacity || '1';
+    const currentColor = computed?.color ?? element.style.color;
     const run = () => {
       rememberInlineStyle(element);
       if (typeof element.animate === 'function') {
-        const animation = element.animate(
-          [
-            { translate: `${current.x}px ${current.y}px` },
-            { translate: `${next.x}px ${next.y}px` },
-          ],
-          { duration: durationMs, easing: easeToCss(vars.ease), fill: 'forwards' },
-        );
+        const start: Keyframe = { translate: `${current.x}px ${current.y}px` };
+        const end: Keyframe = { translate: `${next.x}px ${next.y}px` };
+        if (vars.opacity !== undefined) {
+          start.opacity = currentOpacity;
+          end.opacity = vars.opacity;
+        }
+        if (vars.color !== undefined) {
+          start.color = currentColor;
+          end.color = vars.color;
+        }
+
+        const animation = element.animate([start, end], {
+          duration: durationMs,
+          easing: easeToCss(vars.ease),
+          fill: 'forwards',
+        });
         registerAnimation(animation);
         void animation.finished
           .then(() => {
-            writeTranslate(element, next.x, next.y);
+            applyVarsImmediately(element, vars);
             animation.cancel();
             vars.onComplete?.();
           })
           .catch(() => undefined);
       } else {
-        writeTranslate(element, next.x, next.y);
+        applyVarsImmediately(element, vars);
         vars.onComplete?.();
       }
     };
@@ -277,9 +311,7 @@ const animateTargets = (
   direction: 'from' | 'to',
   timelineDelay = 0,
 ): number => {
-  const elements = resolveTargets(target).filter((element): element is HTMLElement =>
-    element instanceof HTMLElement,
-  );
+  const elements = resolveHtmlTargets(target);
   const stagger = Math.max(0, vars.stagger ?? 0);
 
   elements.forEach((element, index) => {
@@ -376,20 +408,19 @@ const to = (target: AnimationTarget, vars: MotionVars): void => {
   animateTargets(target, vars, 'to');
 };
 
+const fromTo = (target: AnimationTarget, fromVars: MotionVars, toVars: MotionVars): void => {
+  const elements = resolveHtmlTargets(target);
+  const stagger = Math.max(0, toVars.stagger ?? 0);
+  const delay = Math.max(0, toVars.delay ?? 0);
+
+  elements.forEach((element, index) => {
+    applyVarsImmediately(element, fromVars);
+    animateElement(element, { ...toVars, delay: 0 }, 'to', delay + stagger * index);
+  });
+};
+
 const set = (target: AnimationTarget, vars: MotionVars): void => {
-  resolveTargets(target)
-    .filter((element): element is HTMLElement => element instanceof HTMLElement)
-    .forEach((element) => {
-      const current = readTranslate(element);
-      if (vars.x !== undefined || vars.y !== undefined) {
-        writeTranslate(element, vars.x ?? current.x, vars.y ?? current.y);
-      }
-      if (vars.opacity !== undefined) element.style.opacity = String(vars.opacity);
-      if (vars.color !== undefined) element.style.color = vars.color;
-      if (hasTransformVars({ ...vars, x: undefined, y: undefined })) {
-        element.style.transform = buildTransform(vars, false);
-      }
-    });
+  resolveHtmlTargets(target).forEach((element) => applyVarsImmediately(element, vars));
 };
 
 const quickTo = (
@@ -417,6 +448,7 @@ const gsapLite = {
   timeline,
   from,
   to,
+  fromTo,
   set,
   quickTo,
 };
