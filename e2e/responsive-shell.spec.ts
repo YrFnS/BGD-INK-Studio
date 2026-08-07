@@ -1,6 +1,6 @@
-import { devices, expect, test } from '@playwright/test';
+import { devices, expect, type Page, test } from '@playwright/test';
 
-const expectNoHorizontalOverflow = async (page: Parameters<typeof test>[0]['page']) => {
+const expectNoHorizontalOverflow = async (page: Page) => {
   const overflow = await page.evaluate(() => {
     const root = document.documentElement;
     const body = document.body;
@@ -10,7 +10,7 @@ const expectNoHorizontalOverflow = async (page: Parameters<typeof test>[0]['page
   expect(overflow).toBeLessThanOrEqual(1);
 };
 
-const expectNavigationFitsViewport = async (page: Parameters<typeof test>[0]['page']) => {
+const expectNavigationFitsViewport = async (page: Page) => {
   const measurements = await page.locator('#mobile-navigation').evaluate((navigation) => {
     const rect = navigation.getBoundingClientRect();
     const styles = window.getComputedStyle(navigation);
