@@ -242,7 +242,7 @@ const animateElement = (
     const current = readTranslate(element);
     const next = { x: vars.x ?? current.x, y: vars.y ?? current.y };
     const computed = getComputed(element);
-    const currentOpacity = computed?.opacity ?? element.style.opacity || '1';
+    const currentOpacity = (computed?.opacity ?? element.style.opacity) || '1';
     const currentColor = computed?.color ?? element.style.color;
     const run = () => {
       rememberInlineStyle(element);
