@@ -7,7 +7,6 @@ const getDeviceOptions = (name: string) => {
   return {
     userAgent: descriptor.userAgent,
     viewport: descriptor.viewport,
-    screen: descriptor.screen,
     deviceScaleFactor: descriptor.deviceScaleFactor,
     isMobile: descriptor.isMobile,
     hasTouch: descriptor.hasTouch,
