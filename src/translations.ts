@@ -11,6 +11,7 @@ type TranslationKey =
   | 'catalog.subtitle'
   | 'catalog.startDesign'
   | 'catalog.soldOut'
+  | 'catalog.modelUnavailable'
   | 'product.classic_tshirt'
   | 'product.premium_hoodie'
   | 'product.urban_vest'
@@ -26,6 +27,12 @@ type TranslationKey =
   | 'customizer.scale'
   | 'customizer.interact'
   | 'customizer.exitInteract'
+  | 'customizer.surface'
+  | 'customizer.surface.front'
+  | 'customizer.surface.back'
+  | 'customizer.printArea'
+  | 'customizer.artworkWidth'
+  | 'customizer.modelUnavailable'
   | 'checkout.title'
   | 'checkout.submit'
   | 'checkout.name'
@@ -84,6 +91,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
       'Choose a canvas for your creativity. Premium cotton blends optimized for Baghdad weather.',
     'catalog.startDesign': 'Customize',
     'catalog.soldOut': 'Sold Out',
+    'catalog.modelUnavailable': '3D model coming soon',
     'product.classic_tshirt': 'Classic T-Shirt',
     'product.premium_hoodie': 'Premium Hoodie',
     'product.urban_vest': 'Urban Vest',
@@ -99,6 +107,13 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'customizer.scale': 'Logo Size',
     'customizer.interact': 'Tap to 3D View',
     'customizer.exitInteract': 'Lock View',
+    'customizer.surface': 'Print surface',
+    'customizer.surface.front': 'Front',
+    'customizer.surface.back': 'Back',
+    'customizer.printArea': 'Print area',
+    'customizer.artworkWidth': 'Artwork width',
+    'customizer.modelUnavailable':
+      'This product does not have an approved 3D model yet. Choose a model-ready product from the catalog.',
     'checkout.title': 'SHIPPING DETAILS',
     'checkout.submit': 'CONFIRM ORDER',
     'checkout.name': 'Full Name',
@@ -165,6 +180,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'catalog.subtitle': 'خامات قطنية فاخرة ومريحة، تناسب جوّنا.',
     'catalog.startDesign': 'تخصيص',
     'catalog.soldOut': 'نفذت الكمية',
+    'catalog.modelUnavailable': 'موديل الـ3D قريباً',
     'product.classic_tshirt': 'تيشيرت كلاسيك',
     'product.premium_hoodie': 'هودي بريميوم',
     'product.urban_vest': 'سترة',
@@ -180,6 +196,13 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'customizer.scale': 'حجم اللوكو',
     'customizer.interact': 'اضغط للمعاينة 3D',
     'customizer.exitInteract': 'قفل المعاينة',
+    'customizer.surface': 'جهة الطباعة',
+    'customizer.surface.front': 'الأمام',
+    'customizer.surface.back': 'الخلف',
+    'customizer.printArea': 'مساحة الطباعة',
+    'customizer.artworkWidth': 'عرض التصميم',
+    'customizer.modelUnavailable':
+      'هذا المنتج ما عنده موديل 3D معتمد حالياً. اختار منتج جاهز للتخصيص من الموديلات.',
     'checkout.title': 'معلومات التوصيل',
     'checkout.submit': 'أرسل الطلب',
     'checkout.name': 'الاسم',
