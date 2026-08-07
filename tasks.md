@@ -147,7 +147,7 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Add an honest bilingual FAQ covering orders, local storage, file formats, sizes, mobile editing, and pending contact channels.
 - [x] Add an Iraqi-Arabic first pass for the guide, navigation labels, and mobile accessibility names.
 - [x] Add unit accessibility coverage and a real English/Arabic Chromium guide journey.
-- [ ] Add quantity and variant-selection UX using local product data.
+- [x] Add recoverable local quantity preparation alongside the existing size/color variant selection, including a local estimate and explicit no-stock/no-quote wording.
 - [ ] Add official contact information after verification.
 - [ ] Add approved business policies, care guidance, and returns information.
 - [ ] Complete the Iraqi Arabic editorial and terminology review.
