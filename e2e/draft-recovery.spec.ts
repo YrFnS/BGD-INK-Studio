@@ -75,5 +75,7 @@ test('recovers artwork, quantity, and draft-preparation fields across refreshes'
   await page.getByRole('button', { name: 'Open My Designs', exact: true }).click();
   await expect(page).toHaveURL('/designs');
   await expect(page.getByText('Prepared locally', { exact: true })).toBeVisible();
-  await expect(page.getByText('Quantity').locator('..')).toContainText(String(quantity));
+
+  const quantitySummary = page.getByText('Quantity', { exact: true }).locator('..');
+  await expect(quantitySummary).toContainText(String(quantity));
 });
