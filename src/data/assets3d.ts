@@ -1,5 +1,5 @@
 import { useGLTF } from '@react-three/drei';
-import { PrintSurfaceId } from '@/types';
+import { DEFAULT_PRINT_SURFACE_ID, PrintSurfaceId } from '@/types';
 
 export interface ModelBounds {
   minX: number;
@@ -46,8 +46,6 @@ export interface UnavailableProductModelConfig extends BaseProductModelConfig {
 }
 
 export type ProductModelConfig = ReadyProductModelConfig | UnavailableProductModelConfig;
-
-export const DEFAULT_PRINT_SURFACE_ID: PrintSurfaceId = 'front';
 
 const STABLE_SHIRT_URL = '/basic_t-shirt.glb';
 const ROTATION_CORRECTION: [number, number, number] = [-Math.PI / 2, 0, 0];
@@ -141,7 +139,7 @@ export const getPrintSurface = (
 ): PrintSurfaceDefinition =>
   config.surfaces.find((surface) => surface.id === surfaceId) ?? config.surfaces[0];
 
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && !import.meta.env.TEST) {
   const modelUrls = new Set(
     Object.values(PRODUCT_MODEL_CONFIGS).flatMap((config) =>
       config.status === 'ready' ? [config.modelUrl] : [],
