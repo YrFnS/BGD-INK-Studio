@@ -77,3 +77,5 @@ jobs:
           git add -A
           git commit -m "complete P0 and P1 foundation"
           git push origin HEAD:agent/bgd-ink-p0-foundation
+
+# Retry marker: one-time migration helper is excluded from the normal lint target.
