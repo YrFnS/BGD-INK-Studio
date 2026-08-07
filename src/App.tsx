@@ -17,6 +17,9 @@ import { OrderDetails, PendingOrder, Product, ViewState } from '@/types';
 const Catalog = React.lazy(() =>
   import('@/features/catalog/Catalog').then((module) => ({ default: module.Catalog })),
 );
+const Guide = React.lazy(() =>
+  import('@/features/guide/Guide').then((module) => ({ default: module.Guide })),
+);
 const Designs = React.lazy(() =>
   import('@/features/designs/Designs').then((module) => ({ default: module.Designs })),
 );
@@ -145,6 +148,11 @@ const AppContent = () => {
       return;
     }
 
+    if (nextView === 'GUIDE') {
+      navigate(routes.guide());
+      return;
+    }
+
     if (nextView === 'DESIGNS') {
       navigate(routes.designs());
       return;
@@ -164,6 +172,13 @@ const AppContent = () => {
         );
       case 'CATALOG':
         return <Catalog onSelectProduct={handleProductSelect} busyProductId={busyProductId} />;
+      case 'GUIDE':
+        return (
+          <Guide
+            onOpenCatalog={() => navigate(routes.catalog())}
+            onOpenDesigns={() => navigate(routes.designs())}
+          />
+        );
       case 'DESIGNS':
         return (
           <Designs
