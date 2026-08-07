@@ -1,4 +1,5 @@
 import { BRAND } from '@/config/brand';
+import { normalizeDraftQuantity } from '@/config/draft';
 import { PLATFORM_STATUS } from '@/config/platform';
 import { PRODUCTS as INITIAL_PRODUCTS } from '@/data/products';
 import { Order, Product } from '@/types';
@@ -141,7 +142,22 @@ export const getGallery = (): string[] => {
   return normalized;
 };
 
-export const getOrders = (): Order[] => readJson<Order[]>(KEYS.orders, []);
+const normalizeStoredOrders = (orders: Order[]): Order[] =>
+  orders.map((order) => ({
+    ...order,
+    quantity: normalizeDraftQuantity(order.quantity),
+  }));
+
+export const getOrders = (): Order[] => {
+  const stored = readJson<Order[]>(KEYS.orders, []);
+  const normalized = normalizeStoredOrders(Array.isArray(stored) ? stored : []);
+
+  if (JSON.stringify(stored) !== JSON.stringify(normalized)) {
+    writeJson(KEYS.orders, normalized);
+  }
+
+  return normalized;
+};
 
 export const saveOrder = (order: Order): boolean => {
   if (!PLATFORM_STATUS.localOrderStorageEnabled) return false;
