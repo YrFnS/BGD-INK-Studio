@@ -167,8 +167,20 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Add a Pixel 5 Iraqi-Arabic preparation journey covering validation, localized areas, receipt creation, My Designs state, and overflow prevention.
 - [ ] Add official contact information after verification.
 - [ ] Add approved business policies, care guidance, and returns information.
-- [ ] Validate the complete journey on representative physical phones and tablets.
 - [ ] Link future reviews to verifiable customer work or keep the review section absent.
+
+### Performance and responsive finalization
+
+- [x] Replace the shipped GSAP runtime with a tested, repository-specific Web Animations compatibility layer.
+- [x] Preserve existing page, toast, cursor, magnetic, catalog, preparation, receipt, and editor motion behavior without shipping the full GSAP runtime.
+- [x] Reduce initial JavaScript from 97.56 KiB to 71.07 KiB gzip and total JavaScript from 403.79 KiB to 377.29 KiB gzip.
+- [x] Tighten JavaScript and CSS performance budgets after the measured reduction.
+- [x] Add display-cutout safe areas, dynamic viewport height, software-keyboard resizing, contained mobile-menu scrolling, and short-landscape handling.
+- [x] Add application-wide, reduced-motion-aware same-page section scrolling with synchronized URL hashes.
+- [x] Add a permanent responsive-shell source gate.
+- [x] Add iPhone portrait/short-landscape/restored-portrait and iPad Arabic orientation-sized browser journeys.
+- [x] Expand the complete gate to 71 unit/component/accessibility tests across 26 files and 11 Chromium journeys.
+- [ ] Validate the complete journey on representative physical Android phones, iPhones, and tablets.
 
 ## P4 — Frontend delivery, PWA, SEO, and growth
 
