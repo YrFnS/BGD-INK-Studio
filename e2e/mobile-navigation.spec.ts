@@ -18,9 +18,9 @@ test('supports mobile navigation and Arabic RTL interaction', async ({ page }) =
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 
-  await page.getByRole('button', { name: 'Open menu' }).click();
+  await page.getByRole('button', { name: 'فتح القائمة' }).click();
   await page
-    .getByRole('navigation', { name: 'Mobile navigation' })
+    .getByRole('navigation', { name: 'تنقل الموبايل' })
     .getByRole('button', { name: 'الموديلات' })
     .click();
   await expect(page).toHaveURL('/catalog');
