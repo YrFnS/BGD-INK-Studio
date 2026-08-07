@@ -1,7 +1,9 @@
 import React, { useRef } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
+import type { PrintSurfaceDefinition } from '@/data/assets3d';
 import { DraftSaveStatus } from '@/services/drafts';
-import { DecalLayer, Product, Size } from '@/types';
+import { DecalLayer, PrintSurfaceId, Product, Size } from '@/types';
+import { getSurfaceScaleLimits, scaleToArtworkWidthCm } from './printArea';
 
 interface ControlsProps {
   product: Product;
@@ -9,6 +11,9 @@ interface ControlsProps {
   onColorChange: (color: string) => void;
   selectedSize: Size;
   onSizeChange: (size: Size) => void;
+  surfaces: readonly PrintSurfaceDefinition[];
+  selectedSurfaceId: PrintSurfaceId;
+  onSurfaceChange: (surfaceId: PrintSurfaceId) => void;
   decals: DecalLayer[];
   activeDecalId: string | null;
   onSetActiveDecal: (id: string) => void;
@@ -28,6 +33,9 @@ export const Controls: React.FC<ControlsProps> = ({
   onColorChange,
   selectedSize,
   onSizeChange,
+  surfaces,
+  selectedSurfaceId,
+  onSurfaceChange,
   decals,
   activeDecalId,
   onSetActiveDecal,
@@ -49,15 +57,24 @@ export const Controls: React.FC<ControlsProps> = ({
 
   const sizes = Object.values(Size);
   const activeDecal = decals.find((decal) => decal.id === activeDecalId);
+  const selectedSurface =
+    surfaces.find((surface) => surface.id === selectedSurfaceId) ?? surfaces[0];
+  const activeSurface = activeDecal
+    ? (surfaces.find((surface) => surface.id === activeDecal.surfaceId) ?? selectedSurface)
+    : selectedSurface;
+  const activeScaleLimits = activeSurface ? getSurfaceScaleLimits(activeSurface) : null;
+  const activeArtworkWidthCm =
+    activeDecal && activeSurface
+      ? scaleToArtworkWidthCm(activeDecal.scale, activeSurface)
+      : null;
   const uploadText = language === 'ar' ? 'إضافة طبقة' : 'Add layer';
   const uploadingText = language === 'ar' ? 'جاري حفظ الصورة…' : 'Saving artwork…';
   const selectedLayerText = language === 'ar' ? 'الطبقة المحددة' : 'Selected layer';
-  const layerSizeText = language === 'ar' ? 'الحجم' : 'Size';
   const rotationText = language === 'ar' ? 'الدوران' : 'Rotation';
   const dragHelpText =
     language === 'ar'
-      ? 'اسحب التصميم على القطعة، واستخدم المؤشرات لتغيير الحجم والدوران.'
-      : 'Drag the artwork on the garment, then use the sliders to resize or rotate it.';
+      ? 'اسحب التصميم داخل حدود مساحة الطباعة، واستخدم المؤشرات لتغيير الحجم والدوران.'
+      : 'Drag the artwork inside the print-area boundary, then resize or rotate it.';
 
   const saveStatusText: Record<DraftSaveStatus, string> = {
     saved: language === 'ar' ? 'محفوظ على هذا الجهاز' : 'Saved on this device',
@@ -139,6 +156,32 @@ export const Controls: React.FC<ControlsProps> = ({
           </div>
         </fieldset>
 
+        <fieldset>
+          <legend className="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            {t('customizer.surface')}
+          </legend>
+          <div className="grid grid-cols-2 gap-2">
+            {surfaces.map((surface) => (
+              <button
+                type="button"
+                key={surface.id}
+                onClick={() => onSurfaceChange(surface.id)}
+                aria-pressed={selectedSurfaceId === surface.id}
+                className={`rounded-xl border p-3 text-start transition-all ${
+                  selectedSurfaceId === surface.id
+                    ? 'border-accent bg-accent/10 text-accent shadow-sm'
+                    : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-300'
+                }`}
+              >
+                <span className="block text-sm font-bold">{t(surface.labelKey)}</span>
+                <span className="mt-1 block font-mono text-[10px] opacity-70">
+                  {surface.physicalWidthCm} × {surface.physicalHeightCm} cm
+                </span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
         <section aria-labelledby="artwork-layers-label">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h3
@@ -174,6 +217,11 @@ export const Controls: React.FC<ControlsProps> = ({
               <span className="text-sm font-medium text-gray-500 group-hover:text-accent">
                 {isUploading ? uploadingText : t('customizer.upload')}
               </span>
+              {selectedSurface && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  {t(selectedSurface.labelKey)}
+                </span>
+              )}
             </button>
           ) : (
             <div className="space-y-4">
@@ -181,37 +229,50 @@ export const Controls: React.FC<ControlsProps> = ({
                 className="no-scrollbar flex gap-2 overflow-x-auto pb-2"
                 aria-label={t('customizer.upload')}
               >
-                {decals.map((layer, index) => (
-                  <button
-                    type="button"
-                    key={layer.id}
-                    onClick={() => onSetActiveDecal(layer.id)}
-                    aria-label={`${selectedLayerText} ${index + 1}`}
-                    aria-pressed={activeDecalId === layer.id}
-                    className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
-                      activeDecalId === layer.id
-                        ? 'border-accent ring-2 ring-accent/20'
-                        : 'border-gray-200 opacity-70 hover:opacity-100 dark:border-zinc-700'
-                    }`}
-                  >
-                    <img
-                      src={layer.url}
-                      alt={layer.fileName ?? `${selectedLayerText} ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
-                    {activeDecalId === layer.id && (
-                      <span className="pointer-events-none absolute inset-0 bg-accent/10" />
-                    )}
-                  </button>
-                ))}
+                {decals.map((layer, index) => {
+                  const layerSurface = surfaces.find((surface) => surface.id === layer.surfaceId);
+                  return (
+                    <button
+                      type="button"
+                      key={layer.id}
+                      onClick={() => onSetActiveDecal(layer.id)}
+                      aria-label={`${selectedLayerText} ${index + 1}${layerSurface ? ` — ${t(layerSurface.labelKey)}` : ''}`}
+                      aria-pressed={activeDecalId === layer.id}
+                      className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                        activeDecalId === layer.id
+                          ? 'border-accent ring-2 ring-accent/20'
+                          : 'border-gray-200 opacity-70 hover:opacity-100 dark:border-zinc-700'
+                      }`}
+                    >
+                      <img
+                        src={layer.url}
+                        alt={layer.fileName ?? `${selectedLayerText} ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      {layerSurface && (
+                        <span className="pointer-events-none absolute inset-x-1 bottom-1 truncate rounded bg-black/75 px-1 py-0.5 text-[8px] font-bold uppercase text-white">
+                          {t(layerSurface.labelKey)}
+                        </span>
+                      )}
+                      {activeDecalId === layer.id && (
+                        <span className="pointer-events-none absolute inset-0 bg-accent/10" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
-              {activeDecal && (
+              {activeDecal && activeSurface && activeScaleLimits && (
                 <div className="animate-fade-in space-y-4 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-800/50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase text-gray-500">
-                      {selectedLayerText}
-                    </span>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <span className="block text-xs font-bold uppercase text-gray-500">
+                        {selectedLayerText}
+                      </span>
+                      <span className="mt-1 block text-[10px] font-medium text-gray-400">
+                        {t(activeSurface.labelKey)}
+                      </span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => onRemoveDecal(activeDecal.id)}
@@ -227,18 +288,18 @@ export const Controls: React.FC<ControlsProps> = ({
                         htmlFor={`layer-size-${activeDecal.id}`}
                         className="text-[10px] font-bold uppercase text-gray-400"
                       >
-                        {layerSizeText}
+                        {t('customizer.artworkWidth')}
                       </label>
                       <span className="font-mono text-[10px] text-gray-400">
-                        {Math.round(activeDecal.scale * 100)}%
+                        {activeArtworkWidthCm?.toFixed(1)} cm
                       </span>
                     </div>
                     <input
                       id={`layer-size-${activeDecal.id}`}
                       type="range"
-                      min="0.05"
-                      max="0.4"
-                      step="0.01"
+                      min={activeScaleLimits.minimum}
+                      max={activeScaleLimits.maximum}
+                      step="0.005"
                       value={activeDecal.scale}
                       onChange={(event) =>
                         onUpdateDecal(activeDecal.id, {
