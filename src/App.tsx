@@ -216,6 +216,8 @@ const AppContent = () => {
             orderDetails={matchingSubmission?.details}
             pendingOrder={matchingSubmission?.pendingOrder}
             onReset={handleReset}
+            onOpenDesigns={() => navigate(routes.designs())}
+            onStartNew={() => navigate(routes.catalog())}
           />
         );
       }
