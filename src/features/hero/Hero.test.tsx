@@ -15,7 +15,7 @@ describe('P3 premium storefront', () => {
     );
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'YOUR ARTWORK. BUILT FOR THE GARMENT.',
+      /YOUR ARTWORK\.\s*BUILT FOR THE GARMENT\./,
     );
     expect(screen.getByText('WE SHOW WHAT IS READY — AND WHAT IS NOT.')).toBeVisible();
 
