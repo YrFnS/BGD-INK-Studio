@@ -12,21 +12,19 @@ export const Footer: React.FC = () => {
   const year = new Date().getFullYear();
   const whatsappNumber = getConfiguredWhatsAppNumber();
 
-  const links: ContactLink[] = [
-    BRAND.contact.instagramUrl ? { label: 'Instagram', href: BRAND.contact.instagramUrl } : null,
-    whatsappNumber ? { label: 'WhatsApp', href: `https://wa.me/${whatsappNumber}` } : null,
-    BRAND.contact.email ? { label: 'Email', href: `mailto:${BRAND.contact.email}` } : null,
-  ].filter((link): link is ContactLink => Boolean(link));
-
   const copy =
     language === 'ar'
       ? {
-          statement: 'ستوديو محلي لتجهيز ومعاينة مسودات الطباعة على الملابس.',
+          statement: 'ستوديو محلي لتجهيز ومراجعة مسودات الطباعة على الملابس.',
           local: 'المسودات والتصاميم تبقى على هذا الجهاز',
-          noAccount: 'بدون حساب',
-          prototype: 'النسخة الحالية لا تستلم طلبات حقيقية',
+          noAccount: 'ما يحتاج حساب',
+          prototype: 'النسخة الحالية ما تستلم طلبات حقيقية',
           rights: 'جميع الحقوق محفوظة',
-          contactPending: 'قنوات التواصل الرسمية تضاف بعد تأكيدها',
+          contactPending: 'قنوات التواصل الرسمية تظهر بعد تأكيدها',
+          contactNavigation: 'روابط التواصل الرسمية',
+          instagram: 'إنستغرام',
+          whatsapp: 'واتساب',
+          email: 'البريد الإلكتروني',
         }
       : {
           statement: 'A local studio for preparing and reviewing custom-apparel print drafts.',
@@ -35,7 +33,21 @@ export const Footer: React.FC = () => {
           prototype: 'The current preview does not accept real orders',
           rights: 'All rights reserved',
           contactPending: 'Official contact channels will appear after verification',
+          contactNavigation: 'Official contact links',
+          instagram: 'Instagram',
+          whatsapp: 'WhatsApp',
+          email: 'Email',
         };
+
+  const links: ContactLink[] = [
+    BRAND.contact.instagramUrl
+      ? { label: copy.instagram, href: BRAND.contact.instagramUrl }
+      : null,
+    whatsappNumber
+      ? { label: copy.whatsapp, href: `https://wa.me/${whatsappNumber}` }
+      : null,
+    BRAND.contact.email ? { label: copy.email, href: `mailto:${BRAND.contact.email}` } : null,
+  ].filter((link): link is ContactLink => Boolean(link));
 
   return (
     <footer className="border-t border-black/10 bg-[#111111] py-12 text-[#f4f1ea] dark:border-white/10 sm:py-16">
@@ -43,12 +55,12 @@ export const Footer: React.FC = () => {
         <div className="grid gap-10 lg:grid-cols-[1.1fr_.9fr] lg:gap-20">
           <div>
             <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-[#f4f1ea] font-display text-[10px] font-black tracking-[-0.05em] text-black">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-[#f4f1ea] font-display text-[10px] font-black tracking-[-0.05em] text-black" dir="ltr">
                 B/I
               </span>
               <div>
                 <h2 className="font-display text-xl font-black tracking-[-0.045em]">
-                  {BRAND.displayName}
+                  <bdi dir="ltr">{BRAND.displayName}</bdi>
                 </h2>
                 <p className="mt-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-white/35">
                   {getLocalizedBrandText(BRAND.location, language)}
@@ -68,6 +80,7 @@ export const Footer: React.FC = () => {
               >
                 <span
                   className={`h-2 w-2 shrink-0 rounded-full ${index === 2 ? 'bg-accent' : 'bg-emerald-400'}`}
+                  aria-hidden="true"
                 />
                 <span className="text-xs font-semibold leading-5 text-white/55">{item}</span>
               </div>
@@ -77,7 +90,7 @@ export const Footer: React.FC = () => {
 
         <div className="mt-12 flex flex-col gap-6 border-t border-white/10 pt-8 md:flex-row md:items-center md:justify-between">
           {links.length > 0 ? (
-            <nav className="flex flex-wrap gap-x-6 gap-y-3" aria-label="Contact links">
+            <nav className="flex flex-wrap gap-x-6 gap-y-3" aria-label={copy.contactNavigation}>
               {links.map((link) => (
                 <a
                   key={link.label}
@@ -95,7 +108,7 @@ export const Footer: React.FC = () => {
           )}
 
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-white/28">
-            © {year} {BRAND.productName} · {copy.rights}
+            <bdi dir="ltr">© {year} {BRAND.productName}</bdi> · {copy.rights}
           </p>
         </div>
       </div>
