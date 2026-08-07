@@ -1,90 +1,106 @@
 # BGD/INK Studio
 
-BGD/INK Studio is a bilingual English/Arabic local web application for designing and previewing custom-printed apparel in 3D.
+BGD/INK Studio is a bilingual English/Iraqi-Arabic web application for preparing custom-apparel design drafts in a model-aware 3D editor.
 
-> Designs, artwork, checkout fields, submitted draft summaries, and generated production files stay on the current device. They are not sent to a shop, synchronized between devices, or written to a production database.
+> The project is intentionally frontend and local-only. Designs, original artwork, draft details, and generated production files stay on the current device. They are not sent to a shop, synchronized between devices, or written to a production database.
 
 ## Current scope
 
-The project is intentionally **frontend and local-only for now**.
-
 Active work includes:
 
-- The React/Vite storefront
-- The 3D product customizer
-- Browser-local IndexedDB drafts and original artwork blobs
-- Local design recovery, proofs, and machine-readable exports
-- Accessibility, mobile interaction, Iraqi Arabic, performance, PWA, and SEO
+- the React/Vite storefront
+- the premium editorial print-lab identity
+- owned local garment illustrations
+- the product-aware 3D customizer
+- browser-local IndexedDB drafts and original artwork blobs
+- local design recovery, PNG proofs, and JSON specifications
+- English/Iraqi-Arabic content and RTL behavior
+- accessibility, touch interaction, performance, PWA, and SEO
 
 Paused until explicitly reopened:
 
-- Backend development
-- Production databases
-- Remote object storage
-- User accounts and cross-device synchronization
-- Staff or administration portals
-- Real product, stock, pricing, customer, and order persistence
-- Real order acceptance, approval, tracking, or fulfillment
+- backend development
+- production databases
+- remote object storage
+- accounts and cross-device synchronization
+- staff or administration portals
+- authoritative stock, pricing, customer, and order data
+- real order acceptance, payment, approval, tracking, or fulfillment
 
-The current checkout and confirmation flow saves a **local design draft**, not a real customer order.
+The draft-details and confirmation flow saves a **local design draft**, not a real customer order.
 
-## P0 and P1 status
+## Phase status
 
-P0 and P1 are complete on `agent/bgd-ink-p0-foundation`:
+### P0 — safe foundation and rebrand
 
-- Central BGD/INK brand configuration and enforced brand source of truth
-- Removed public prototype admin access, hardcoded PINs, client-side secrets, and false offline claims
-- Compiled Tailwind CSS, strict TypeScript, warning-free ESLint, and Prettier
-- Source code under `src/` with the `@/` alias and enforced import boundaries
-- Recoverable URL routes, IndexedDB artwork and drafts, checkout recovery, and My Designs
-- Unit, component, accessibility, desktop Chromium, mobile touch, and Arabic RTL coverage
-- Pinned Node/npm, locked `npm ci`, CI caching, and route-aware bundle budgets
-- Troubleshooting and prototype-safety documentation
+Complete on `agent/bgd-ink-p0-foundation`:
 
-## P2 status
+- centralized BGD/INK brand configuration
+- removed public prototype admin access, hardcoded PINs, browser-exposed secrets, and false offline claims
+- migrated old local browser keys without destroying recovery data
+- added a permanent brand source-of-truth check
 
-P2 is in progress on `agent/bgd-ink-p2-models-print-areas`.
+### P1 — engineering foundation
 
-Completed local-customizer work includes:
+Complete on `agent/bgd-ink-p0-foundation`:
 
-- Honest product-model capability checks; products without genuine matching geometry are not opened with a fake T-shirt model
-- Classic T-shirt front and back print surfaces with centimeter dimensions, safe boundaries, and surface-specific cameras
-- Aspect-ratio-aware artwork width and height
-- Source pixel, transparency, padding, and effective-DPI analysis performed locally in the browser
-- Low-resolution, extreme-aspect-ratio, transparent-padding, and near-edge warnings
-- Undo and redo with grouped pointer and slider gestures
-- Layer rename, duplicate, visibility, ordering, selection, and non-destructive deletion
-- Explicit **View Garment**, **Move Design**, and **Resize/Rotate** interaction modes
-- One-pointer movement and transform gestures plus two-pointer pinch-and-twist transforms
-- Adaptive high, balanced, and low-power rendering profiles
-- WebGL support detection, context-loss handling, retryable recovery, and a safe 2D preview
-- Rendering pause while the page is hidden and demand rendering on constrained devices
-- Downloadable multi-surface PNG production proofs
-- URL-free JSON production specifications with centimeter placement and artwork quality metadata
-- IndexedDB draft version 4, which preserves source pixels, aspect ratio, transparency, and padding analysis for exports and recovery
-- Runtime artwork textures capped by rendering profile without modifying the original IndexedDB files
-- CI inspection and enforcement for GLB file size, triangle count, mesh count, material count, and embedded texture dimensions and bytes
+- compiled Tailwind CSS, strict TypeScript, warning-free ESLint, and Prettier
+- application source under `src/` with the `@/` alias and enforced import boundaries
+- History API routes and direct-route hosting fallback
+- recoverable IndexedDB designs, checkout fields, and My Designs workspace
+- locked Node/npm environment, committed lockfile, cached `npm ci`, tests, CI, and bundle budgets
 
-Still required before P2 is complete:
+### P2 — production-quality local customizer
 
-- Confirming physical measurements against the real Classic T-shirt and printing process
-- Genuine optimized oversized T-shirt, hoodie, and vest models
-- Calibrated sleeve and other product-specific surfaces
-- Geometry-aware seam warnings
-- Compression and re-audit of the approved final garment assets
+In progress on `agent/bgd-ink-p2-models-print-areas`:
 
-The current Classic T-shirt asset passes the enforced limits but does not yet use Meshopt, Draco, or KTX2 compression. Compression is deliberately deferred until the final product assets are approved so work is not repeated on placeholder or incomplete models.
+- honest product-model readiness; no unrelated garment geometry is substituted
+- Classic T-shirt front/back surfaces, centimeter placement, safe boundaries, and surface-specific cameras
+- aspect-ratio-aware artwork dimensions
+- source pixels, transparency, padding, effective DPI, and quality warnings
+- undo/redo and complete layer controls
+- explicit View, Move, and Resize/Rotate modes
+- one- and two-pointer gestures
+- adaptive rendering profiles, WebGL recovery, and safe 2D fallback
+- downloadable multi-surface PNG proof and URL-free JSON specification
+- profile-aware GPU preview textures that preserve original IndexedDB artwork
+- measured GLB geometry and embedded-texture budgets
 
-None of this P2 work adds backend, database, account, or remote-storage infrastructure.
+P2 still depends on real physical inputs: confirmed Classic T-shirt calibration, genuine oversized T-shirt/hoodie/vest models, supported sleeve surfaces, geometry-aware seam warnings, and final asset compression.
+
+### P3 — premium storefront and customer journey
+
+In progress on `agent/bgd-ink-p3-premium-storefront`:
+
+- editorial print-lab homepage and model-aware Studio Workbench
+- owned local SVG garment library for the four configured products
+- owned icon system instead of emoji process art
+- removal of remote stock imagery, fabricated-looking testimonials, and unsupported product or delivery promises
+- catalog hierarchy built around model readiness, availability, local starting price, configured colours, and editor sizes
+- premium header, RTL-aware mobile navigation, footer, and prototype notice
+- permanent storefront trust gate
+- `/guide` route with verified-versus-pending expectations, garment-measurement instructions, reference-only method education, artwork preparation, prototype policies, and FAQs
+- English/Iraqi-Arabic guide and direct-route browser coverage
+- Three.js kept out of the initial storefront bundle
+
+Still open in P3:
+
+- approved real product and completed-work photography
+- confirmed prices, production times, product specifications, method availability, and product-specific size charts
+- quantity and variant preparation
+- official contact channels
+- approved returns, care, privacy, and fulfillment policies
+- complete Iraqi-Arabic editorial and RTL review
+- representative physical phone and tablet validation
 
 ## Brand
 
-Brand values live only in `src/config/brand.ts`:
+Brand values live in `src/config/brand.ts`:
 
-- Customer-facing name: **BGD/INK**
-- Product name: **BGD/INK Studio**
-- Tagline: **Design it. Wear it.** / **صمّمها والبسها**
-- Primary market: Baghdad, Iraq
+- customer-facing name: **BGD/INK**
+- product name: **BGD/INK Studio**
+- tagline: **Design it. Wear it.** / **صمّمها والبسها**
+- primary market: Baghdad, Iraq
 
 `npm run check:brand` prevents customer-facing source files from reintroducing old or hardcoded brand literals.
 
@@ -125,23 +141,22 @@ npm run check
 npm run test:e2e
 ```
 
-The fast gate performs:
+The fast gate runs:
 
 ```text
 environment validation
 → strict TypeScript
 → warning-free ESLint
 → brand source-of-truth validation
-→ import-boundary validation
-→ measured GLB geometry and texture budgets
+→ architectural import-boundary validation
+→ measured GLB asset budgets
+→ storefront content-trust validation
 → unit, component, and accessibility tests
 → production build
 → JavaScript and CSS bundle budgets
 ```
 
-Current P2 coverage includes **45 unit/component/accessibility tests across 15 files** and **six Chromium customer journeys** covering recovery, artwork quality, layer editing, mobile Arabic/RTL navigation, rendering fallback behavior, and real PNG/JSON downloads.
-
-Additional commands:
+Useful commands:
 
 ```bash
 npm run typecheck
@@ -150,6 +165,7 @@ npm run check:environment
 npm run check:brand
 npm run check:boundaries
 npm run check:assets
+npm run check:storefront
 npm run test
 npm run test:unit
 npm run test:coverage
@@ -162,16 +178,19 @@ npm run check:bundle
 npm run preview
 ```
 
+The current P3 fast suite contains 49 unit/component/accessibility tests. Seven Chromium journeys cover draft and checkout recovery, artwork quality, layer history, mobile Arabic/RTL navigation, WebGL/2D recovery, real PNG/JSON downloads, and the bilingual Studio Guide.
+
 ## Routes
 
-| Route                | Purpose                   |
-| -------------------- | ------------------------- |
-| `/`                  | Landing page              |
-| `/catalog`           | Product selection         |
-| `/designs`           | Recent local designs      |
-| `/studio/:draftId`   | Recoverable 3D editor     |
-| `/checkout/:draftId` | Recoverable delivery form |
-| `/draft/:draftId`    | Local draft confirmation  |
+| Route | Purpose |
+| --- | --- |
+| `/` | Premium landing page |
+| `/catalog` | Model-aware garment selection |
+| `/guide` | Size preparation, methods, policies, and FAQ |
+| `/designs` | Recent local designs |
+| `/studio/:draftId` | Recoverable 3D editor |
+| `/checkout/:draftId` | Recoverable local draft details |
+| `/draft/:draftId` | Local draft confirmation |
 
 Browser Back/Forward navigation is supported. Netlify direct-route fallback is provided through `public/_redirects`.
 
@@ -179,51 +198,29 @@ Browser Back/Forward navigation is supported. Netlify direct-route fallback is p
 
 IndexedDB draft version 4 stores:
 
-- Draft name, product, color, size, and notes
-- Original PNG, JPEG, or WebP artwork blobs
-- Layer names, visibility, ordering, active selection, and print surfaces
-- Layer position, rotation, aspect ratio, and physical scale
-- Source dimensions, transparency, padding, and other local artwork-analysis metadata
-- Checkout contact and address fields
-- Local submission linkage
+- draft name, product, colour, size, and notes
+- original PNG, JPEG, or WebP artwork blobs
+- layer names, visibility, order, active selection, and print surfaces
+- layer placement, rotation, aspect ratio, and physical scale
+- source dimensions, transparency, padding, and quality metadata
+- local contact and address fields
+- local submission linkage
 
-The My Designs workspace can reopen, rename, duplicate, and permanently delete local designs. Duplicate designs receive independent artwork blobs.
+My Designs can reopen, rename, duplicate, and permanently delete local drafts. Duplicated designs receive independent artwork blobs.
 
-The original artwork blob remains separate from generated object URLs, Three.js preview textures, PNG proofs, and JSON specifications. Export generation reads the original local preview data but never replaces or mutates the IndexedDB artwork blob. Preview URLs are recreated when a design is restored and revoked when the relevant screen closes.
-
-IndexedDB is browser-local persistence, not production storage. Clearing browser data can permanently remove designs, and there is no server backup or cross-device recovery.
+The original artwork remains separate from object URLs, Three.js preview textures, PNG proofs, and JSON specifications. Clearing browser data can permanently remove local designs; there is no server backup or account recovery.
 
 ## Customizer interaction modes
 
-The 3D editor deliberately separates gestures:
-
 - **View Garment:** orbit and zoom the product camera
 - **Move Design:** drag the selected visible layer within its safe print surface
-- **Resize/Rotate:** drag horizontally to rotate and vertically to resize, or use two pointers for pinch-and-twist transforms
+- **Resize/Rotate:** drag or use two pointers for pinch-and-twist transforms
 
-Move and transform controls remain disabled until a visible layer is selected. Gestures are grouped into single undoable history actions.
+Artwork modes remain disabled until a visible layer is selected. Continuous gestures are grouped into one undoable history action.
 
-## Rendering resilience
+## Rendering and texture resilience
 
-The customizer chooses a rendering profile from device capabilities such as pointer type, viewport, hardware concurrency, optional device memory, reduced-motion preference, and data-saving preference.
-
-Profiles can adjust:
-
-- Device pixel ratio
-- Antialiasing
-- Shadows and shadow-map size
-- Texture anisotropy
-- Idle animation
-- WebGL power preference
-- Maximum derived artwork-texture dimensions
-
-Rendering pauses while the document is hidden. Constrained devices use demand rendering rather than a permanent animation loop.
-
-When WebGL is unavailable, its context is lost, or the garment model cannot render, the app switches to a safe local 2D preview without discarding the draft. A supported device can retry the 3D renderer from the same design state.
-
-## Artwork preview textures
-
-The original uploaded file remains untouched in IndexedDB. The 3D renderer creates a separate canvas-derived texture for GPU display and caps its largest dimension according to the selected rendering profile:
+The editor selects high, balanced, or low-power settings from available device hints. Profiles can adjust DPR, antialiasing, shadows, anisotropy, idle animation, power preference, and maximum derived artwork-texture dimensions.
 
 | Profile | Maximum preview dimension |
 | --- | ---: |
@@ -231,47 +228,54 @@ The original uploaded file remains untouched in IndexedDB. The 3D renderer creat
 | Balanced | 1536 px |
 | Low power | 1024 px |
 
-The cap also respects the browser-reported maximum WebGL texture size. Aspect ratio is preserved, smaller artwork is not enlarged, mipmaps remain enabled, and generated GPU textures are disposed when the layer or rendering profile changes.
+The cap also respects the WebGL hardware limit. Smaller files are not enlarged, aspect ratio is preserved, and generated GPU textures are disposed when no longer needed.
 
-These limits reduce GPU memory pressure without degrading the original file or the local production metadata.
+Rendering pauses while the page is hidden. When WebGL is unavailable or loses context, the app switches to a safe local 2D preview without discarding the draft.
 
 ## Local production files
 
-The customizer route includes a collapsible **Production files** section below the editor. It reads the latest stable IndexedDB draft before generating either file.
+The customizer can generate:
 
 ### PNG proof
 
-The PNG proof is a high-resolution, browser-generated sheet containing every configured product surface. It includes:
-
-- Product, size, color, draft name, and draft ID
-- Surface labels and physical print-area dimensions
-- Safe-margin guides
-- Visible artwork positioned and rotated from the saved centimeter placement
-- Layer order and names
-- A calibration warning
+- every configured product surface
+- product, size, colour, draft name, and ID
+- physical print-area dimensions and safe margins
+- visible artwork placement, rotation, order, and layer names
+- an explicit calibration warning
 
 ### JSON specification
 
-The JSON specification contains:
+- product and draft metadata
+- documented viewer-facing centimeter coordinates
+- every configured surface
+- visible and hidden layers
+- physical dimensions, center and edge offsets, and rotation
+- source file metadata, dimensions, aspect ratio, and transparency
+- estimated DPI, quality level, and warnings
+- explicit `unverified` physical calibration
 
-- Product and draft metadata
-- A documented centimeter coordinate system
-- Every configured surface
-- Visible and hidden layer state
-- Layer order, width, height, center, edge offsets, and rotation
-- Source file name, type, pixel dimensions, aspect ratio, and transparency data
-- Estimated DPI, quality level, and warnings
-- An explicit `unverified` calibration status requiring physical confirmation
+Temporary `blob:` preview URLs are excluded. These files are planning and handoff aids, not authorization to print.
 
-Temporary `blob:` preview URLs are never included. Generated files are independent browser outputs and do not modify the original IndexedDB artwork.
+## Studio Guide
 
-These files are planning and handoff aids, not authorization to print. The physical print areas must still be confirmed against the exact garment blank and production method.
+The `/guide` route deliberately separates verified implementation facts from information that still needs real business or production confirmation.
+
+It includes:
+
+- current storefront expectations
+- how to measure an existing garment rather than guessing body measurements
+- a clear pending state for exact product size charts
+- reference-only DTF, screen-printing, and embroidery trade-offs
+- artwork-preparation checklist
+- local-data, artwork-rights, colour-preview, calibration, and no-commerce policies
+- bilingual FAQ
+
+The method descriptions do not claim that those methods are currently offered. Prototype policies do not replace approved business policies.
 
 ## 3D asset budgets
 
-`npm run check:assets` validates every GLB under `public/` after Git LFS checkout. It fails when a model is still an LFS pointer, is not a valid glTF 2.0 binary, or exceeds a reviewed limit.
-
-The current enforced per-model limits are:
+`npm run check:assets` validates every GLB under `public/` after Git LFS checkout. It rejects unresolved LFS pointers, invalid glTF 2.0 binaries, and assets that exceed reviewed limits.
 
 | Metric | Limit |
 | --- | ---: |
@@ -282,7 +286,7 @@ The current enforced per-model limits are:
 | Embedded texture dimension | 1024 px |
 | Embedded texture size | 1,100,000 bytes |
 
-The measured Classic T-shirt baseline is:
+Current Classic T-shirt baseline:
 
 | Metric | Current |
 | --- | ---: |
@@ -294,67 +298,39 @@ The measured Classic T-shirt baseline is:
 | Geometry compression | None |
 | Texture compression | None |
 
-New models must pass the same audit. Final approved assets should then be tested with Meshopt or Draco geometry compression and KTX2/Basis textures where the visual and browser-compatibility tradeoffs are acceptable.
-
-## Source architecture
-
-```text
-src/
-  components/       shared presentation
-  config/           brand, capability, and budget configuration
-  contexts/         language, theme, and toast state
-  data/             local products and 3D asset metadata
-  features/         route-level customer experiences
-  hooks/            shared React hooks
-  routing/          History API routing
-  services/         local application and IndexedDB services
-  utils/            browser-local prototype helpers
-  App.tsx           feature composition root
-  main.tsx          browser entry point
-  translations.ts   English and Iraqi Arabic copy
-  types.ts          shared domain types
-```
-
-Cross-area imports use `@/`. Features cannot import another feature's internals, and lower-level modules cannot depend on feature or UI layers. `npm run check:boundaries` enforces these rules.
+Final approved models should be tested with Meshopt or Draco and KTX2/Basis where the visual and compatibility trade-offs are acceptable.
 
 ## Performance budgets
 
-The build manifest is measured for initial assets, lazy assets, total JavaScript, and CSS. The limits are stored in `src/config/bundle-budgets.json`. The Three.js core is kept in a dedicated lazy vendor chunk rather than being loaded with the initial storefront.
-
-Current validated measurements:
+The P3 storefront keeps Three.js lazy. Current measured production baseline:
 
 | Metric | Current | Limit |
 | --- | ---: | ---: |
-| Initial JavaScript, gzip | 108.08 KiB | 140 KiB |
-| Initial CSS, gzip | 11.37 KiB | 13 KiB |
-| Largest lazy JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
+| Initial JavaScript, gzip | 97.21 KiB | 140 KiB |
+| Initial CSS, gzip | 15.08 KiB | 16 KiB |
+| Largest async JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
 | Largest JavaScript chunk, raw | 651.42 KiB | 800 KiB |
-| Total JavaScript, gzip | 397.88 KiB | 410 KiB |
-| Total JavaScript, raw | 1,340.77 KiB | 1,400 KiB |
-| Total CSS, gzip | 11.37 KiB | 15 KiB |
+| Total JavaScript, gzip | 397.42 KiB | 410 KiB |
+| Total JavaScript, raw | 1,354.26 KiB | 1,400 KiB |
+| Total CSS, gzip | 15.08 KiB | 16.5 KiB |
 
-The customizer route is approximately **79.16 KiB raw / 26.15 KiB gzip**. The lazy PNG/JSON export engine is approximately **8.73 KiB raw / 3.70 KiB gzip**. Three.js remains isolated in its lazy vendor chunk.
-
-A budget change must be intentional and reviewed; it should not be the automatic response to a regression.
+The CSS limit was deliberately reviewed for the P3 editorial visual system. It remains tight and should not be raised automatically.
 
 ## Prototype safety boundaries
 
-- There is no public admin portal.
-- There are no browser-exposed API keys.
-- Local submission creates a draft, not a confirmed order.
-- Clearing browser storage can permanently remove local designs.
-- There is no account recovery or cross-device synchronization.
-- WhatsApp actions appear only when a real destination is configured.
-- PWA/offline claims remain disabled until reliable caching is implemented.
-- No backend, database, or remote object-storage integration is currently planned.
-- Generated proofs and specifications use unverified local calibration values until physically confirmed.
+- no public admin portal
+- no browser-exposed API keys
+- no real order, payment, inventory reservation, delivery promise, or fulfillment workflow
+- no account recovery or cross-device synchronization
+- no remote artwork upload
+- official contact actions appear only after verified destinations are configured
+- generated proofs and specifications use unverified physical calibration until confirmed
+- PWA/offline claims remain disabled until reliable caching exists
 
 Do not use the local prototype for real customer orders or sensitive production data.
 
-## Troubleshooting
+## Documentation
 
-See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for Git LFS, IndexedDB, artwork upload, WebGL, local production exports, asset-budget validation, deployment routing, Playwright, runtime, and bundle-budget guidance.
-
-## Roadmap
-
-The maintained P0-P4 checklist lives in [tasks.md](tasks.md). The active roadmap is frontend/local-only; paused infrastructure is listed separately and does not block P2 or P3.
+- [P3 storefront direction](docs/P3-STOREFRONT-DIRECTION.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Roadmap](tasks.md)
