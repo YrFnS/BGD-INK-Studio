@@ -2,7 +2,7 @@
 
 BGD/INK Studio is a bilingual English/Iraqi-Arabic web application for preparing custom-apparel design drafts in a model-aware 3D editor.
 
-> The project is intentionally frontend and local-only. Designs, original artwork, draft details, and generated production files stay on the current device. They are not sent to a shop, synchronized between devices, or written to a production database.
+> The project is intentionally frontend and local-only. Designs, original artwork, draft details, quantities, and generated production files stay on the current device. They are not sent to a shop, synchronized between devices, or written to a production database.
 
 ## Current scope
 
@@ -13,6 +13,7 @@ Active work includes:
 - owned local garment illustrations
 - the product-aware 3D customizer
 - browser-local IndexedDB drafts and original artwork blobs
+- recoverable size, colour, quantity, and contact preparation
 - local design recovery, PNG proofs, and JSON specifications
 - English/Iraqi-Arabic content and RTL behavior
 - accessibility, touch interaction, performance, PWA, and SEO
@@ -27,7 +28,7 @@ Paused until explicitly reopened:
 - authoritative stock, pricing, customer, and order data
 - real order acceptance, payment, approval, tracking, or fulfillment
 
-The draft-details and confirmation flow saves a **local design draft**, not a real customer order.
+The draft-details and receipt flow saves a **local design draft**, not a real customer order.
 
 ## Phase status
 
@@ -47,7 +48,7 @@ Complete on `agent/bgd-ink-p0-foundation`:
 - compiled Tailwind CSS, strict TypeScript, warning-free ESLint, and Prettier
 - application source under `src/` with the `@/` alias and enforced import boundaries
 - History API routes and direct-route hosting fallback
-- recoverable IndexedDB designs, checkout fields, and My Designs workspace
+- recoverable IndexedDB designs, draft details, and My Designs workspace
 - locked Node/npm environment, committed lockfile, cached `npm ci`, tests, CI, and bundle budgets
 
 ### P2 — production-quality local customizer
@@ -80,6 +81,9 @@ In progress on `agent/bgd-ink-p3-premium-storefront`:
 - premium header, RTL-aware mobile navigation, footer, and prototype notice
 - permanent storefront trust gate
 - `/guide` route with verified-versus-pending expectations, garment-measurement instructions, reference-only method education, artwork preparation, prototype policies, and FAQs
+- recoverable local quantity preparation alongside size and colour
+- serialized detail/quantity autosaves that prevent lost updates
+- touch-first local draft receipt with draft-ID copy, prepared variant, quantity, local estimate, and direct My Designs/new-draft actions
 - English/Iraqi-Arabic guide and direct-route browser coverage
 - Three.js kept out of the initial storefront bundle
 
@@ -87,7 +91,6 @@ Still open in P3:
 
 - approved real product and completed-work photography
 - confirmed prices, production times, product specifications, method availability, and product-specific size charts
-- quantity and variant preparation
 - official contact channels
 - approved returns, care, privacy, and fulfillment policies
 - complete Iraqi-Arabic editorial and RTL review
@@ -178,7 +181,7 @@ npm run check:bundle
 npm run preview
 ```
 
-The current P3 fast suite contains 49 unit/component/accessibility tests. Seven Chromium journeys cover draft and checkout recovery, artwork quality, layer history, mobile Arabic/RTL navigation, WebGL/2D recovery, real PNG/JSON downloads, and the bilingual Studio Guide.
+The current P3 fast suite contains **55 unit/component/accessibility tests across 20 files**. Seven Chromium journeys cover draft/detail/quantity recovery, artwork quality, layer history, mobile Arabic/RTL navigation, WebGL/2D recovery, real PNG/JSON downloads, and the bilingual Studio Guide.
 
 ## Routes
 
@@ -189,16 +192,16 @@ The current P3 fast suite contains 49 unit/component/accessibility tests. Seven 
 | `/guide` | Size preparation, methods, policies, and FAQ |
 | `/designs` | Recent local designs |
 | `/studio/:draftId` | Recoverable 3D editor |
-| `/checkout/:draftId` | Recoverable local draft details |
-| `/draft/:draftId` | Local draft confirmation |
+| `/checkout/:draftId` | Recoverable local draft preparation |
+| `/draft/:draftId` | Local draft receipt |
 
 Browser Back/Forward navigation is supported. Netlify direct-route fallback is provided through `public/_redirects`.
 
 ## Local draft model
 
-IndexedDB draft version 4 stores:
+IndexedDB draft version 5 stores:
 
-- draft name, product, colour, size, and notes
+- draft name, product, colour, size, quantity, and notes
 - original PNG, JPEG, or WebP artwork blobs
 - layer names, visibility, order, active selection, and print surfaces
 - layer placement, rotation, aspect ratio, and physical scale
@@ -206,9 +209,25 @@ IndexedDB draft version 4 stores:
 - local contact and address fields
 - local submission linkage
 
-My Designs can reopen, rename, duplicate, and permanently delete local drafts. Duplicated designs receive independent artwork blobs.
+My Designs can reopen, rename, duplicate, and permanently delete local drafts. Duplicated designs receive independent artwork blobs and preserve the prepared quantity while clearing contact details and submission status.
+
+The draft-preparation page serializes contact and quantity writes so rapid edits cannot overwrite one another. Submit waits for the latest queued state before creating the browser-local summary.
 
 The original artwork remains separate from object URLs, Three.js preview textures, PNG proofs, and JSON specifications. Clearing browser data can permanently remove local designs; there is no server backup or account recovery.
+
+## Local quantity and receipt
+
+The size and colour selected in the editor are joined by a recoverable local quantity from 1 to 50. The interface calculates a local estimate from the configured unit price and repeats that it is not a quotation, stock reservation, or confirmed order.
+
+After saving, the local receipt shows:
+
+- draft identifier with copy action
+- garment, size, and colour
+- local quantity
+- local estimate
+- direct actions to My Designs, a new draft, or the homepage
+
+Refreshing the receipt route can still show the draft identifier, while My Designs remains the source for reopening browser-local content.
 
 ## Customizer interaction modes
 
@@ -306,15 +325,15 @@ The P3 storefront keeps Three.js lazy. Current measured production baseline:
 
 | Metric | Current | Limit |
 | --- | ---: | ---: |
-| Initial JavaScript, gzip | 97.21 KiB | 140 KiB |
-| Initial CSS, gzip | 15.08 KiB | 16 KiB |
+| Initial JavaScript, gzip | 97.32 KiB | 140 KiB |
+| Initial CSS, gzip | 15.30 KiB | 16 KiB |
 | Largest async JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
 | Largest JavaScript chunk, raw | 651.42 KiB | 800 KiB |
-| Total JavaScript, gzip | 397.42 KiB | 410 KiB |
-| Total JavaScript, raw | 1,354.26 KiB | 1,400 KiB |
-| Total CSS, gzip | 15.08 KiB | 16.5 KiB |
+| Total JavaScript, gzip | 400.06 KiB | 410 KiB |
+| Total JavaScript, raw | 1,363.73 KiB | 1,400 KiB |
+| Total CSS, gzip | 15.30 KiB | 16.5 KiB |
 
-The CSS limit was deliberately reviewed for the P3 editorial visual system. It remains tight and should not be raised automatically.
+The CSS limit was deliberately reviewed for the P3 editorial visual system. JavaScript and CSS limits should not be raised automatically.
 
 ## Prototype safety boundaries
 
