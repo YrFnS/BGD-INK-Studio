@@ -30,14 +30,15 @@ Brand values, contact destinations, storage namespaces, and order prefixes are c
 
 ### Requirements
 
-- Node.js 20 or newer
-- npm 10 or newer
+- Node.js **22.23.1**, pinned in `.nvmrc`
+- npm **10.9.8**, declared through `packageManager`
 - Git LFS for the GLB assets
 
 ### Commands
 
 ```bash
-npm install
+nvm use
+npm ci
 npm run dev
 ```
 
@@ -47,7 +48,7 @@ Before opening a pull request:
 npm run check
 ```
 
-`npm run check` performs strict TypeScript validation, ESLint validation, the fast unit/component test suite, and a production Vite build.
+`npm run check` performs strict TypeScript validation, warning-free ESLint validation, the fast unit/component test suite, a production Vite build, and route-aware bundle-budget enforcement.
 
 Additional commands:
 
@@ -62,8 +63,40 @@ npm run test:e2e:ui
 npm run format:check
 npm run format
 npm run build
+npm run check:bundle
 npm run preview
 ```
+
+## Reproducible installs
+
+`package-lock.json` is committed with lockfile version 3. Local validation and GitHub Actions use `npm ci`, so dependency resolution must match the reviewed lockfile exactly. GitHub Actions also caches npm's download cache by the lockfile hash; it does not cache `node_modules`.
+
+Runtime consistency is enforced in four places:
+
+- `.nvmrc` pins Node.js 22.23.1.
+- `package.json` declares npm 10.9.8 and compatible engine ranges.
+- GitHub Actions reads `.nvmrc` and installs with `npm ci`.
+- Netlify uses the same pinned Node.js version and runs the full validation command before publishing.
+
+When dependencies change, update both `package.json` and `package-lock.json` in the same review.
+
+## Performance budgets
+
+Vite emits `.vite/manifest.json`, and `scripts/check-bundle-budget.mjs` uses that graph to distinguish initial assets from lazy route chunks. It calculates gzip sizes itself and fails the build when a reviewed ceiling is exceeded.
+
+Current production baseline and enforced limits:
+
+| Metric | Current baseline | Limit |
+| --- | ---: | ---: |
+| Initial JavaScript, gzip | 107.21 KiB | 140 KiB |
+| Initial CSS, gzip | 9.86 KiB | 13 KiB |
+| Largest lazy JavaScript chunk, gzip | 262.42 KiB | 290 KiB |
+| Largest JavaScript chunk, raw | 943.74 KiB | 1,024 KiB |
+| Total JavaScript, gzip | 395.61 KiB | 425 KiB |
+| Total JavaScript, raw | 1,336.28 KiB | 1,450 KiB |
+| Total CSS, gzip | 9.86 KiB | 15 KiB |
+
+The thresholds live in `config/bundle-budgets.json`. A budget increase should be an intentional review decision with a documented reason, not an automatic response to a failing build. The large lazy customizer chunk remains a P2 optimization target even though it is not part of the initial page load.
 
 ## Automated testing
 
@@ -167,7 +200,7 @@ Do not use the current local prototype adapter for real customer orders or sensi
 
 ```text
 components/          Shared layout and UI components
-config/              Brand, runtime, and capability configuration
+config/              Brand, runtime, capability, and bundle-budget configuration
 contexts/            Theme, language, and toast state
 e2e/                 Playwright browser journeys
 features/            Catalog, designs, customizer, checkout, and landing experiences
@@ -175,6 +208,7 @@ data/                Prototype product and 3D asset configuration
 docs/                Architecture and backend contracts
 hooks/                Shared hooks
 routing/              History API route parsing and navigation
+scripts/              Build-time quality and performance checks
 services/api/         Typed local and Frappe data adapters
 services/drafts/      IndexedDB draft and artwork repository
 test/                 Shared Vitest and browser-environment setup
@@ -183,8 +217,8 @@ utils/                Legacy/prototype summary persistence helpers
 
 ## Validation
 
-Netlify deploy previews run `npm run check` before publishing. GitHub Actions runs the same fast validation gate and, after it passes, installs Chromium and executes the Playwright recovery journey. A failed browser job uploads its Playwright report for diagnosis.
+Netlify deploy previews run `npm run check` before publishing. GitHub Actions restores the npm cache, runs a locked `npm ci`, executes the same fast validation and bundle-budget gate, and then runs the Playwright Chromium recovery journey. A failed browser job uploads its Playwright report for diagnosis.
 
 ## Roadmap
 
-The implementation plan lives in `tasks.md` and is organized into P0–P4. P0 establishes the safe BGD/INK foundation. P1 adds the engineering pipeline, recoverable workspace, route recovery, automated testing, and backend boundary. P2 rebuilds the production-grade customizer. P3 redesigns the storefront, and P4 adds operations, PWA, analytics, and growth features.
+The implementation plan lives in `tasks.md` and is organized into P0–P4. P0 establishes the safe BGD/INK foundation. P1 adds the engineering pipeline, recoverable workspace, route recovery, automated testing, reproducible builds, performance budgets, and backend boundary. P2 rebuilds the production-grade customizer. P3 redesigns the storefront, and P4 adds operations, PWA, analytics, and growth features.
