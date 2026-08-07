@@ -39,8 +39,8 @@ test('renames, duplicates, hides, reorders, and restores layers with history', a
   await page.getByRole('button', { name: /Redo/ }).click();
   await expect(page.getByRole('button', { name: 'Show' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Send backward' }).click();
-  await page.getByRole('button', { name: 'Bring forward' }).click();
+  await page.getByRole('button', { name: 'Send layer backward' }).click();
+  await page.getByRole('button', { name: 'Bring layer forward' }).click();
   await expect(page.getByText('Saved on this device', { exact: true })).toBeVisible();
 
   await page.reload();
