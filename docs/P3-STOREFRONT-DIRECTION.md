@@ -94,18 +94,53 @@ The method explanations describe common trade-offs but do not claim that any met
 
 The guide has unit, accessibility, direct-route, and English/Arabic Chromium coverage.
 
+## Recoverable local variant and quantity preparation
+
+The size and colour selected in the editor are now joined by a local quantity from 1 to 50 on the draft-preparation route.
+
+This is deliberately not presented as ecommerce stock or a quotation:
+
+- the quantity is planning data stored in IndexedDB draft version 5
+- older drafts safely normalize to quantity 1
+- duplicated drafts preserve quantity while clearing contact information and submitted state
+- the displayed estimate uses the locally configured unit price
+- the UI states that no stock is reserved and the estimate is not a confirmed quotation or order
+- legacy browser summaries also normalize missing quantities
+- a future configured WhatsApp handoff includes quantity without turning WhatsApp into the database
+
+The browser test uncovered a real lost-update race when contact details and quantity were saved as competing whole-record updates. The draft-preparation route now serializes those writes through one ordered queue. Every snapshot completes before the next starts, and submit waits for the latest queued state.
+
+The recovery journey verifies quantity, customer fields, configured unit price, and the local estimate after a full page refresh.
+
+## Touch-first local draft receipt
+
+The confirmation route is now a local draft receipt rather than a generic order-success screen.
+
+It provides:
+
+- a clear browser-local status
+- draft identifier with copy action
+- prepared garment, size, colour, quantity, and local estimate when available in the current session
+- explicit “not a quote or confirmed order” language
+- direct actions to My Designs, a new draft, and the homepage
+- a compact identifier-only state after a direct refresh
+- English/Iraqi-Arabic copy
+- automated accessibility coverage
+
+The receipt does not imply payment, stock reservation, shop receipt, delivery, or production acceptance.
+
 ## Performance decisions
 
 P3 originally caused the homepage to import the model manifest from a module that also performed Drei model preloading. That pulled Three.js into the initial route.
 
-The preload side effect was removed from the lightweight model configuration module. Three.js is lazy again, and the initial JavaScript measurement improved to approximately 97 KiB gzip.
+The preload side effect was removed from the lightweight model configuration module. Three.js is lazy again, and the initial JavaScript measurement remains below 100 KiB gzip.
 
-The editorial storefront and guide increased generated Tailwind CSS to approximately 15.08 KiB gzip. After review, the CSS gates were reset narrowly to:
+The editorial storefront, guide, draft-preparation view, and receipt produce approximately 15.30 KiB gzip of CSS. The reviewed CSS gates remain narrow:
 
 - initial CSS: 16 KiB gzip
 - total CSS: 16.5 KiB gzip
 
-This records the deliberate visual-system cost while preserving less than 1.5 KiB of headroom. It is not permission to raise future budgets automatically.
+This records the deliberate visual-system cost with limited headroom. It is not permission to raise future budgets automatically.
 
 ## Remaining P3 work
 
@@ -125,11 +160,9 @@ These should be added only after the business supplies or confirms them.
 
 ### Customer journey
 
-- quantity and variant-selection experience using local product data
 - contact and handoff flow once official contact details are configured
 - complete Iraqi Arabic editorial and terminology review
-- complete RTL review across homepage, catalog, guide, editor, draft details, and confirmation
-- touch-first draft-details and confirmation polish
+- complete RTL review across homepage, catalog, guide, editor, draft details, and receipt
 - representative physical phone and tablet validation
 - future review or completed-work sections only when evidence is verifiable
 
@@ -140,5 +173,5 @@ P3 is complete only when:
 1. Every customer-facing asset is owned, licensed, or clearly marked as a placeholder.
 2. Every business claim has an approved source or is visibly marked pending.
 3. All bilingual content is reviewed in context.
-4. The catalog, guide, editor, draft details, and confirmation journey are touch-first and accessible.
+4. The catalog, guide, editor, draft details, and receipt journey are touch-first and accessible.
 5. Unit, accessibility, browser, trust, asset, build, and performance gates pass.
