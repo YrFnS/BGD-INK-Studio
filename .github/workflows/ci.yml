@@ -76,88 +76,6 @@ jobs:
           content = content.replace("      'scripts/finish-p0-p1.mjs',\n", '')
           eslint.write_text(content)
           PY
-
-          cat > .github/workflows/ci.yml <<'YAML'
-          name: CI
-
-          on:
-            push:
-              branches:
-                - main
-                - 'agent/**'
-            pull_request:
-              branches:
-                - main
-
-          permissions:
-            contents: read
-
-          concurrency:
-            group: ci-${{ github.workflow }}-${{ github.ref }}
-            cancel-in-progress: true
-
-          jobs:
-            validate:
-              name: Typecheck, lint, unit tests, build, and budgets
-              runs-on: ubuntu-latest
-              timeout-minutes: 20
-
-              steps:
-                - name: Checkout repository
-                  uses: actions/checkout@v4
-                  with:
-                    lfs: true
-
-                - name: Set up Node.js and npm cache
-                  uses: actions/setup-node@v4
-                  with:
-                    node-version-file: .nvmrc
-                    cache: npm
-                    cache-dependency-path: package-lock.json
-
-                - name: Install locked dependencies
-                  run: npm ci --no-audit --no-fund
-
-                - name: Validate application
-                  run: npm run check
-
-            e2e:
-              name: Desktop and mobile Chromium journeys
-              needs: validate
-              runs-on: ubuntu-latest
-              timeout-minutes: 25
-
-              steps:
-                - name: Checkout repository
-                  uses: actions/checkout@v4
-                  with:
-                    lfs: true
-
-                - name: Set up Node.js and npm cache
-                  uses: actions/setup-node@v4
-                  with:
-                    node-version-file: .nvmrc
-                    cache: npm
-                    cache-dependency-path: package-lock.json
-
-                - name: Install locked dependencies
-                  run: npm ci --no-audit --no-fund
-
-                - name: Install Chromium
-                  run: npx playwright install --with-deps chromium
-
-                - name: Run browser journeys
-                  run: npm run test:e2e
-
-                - name: Upload Playwright report
-                  if: failure()
-                  uses: actions/upload-artifact@v4
-                  with:
-                    name: playwright-report
-                    path: playwright-report
-                    retention-days: 7
-          YAML
-
           npm run format
 
       - name: Commit completed P0 and P1
@@ -165,6 +83,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          git reset -- .github/workflows/ci.yml
           git commit -m "complete P0 and P1 foundation"
           git push origin HEAD:agent/bgd-ink-p0-foundation
 
