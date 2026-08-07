@@ -38,13 +38,13 @@ test('keeps the Arabic customizer, quality guidance, fallback, and handoff tools
 
   const switchTo2d = page.getByRole('button', { name: 'استخدم المعاينة 2D' });
   if (await switchTo2d.isVisible()) await switchTo2d.click();
-  await expect(page.getByText('المعاينة الآمنة 2D')).toBeVisible();
+  await expect(page.getByText('المعاينة الآمنة 2D', { exact: true })).toBeVisible();
 
   const exportToggle = page.getByTestId('production-export-toggle');
   await exportToggle.scrollIntoViewIfNeeded();
   await exportToggle.click();
   await expect(page.getByRole('heading', { name: 'ملفات التسليم المحلية' })).toBeVisible();
-  await expect(page.getByText('على هذا الجهاز')).toBeVisible();
+  await expect(page.getByText('على هذا الجهاز', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'نزّل إثبات PNG' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'نزّل مواصفات JSON' })).toBeEnabled();
 
