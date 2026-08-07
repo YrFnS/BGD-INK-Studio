@@ -5,9 +5,11 @@
 @theme {
   --color-background: #050505;
   --color-surface: #111111;
-  --color-primary: #ffffff;
-  --color-secondary: #a1a1aa;
-  --color-accent: #dc2626;
+  --color-primary: #f4f1ea;
+  --color-secondary: #a8a29a;
+  --color-accent: #e13b2d;
+  --color-paper: #f4f1ea;
+  --color-ink: #111111;
 
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Syne', ui-sans-serif, system-ui, sans-serif;
@@ -39,6 +41,37 @@
   }
 }
 
+@keyframes studio-garment-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-0.35deg);
+  }
+
+  50% {
+    transform: translate3d(0, -8px, 0) rotate(0.35deg);
+  }
+}
+
+@keyframes studio-scan {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 0.22;
+  }
+
+  80% {
+    opacity: 0.12;
+  }
+
+  100% {
+    transform: translateY(620%);
+    opacity: 0;
+  }
+}
+
 @layer base {
   :root {
     color-scheme: light;
@@ -51,7 +84,7 @@
 
   html {
     min-width: 320px;
-    background: #ffffff;
+    background: var(--color-paper);
     scroll-behavior: smooth;
   }
 
@@ -63,15 +96,15 @@
     min-width: 320px;
     min-height: 100vh;
     margin: 0;
-    background: #ffffff;
-    color: #000000;
+    background: var(--color-paper);
+    color: var(--color-ink);
     -webkit-tap-highlight-color: transparent;
     text-rendering: optimizeLegibility;
   }
 
   .dark body {
     background: var(--color-background);
-    color: #ffffff;
+    color: var(--color-primary);
   }
 
   button,
@@ -90,6 +123,23 @@
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
   }
+}
+
+.studio-garment-drift {
+  animation: studio-garment-drift 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.studio-workbench::after {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 2;
+  height: 22%;
+  content: '';
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, rgb(225 59 45 / 9%), transparent);
+  animation: studio-scan 7s linear infinite;
 }
 
 @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
