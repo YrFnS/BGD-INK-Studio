@@ -25,6 +25,12 @@ import {
   Product,
   Size,
 } from '@/types';
+import {
+  analyzeArtworkFile,
+  analyzeArtworkUrl,
+  normalizeArtworkAspectRatio,
+} from './artworkAnalysis';
+import { ArtworkQualityOverlay } from './ArtworkQualityOverlay';
 import { Controls } from './Controls';
 import {
   areEditorSnapshotsEqual,
@@ -92,16 +98,30 @@ const normalizeLayerForModel = (
     modelConfig,
     hasSupportedSurface ? layer.surfaceId : modelConfig.defaultSurfaceId,
   );
-  const scale = clampScaleToSurface(layer.scale, surface);
+  const aspectRatio = normalizeArtworkAspectRatio(layer.aspectRatio);
+  const scale = clampScaleToSurface(layer.scale, surface, aspectRatio);
 
   return {
     ...layer,
     name: layer.name.trim() || createLayerName(layer.fileName ?? 'artwork', index),
     visible: layer.visible !== false,
     surfaceId: surface.id,
+    aspectRatio,
     scale,
-    position: clampPositionToSurface(layer.position, surface, scale),
+    position: clampPositionToSurface(layer.position, surface, scale, aspectRatio),
   };
+};
+
+const analyzeRestoredLayer = async (layer: DecalLayer): Promise<DecalLayer> => {
+  if (layer.pixelWidth && layer.pixelHeight && layer.aspectRatio) {
+    return { ...layer, aspectRatio: normalizeArtworkAspectRatio(layer.aspectRatio) };
+  }
+
+  try {
+    return { ...layer, ...(await analyzeArtworkUrl(layer.url)) };
+  } catch {
+    return { ...layer, aspectRatio: normalizeArtworkAspectRatio(layer.aspectRatio) };
+  }
 };
 
 export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onMissingDraft }) => {
@@ -170,7 +190,8 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     const hasSelectedSurface = config?.surfaces.some(
       (surface) => surface.id === snapshot.selectedSurfaceId,
     );
-    const nextSurfaceId = activeLayer?.surfaceId ??
+    const nextSurfaceId =
+      activeLayer?.surfaceId ??
       (hasSelectedSurface ? snapshot.selectedSurfaceId : config?.defaultSurfaceId) ??
       DEFAULT_PRINT_SURFACE_ID;
     const nextActiveDecalId = activeLayer?.id ?? null;
@@ -309,7 +330,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     updateHistoryAvailability(null);
 
     Promise.all([loadDesignDraft(draftId), platformApi.catalog.listProducts(controller.signal)])
-      .then(([draft, products]) => {
+      .then(async ([draft, products]) => {
         if (disposed) {
           if (draft) releaseDraftObjectUrls(draft);
           return;
@@ -335,8 +356,14 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
           return;
         }
 
+        const analyzedDecals = await Promise.all(draft.decals.map(analyzeRestoredLayer));
+        if (disposed) {
+          releaseDraftObjectUrls(draft);
+          return;
+        }
+
         modelConfigRef.current = matchingModelConfig;
-        const normalizedDecals = draft.decals.map((layer, index) =>
+        const normalizedDecals = analyzedDecals.map((layer, index) =>
           normalizeLayerForModel(layer, matchingModelConfig, index),
         );
         const restoredActiveLayer = normalizedDecals.find(
@@ -467,10 +494,11 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     }
 
     const surface = getPrintSurface(modelConfig, selectedSurfaceIdRef.current);
-    const defaultTransform = createDefaultSurfaceTransform(surface);
 
     setIsUploading(true);
     try {
+      const analysis = await analyzeArtworkFile(file);
+      const defaultTransform = createDefaultSurfaceTransform(surface, analysis.aspectRatio);
       const asset = await storeArtworkFile(draftId, file);
       const newLayer: DecalLayer = {
         id: createLayerId(),
@@ -485,6 +513,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
         rotation: defaultTransform.rotation,
         userRotation: 0,
         scale: defaultTransform.scale,
+        ...analysis,
       };
 
       commitEditorChange((current) => ({
@@ -495,15 +524,15 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
       }));
       showToast(
         language === 'ar'
-          ? 'تم حفظ الصورة وإضافتها لمساحة الطباعة.'
-          : 'Artwork saved and added to the selected print surface.',
+          ? 'تم تحليل الصورة وإضافتها لمساحة الطباعة.'
+          : 'Artwork analyzed and added to the selected print surface.',
         'success',
       );
     } catch {
       showToast(
         language === 'ar'
-          ? 'تعذر حفظ الصورة على هذا الجهاز.'
-          : 'The artwork could not be stored on this device.',
+          ? 'تعذر قراءة الصورة أو حفظها على هذا الجهاز.'
+          : 'The artwork could not be decoded or stored on this device.',
         'error',
       );
     } finally {
@@ -530,7 +559,12 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
       };
     });
 
-    showToast(language === 'ar' ? 'تم حذف الطبقة. يمكنك التراجع.' : 'Layer removed. You can undo.', 'info');
+    showToast(
+      language === 'ar'
+        ? 'تم حذف الطبقة. يمكنك التراجع.'
+        : 'Layer removed. You can undo.',
+      'info',
+    );
   };
 
   const handleDecalUpdate = (id: string, updates: Partial<DecalLayer>) => {
@@ -543,17 +577,24 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
         if (layer.id !== id) return layer;
 
         const surface = getPrintSurface(config, layer.surfaceId);
-        const scale = clampScaleToSurface(updates.scale ?? layer.scale, surface);
+        const aspectRatio = normalizeArtworkAspectRatio(layer.aspectRatio);
+        const scale = clampScaleToSurface(
+          updates.scale ?? layer.scale,
+          surface,
+          aspectRatio,
+        );
         const position = clampPositionToSurface(
           updates.position ?? layer.position,
           surface,
           scale,
+          aspectRatio,
         );
 
         return {
           ...layer,
           ...updates,
           surfaceId: surface.id,
+          aspectRatio,
           scale,
           position,
         };
@@ -651,6 +692,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
           [source.position[0] + 0.025, source.position[1] - 0.025, source.position[2]],
           surface,
           source.scale,
+          normalizeArtworkAspectRatio(source.aspectRatio),
         ),
       };
       const nextDecals = [...current.decals];
@@ -752,6 +794,10 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   }
 
   const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
+  const activeQualityLayer = decals.find((layer) => layer.id === activeDecalId) ?? null;
+  const activeQualitySurface = activeQualityLayer
+    ? getPrintSurface(modelConfig, activeQualityLayer.surfaceId)
+    : selectedSurface;
 
   return (
     <div
@@ -778,6 +824,12 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
             </span>
           </div>
         </div>
+
+        <ArtworkQualityOverlay
+          layer={activeQualityLayer}
+          surface={activeQualitySurface}
+          language={language}
+        />
 
         {!isInteracting && (
           <button
