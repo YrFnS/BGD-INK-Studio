@@ -107,18 +107,46 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Establish measured GLB and artwork-texture budgets from the current Classic T-shirt baseline.
 - [ ] Compress and re-audit the approved final garment GLBs and their embedded textures after genuine product assets are available.
 
-## P3 — Premium storefront and customer journey
+## P3 — Premium storefront and customer journey — IN PROGRESS
 
-- [ ] Establish the complete BGD/INK identity and owned visual asset library.
-- [ ] Replace generic stock imagery, emoji, and unverified testimonials.
-- [ ] Add real product photography and completed customer work.
-- [ ] Add locally configured price ranges, production times, size guides, and printing-method explanations.
+### Identity, visual assets, and trust
+
+- [x] Create `agent/bgd-ink-p3-premium-storefront` from the complete P2 branch.
+- [x] Establish the editorial print-lab direction with paper, ink, signal-color, measurement-grid, and production-annotation language.
+- [x] Add an owned vector garment library for all four locally configured catalog products.
+- [x] Replace customer-facing stock photography with owned local assets.
+- [x] Replace emoji process graphics with an owned SVG icon system.
+- [x] Remove fabricated-looking anonymous testimonials instead of presenting them as customer proof.
+- [x] Remove unsupported material, printing-method, wash-performance, superlative, and delivery claims.
+- [x] Add a permanent CI trust gate for stock imagery, fabricated reviews, emoji icons, and unsupported promises.
+- [ ] Add approved real product photography.
+- [ ] Add approved completed-customer-work photography.
+- [ ] Finish the complete BGD/INK identity and owned campaign asset library.
+
+### Premium storefront and catalog
+
+- [x] Rebuild the homepage around the real editor, local-draft, quality-analysis, and export capabilities.
+- [x] Add a premium model-aware studio workbench visual without loading Three.js on the homepage.
+- [x] Rebuild the catalog hierarchy around model readiness, availability, starting price, configured colors, and editor sizes.
+- [x] Keep unfinished products visible while clearly locking unavailable customization.
+- [x] Add explicit local-price and no-real-order context.
+- [x] Redesign the desktop header, RTL-aware mobile navigation, prototype notice, and footer.
+- [x] Migrate legacy stored product records to owned canonical imagery while preserving local price, color, and stock values.
+- [ ] Confirm final price ranges with the business.
+- [ ] Add confirmed production times.
+- [ ] Add approved product-specific size guides.
+- [ ] Add confirmed printing-method explanations.
+
+### Customer journey and business information
+
 - [ ] Add quantity and variant-selection UX using local product data.
-- [ ] Complete the Iraqi Arabic and RTL content review.
-- [ ] Add real contact information, policies, care guidance, and frequently asked questions.
-- [ ] Keep motion intentional, accessible, and restrained.
-- [ ] Finish a touch-first mobile customizer and draft-checkout experience across representative real devices.
-- [ ] Link reviews to verifiable customer work or remove them.
+- [ ] Add official contact information after verification.
+- [ ] Add approved policies, care guidance, and frequently asked questions.
+- [ ] Complete the Iraqi Arabic editorial and terminology review.
+- [ ] Review every RTL layout in the homepage, catalog, editor, draft details, and confirmation flow.
+- [ ] Finish touch-first draft-details and confirmation polish.
+- [ ] Validate the complete journey on representative physical phones and tablets.
+- [ ] Link future reviews to verifiable customer work or keep the review section absent.
 
 ## P4 — Frontend delivery, PWA, SEO, and growth
 
