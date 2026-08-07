@@ -7,12 +7,12 @@ export {
   loadDesignDraft,
   markDesignDraftSubmitted,
   releaseDraftObjectUrls,
-  releaseDraftSummaryObjectUrls,
   renameDesignDraft,
   saveCheckoutDetails,
   saveDesignDraft,
   storeArtworkFile,
 } from './indexedDb';
+export { releaseDraftSummaryObjectUrls } from './objectUrls';
 export type {
   CreateDesignDraftInput,
   DesignDraftRecord,
