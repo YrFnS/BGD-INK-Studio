@@ -40,25 +40,40 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Apply P0 and P1 completion migration
-        run: node scripts/finish-p0-p1.mjs
+      - name: Apply and validate P0/P1 completion
+        id: completion
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          {
+            node scripts/finish-p0-p1.mjs
+            npm run format
+            npm run check
+            npx playwright install --with-deps chromium
+            npm run test:e2e
+          } 2>&1 | tee /tmp/finish-p0-p1.log
+          status=${PIPESTATUS[0]}
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
 
-      - name: Format generated changes
-        run: npm run format
-
-      - name: Validate engineering foundation
-        run: npm run check
-
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Run desktop and mobile browser journeys
-        run: npm run test:e2e
-
-      - name: Commit validated migration
+      - name: Publish validated migration or diagnostic
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [[ "${{ steps.completion.outputs.status }}" != "0" ]]; then
+            git reset --hard HEAD
+            git clean -fd
+            cp /tmp/finish-p0-p1.log finish-p0-p1-error.log
+            git add finish-p0-p1-error.log
+            git commit -m "chore: capture P0 P1 migration failure"
+            git push origin HEAD:agent/bgd-ink-p0-foundation
+            exit 1
+          fi
+
+          rm -f finish-p0-p1-error.log
           git add -A
           git commit -m "complete P0 and P1 foundation"
           git push origin HEAD:agent/bgd-ink-p0-foundation
