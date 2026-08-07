@@ -10,83 +10,13 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  finish-foundation:
-    name: Finish P0 and P1 once
-    if: >-
-      github.event_name == 'pull_request' &&
-      github.head_ref == 'agent/bgd-ink-p0-foundation' &&
-      github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-
-    steps:
-      - name: Checkout branch
-        uses: actions/checkout@v4
-        with:
-          ref: agent/bgd-ink-p0-foundation
-          fetch-depth: 0
-          lfs: true
-
-      - name: Set up Node.js and npm cache
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install locked dependencies
-        run: npm ci --no-audit --no-fund
-
-      - name: Apply migration when needed
-        run: |
-          if [[ ! -f src/App.tsx ]]; then
-            node scripts/finish-p0-p1.mjs
-          else
-            echo "P0/P1 source migration is already present."
-          fi
-          node scripts/patch-p0-p1.mjs
-
-      - name: Format generated changes
-        run: npm run format
-
-      - name: Validate engineering foundation
-        run: npm run check
-
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Run desktop and mobile browser journeys
-        run: npm run test:e2e
-
-      - name: Remove migration-only files
-        run: |
-          rm -f scripts/finish-p0-p1.mjs scripts/patch-p0-p1.mjs finish-p0-p1-error.log
-          python - <<'PY'
-          from pathlib import Path
-
-          eslint = Path('eslint.config.mjs')
-          content = eslint.read_text()
-          content = content.replace("      'scripts/finish-p0-p1.mjs',\n", '')
-          eslint.write_text(content)
-          PY
-          npm run format
-
-      - name: Commit completed P0 and P1
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git reset -- .github/workflows/ci.yml
-          git commit -m "complete P0 and P1 foundation"
-          git push origin HEAD:agent/bgd-ink-p0-foundation
-
   validate:
     name: Typecheck, lint, unit tests, build, and budgets
     runs-on: ubuntu-latest
@@ -112,7 +42,7 @@ jobs:
         run: npm run check
 
   e2e:
-    name: Chromium recovery journey
+    name: Desktop and mobile Chromium journeys
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -136,7 +66,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run browser journey
+      - name: Run browser journeys
         run: npm run test:e2e
 
       - name: Upload Playwright report
