@@ -5,6 +5,9 @@ import {
   clampPositionToSurface,
   clampScaleToSurface,
   createDefaultSurfaceTransform,
+  getArtworkEdgeClearanceCm,
+  getArtworkModelDimensions,
+  getArtworkPhysicalDimensions,
   getSurfaceScaleLimits,
   isPointOnSurfaceSide,
   scaleToArtworkWidthCm,
@@ -43,17 +46,28 @@ const backSurface = {
 } satisfies PrintSurfaceDefinition;
 
 describe('print area calculations', () => {
-  it('converts between centimeters and model scale', () => {
+  it('converts centimeters and preserves source aspect ratio', () => {
     const scale = artworkWidthCmToScale(15, frontSurface);
+    const physical = getArtworkPhysicalDimensions(scale, frontSurface, 2);
+    const model = getArtworkModelDimensions(scale, frontSurface, 2);
 
     expect(scale).toBeCloseTo(0.3);
     expect(scaleToArtworkWidthCm(scale, frontSurface)).toBeCloseTo(15);
+    expect(physical).toEqual({ widthCm: 15, heightCm: 7.5 });
+    expect(model.width).toBeCloseTo(0.3);
+    expect(model.height).toBeCloseTo(0.15);
   });
 
-  it('clamps artwork size and position inside the safe area', () => {
-    const limits = getSurfaceScaleLimits(frontSurface);
-    const safeScale = clampScaleToSurface(100, frontSurface);
-    const position = clampPositionToSurface([100, -100, 0.16], frontSurface, safeScale);
+  it('clamps wide and tall artwork inside the safe area', () => {
+    const tallAspectRatio = 0.5;
+    const limits = getSurfaceScaleLimits(frontSurface, tallAspectRatio);
+    const safeScale = clampScaleToSurface(100, frontSurface, tallAspectRatio);
+    const position = clampPositionToSurface(
+      [100, -100, 0.16],
+      frontSurface,
+      safeScale,
+      tallAspectRatio,
+    );
 
     expect(safeScale).toBeCloseTo(limits.maximum);
     expect(position[0]).toBeLessThanOrEqual(frontSurface.modelBounds.maxX);
@@ -61,14 +75,19 @@ describe('print area calculations', () => {
     expect(position[1]).toBeLessThanOrEqual(frontSurface.modelBounds.maxY);
     expect(position[1]).toBeGreaterThanOrEqual(frontSurface.modelBounds.minY);
     expect(position[2]).toBe(0.16);
+    expect(
+      getArtworkEdgeClearanceCm(position, frontSurface, safeScale, tallAspectRatio),
+    ).toBeGreaterThanOrEqual(-0.001);
   });
 
   it('creates a surface-specific default transform and rejects the opposite garment side', () => {
-    const transform = createDefaultSurfaceTransform(backSurface);
+    const transform = createDefaultSurfaceTransform(backSurface, 2);
+    const dimensions = getArtworkPhysicalDimensions(transform.scale, backSurface, 2);
 
     expect(transform.position[2]).toBeLessThan(0);
     expect(transform.rotation[1]).toBe(Math.PI);
-    expect(scaleToArtworkWidthCm(transform.scale, backSurface)).toBeCloseTo(12);
+    expect(dimensions.widthCm).toBeCloseTo(12);
+    expect(dimensions.heightCm).toBeCloseTo(6);
     expect(isPointOnSurfaceSide(-0.1, backSurface)).toBe(true);
     expect(isPointOnSurfaceSide(0.1, backSurface)).toBe(false);
   });
