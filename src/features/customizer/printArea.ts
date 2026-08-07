@@ -1,4 +1,4 @@
-import { PrintSurfaceDefinition } from '@/data/assets3d';
+import type { PrintSurfaceDefinition } from '@/data/assets3d';
 
 const clamp = (value: number, minimum: number, maximum: number): number =>
   Math.min(Math.max(value, minimum), maximum);
