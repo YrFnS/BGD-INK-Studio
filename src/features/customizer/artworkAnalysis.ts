@@ -34,6 +34,11 @@ export interface ArtworkPixelSample {
   data: Uint8ClampedArray;
 }
 
+interface ArtworkDimensions {
+  pixelWidth: number;
+  pixelHeight: number;
+}
+
 export const normalizeArtworkAspectRatio = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 1;
 
@@ -131,6 +136,118 @@ const loadImageElement = (url: string): Promise<HTMLImageElement> =>
     image.src = url;
   });
 
+const readUint24LittleEndian = (view: DataView, offset: number): number =>
+  view.getUint8(offset) | (view.getUint8(offset + 1) << 8) | (view.getUint8(offset + 2) << 16);
+
+const readPngDimensions = (view: DataView): ArtworkDimensions | null => {
+  if (view.byteLength < 24) return null;
+  const signature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (!signature.every((byte, index) => view.getUint8(index) === byte)) return null;
+
+  const pixelWidth = view.getUint32(16, false);
+  const pixelHeight = view.getUint32(20, false);
+  return pixelWidth > 0 && pixelHeight > 0 ? { pixelWidth, pixelHeight } : null;
+};
+
+const isJpegStartOfFrameMarker = (marker: number): boolean =>
+  [0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf].includes(
+    marker,
+  );
+
+const readJpegDimensions = (view: DataView): ArtworkDimensions | null => {
+  if (view.byteLength < 4 || view.getUint16(0, false) !== 0xffd8) return null;
+
+  let offset = 2;
+  while (offset + 3 < view.byteLength) {
+    if (view.getUint8(offset) !== 0xff) {
+      offset += 1;
+      continue;
+    }
+
+    while (offset < view.byteLength && view.getUint8(offset) === 0xff) offset += 1;
+    if (offset >= view.byteLength) break;
+
+    const marker = view.getUint8(offset);
+    offset += 1;
+    if (marker === 0xd8 || marker === 0xd9) continue;
+    if (marker === 0xda) break;
+    if (offset + 1 >= view.byteLength) break;
+
+    const segmentLength = view.getUint16(offset, false);
+    if (segmentLength < 2 || offset + segmentLength > view.byteLength) break;
+
+    if (isJpegStartOfFrameMarker(marker) && segmentLength >= 7) {
+      const pixelHeight = view.getUint16(offset + 3, false);
+      const pixelWidth = view.getUint16(offset + 5, false);
+      return pixelWidth > 0 && pixelHeight > 0 ? { pixelWidth, pixelHeight } : null;
+    }
+
+    offset += segmentLength;
+  }
+
+  return null;
+};
+
+const readWebpDimensions = (view: DataView): ArtworkDimensions | null => {
+  if (view.byteLength < 30) return null;
+  const text = (offset: number, length: number): string =>
+    String.fromCharCode(...Array.from({ length }, (_, index) => view.getUint8(offset + index)));
+
+  if (text(0, 4) !== 'RIFF' || text(8, 4) !== 'WEBP') return null;
+  const chunkType = text(12, 4);
+
+  if (chunkType === 'VP8X') {
+    const pixelWidth = readUint24LittleEndian(view, 24) + 1;
+    const pixelHeight = readUint24LittleEndian(view, 27) + 1;
+    return { pixelWidth, pixelHeight };
+  }
+
+  if (chunkType === 'VP8L' && view.byteLength >= 25 && view.getUint8(20) === 0x2f) {
+    const first = view.getUint8(21);
+    const second = view.getUint8(22);
+    const third = view.getUint8(23);
+    const fourth = view.getUint8(24);
+    const pixelWidth = 1 + first + ((second & 0x3f) << 8);
+    const pixelHeight = 1 + (second >> 6) + (third << 2) + ((fourth & 0x0f) << 10);
+    return { pixelWidth, pixelHeight };
+  }
+
+  if (
+    chunkType === 'VP8 ' &&
+    view.byteLength >= 30 &&
+    view.getUint8(23) === 0x9d &&
+    view.getUint8(24) === 0x01 &&
+    view.getUint8(25) === 0x2a
+  ) {
+    const pixelWidth = view.getUint16(26, true) & 0x3fff;
+    const pixelHeight = view.getUint16(28, true) & 0x3fff;
+    return pixelWidth > 0 && pixelHeight > 0 ? { pixelWidth, pixelHeight } : null;
+  }
+
+  return null;
+};
+
+const readArtworkDimensions = async (file: File): Promise<ArtworkDimensions> => {
+  const view = new DataView(await file.arrayBuffer());
+  const dimensions =
+    readPngDimensions(view) ?? readJpegDimensions(view) ?? readWebpDimensions(view);
+
+  if (!dimensions) throw new Error('The artwork dimensions could not be read.');
+  return dimensions;
+};
+
+const createDimensionOnlyMetadata = ({
+  pixelWidth,
+  pixelHeight,
+}: ArtworkDimensions): ArtworkSourceMetadata => ({
+  pixelWidth,
+  pixelHeight,
+  aspectRatio: pixelWidth / pixelHeight,
+  hasTransparency: false,
+  transparentPixelRatio: 0,
+  transparentPaddingRatio: 0,
+});
+
 export const analyzeArtworkUrl = async (url: string): Promise<ArtworkSourceMetadata> => {
   const image = await loadImageElement(url);
   return analyzeCanvasSource(image, image.naturalWidth, image.naturalHeight);
@@ -146,15 +263,18 @@ export const analyzeArtworkFile = async (file: File): Promise<ArtworkSourceMetad
         bitmap.close();
       }
     } catch {
-      // Some Chromium and mobile implementations expose createImageBitmap but reject
-      // otherwise valid uploaded files. The HTML image path is slower but more compatible.
+      // Some browsers reject valid small or unusual images through createImageBitmap.
+      // Continue with the ordinary image decoder before falling back to format headers.
     }
   }
 
-  const copiedBlob = file.slice(0, file.size, file.type);
-  const objectUrl = URL.createObjectURL(copiedBlob);
+  const objectUrl = URL.createObjectURL(file);
   try {
-    return await analyzeArtworkUrl(objectUrl);
+    try {
+      return await analyzeArtworkUrl(objectUrl);
+    } catch {
+      return createDimensionOnlyMetadata(await readArtworkDimensions(file));
+    }
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
