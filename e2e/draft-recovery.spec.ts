@@ -5,7 +5,7 @@ const tinyPng = Buffer.from(
   'base64',
 );
 
-test('recovers artwork and checkout fields across refreshes', async ({ page }) => {
+test('recovers artwork and draft-detail fields across refreshes', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/catalog');
 
@@ -23,16 +23,16 @@ test('recovers artwork and checkout fields across refreshes', async ({ page }) =
   });
   await expect(page.getByRole('button', { name: 'Selected layer 1' })).toBeVisible();
 
-  const notes = page.getByPlaceholder('e.g. Print on back, make logo smaller...');
+  const notes = page.getByLabel('Draft Notes');
   await notes.fill('Front center launch logo');
   await expect(page.getByText('Saved on this device', { exact: true })).toBeVisible();
 
   await page.reload();
   await expect(page).toHaveURL(studioPath);
   await expect(page.getByRole('button', { name: 'Selected layer 1' })).toBeVisible();
-  await expect(notes).toHaveValue('Front center launch logo');
+  await expect(page.getByLabel('Draft Notes')).toHaveValue('Front center launch logo');
 
-  await page.getByRole('button', { name: 'Proceed to Checkout' }).click();
+  await page.getByRole('button', { name: 'Continue to Draft Details' }).click();
   await expect(page).toHaveURL(/\/checkout\/draft-/);
 
   await page.getByLabel('Full Name').fill('Yasser Test');
@@ -50,9 +50,9 @@ test('recovers artwork and checkout fields across refreshes', async ({ page }) =
     'Street 10, near the main square',
   );
 
-  await page.getByRole('button', { name: 'CONFIRM ORDER' }).click();
+  await page.getByRole('button', { name: 'SAVE LOCAL DRAFT' }).click();
   await expect(page).toHaveURL(/\/draft\/BGD-/);
-  await expect(page.getByRole('heading', { name: 'Design draft saved' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Draft Saved' })).toBeVisible();
 
   await page.getByRole('button', { name: 'My Designs' }).click();
   await expect(page).toHaveURL('/designs');
