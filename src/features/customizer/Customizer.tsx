@@ -10,7 +10,6 @@ import {
 import { useSEO } from '@/hooks/useSEO';
 import { isAbortError, platformApi } from '@/services/api';
 import {
-  deleteArtworkAsset,
   DraftLoadStatus,
   DraftSaveStatus,
   DesignDraftSnapshot,
@@ -28,6 +27,16 @@ import {
 } from '@/types';
 import { Controls } from './Controls';
 import {
+  areEditorSnapshotsEqual,
+  cloneEditorSnapshot,
+  commitEditorHistory,
+  createEditorHistory,
+  redoEditorHistory,
+  undoEditorHistory,
+  type EditorHistory,
+  type EditorSnapshot,
+} from './editorHistory';
+import {
   clampPositionToSurface,
   clampScaleToSurface,
   createDefaultSurfaceTransform,
@@ -42,6 +51,7 @@ interface CustomizerProps {
 }
 
 type CustomizerLoadStatus = DraftLoadStatus | 'model-unavailable';
+type LayerDirection = 'forward' | 'backward';
 
 const createLayerId = (): string => {
   const token =
@@ -49,6 +59,11 @@ const createLayerId = (): string => {
       ? crypto.randomUUID()
       : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
   return `layer-${token}`;
+};
+
+const createLayerName = (fileName: string, index: number): string => {
+  const name = fileName.replace(/\.[^.]+$/, '').trim().replace(/\s+/g, ' ');
+  return name.slice(0, 60) || `Artwork ${index + 1}`;
 };
 
 const createSnapshot = (
@@ -68,6 +83,7 @@ const createSnapshot = (
 const normalizeLayerForModel = (
   layer: DecalLayer,
   modelConfig: ReadyProductModelConfig,
+  index: number,
 ): DecalLayer => {
   const hasSupportedSurface = modelConfig.surfaces.some(
     (surface) => surface.id === layer.surfaceId,
@@ -80,6 +96,8 @@ const normalizeLayerForModel = (
 
   return {
     ...layer,
+    name: layer.name.trim() || createLayerName(layer.fileName ?? 'artwork', index),
+    visible: layer.visible !== false,
     surfaceId: surface.id,
     scale,
     position: clampPositionToSurface(layer.position, surface, scale),
@@ -107,22 +125,150 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   const [isInteracting, setIsInteracting] = useState(false);
   const [isDraggingDecal, setIsDraggingDecal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
+  const modelConfigRef = useRef<ReadyProductModelConfig | null>(null);
+  const selectedColorRef = useRef('');
+  const selectedSizeRef = useRef<Size>(Size.L);
+  const selectedSurfaceIdRef = useRef<PrintSurfaceId>(DEFAULT_PRINT_SURFACE_ID);
+  const activeDecalIdRef = useRef<string | null>(null);
   const decalsRef = useRef<DecalLayer[]>([]);
+  const historyRef = useRef<EditorHistory | null>(null);
+  const gestureStartRef = useRef<EditorSnapshot | null>(null);
   const mountedRef = useRef(true);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const saveVersionRef = useRef(0);
 
-  const updateDecals = useCallback((update: (current: DecalLayer[]) => DecalLayer[]) => {
-    setDecals((current) => {
-      const next = update(current);
-      decalsRef.current = next;
-      return next;
-    });
+  const updateHistoryAvailability = useCallback((history = historyRef.current) => {
+    setCanUndo(Boolean(history?.past.length));
+    setCanRedo(Boolean(history?.future.length));
   }, []);
+
+  const captureEditorSnapshot = useCallback(
+    (): EditorSnapshot => ({
+      color: selectedColorRef.current,
+      size: selectedSizeRef.current,
+      selectedSurfaceId: selectedSurfaceIdRef.current,
+      activeDecalId: activeDecalIdRef.current,
+      decals: decalsRef.current,
+    }),
+    [],
+  );
+
+  const applyEditorSnapshot = useCallback((snapshot: EditorSnapshot) => {
+    const config = modelConfigRef.current;
+    const normalizedDecals = config
+      ? snapshot.decals.map((layer, index) => normalizeLayerForModel(layer, config, index))
+      : snapshot.decals;
+    const activeLayer = normalizedDecals.find(
+      (layer) => layer.id === snapshot.activeDecalId,
+    );
+    const hasSelectedSurface = config?.surfaces.some(
+      (surface) => surface.id === snapshot.selectedSurfaceId,
+    );
+    const nextSurfaceId = activeLayer?.surfaceId ??
+      (hasSelectedSurface ? snapshot.selectedSurfaceId : config?.defaultSurfaceId) ??
+      DEFAULT_PRINT_SURFACE_ID;
+    const nextActiveDecalId = activeLayer?.id ?? null;
+
+    selectedColorRef.current = snapshot.color;
+    selectedSizeRef.current = snapshot.size;
+    selectedSurfaceIdRef.current = nextSurfaceId;
+    activeDecalIdRef.current = nextActiveDecalId;
+    decalsRef.current = normalizedDecals;
+
+    setSelectedColor(snapshot.color);
+    setSelectedSize(snapshot.size);
+    setSelectedSurfaceId(nextSurfaceId);
+    setActiveDecalId(nextActiveDecalId);
+    setDecals(normalizedDecals);
+  }, []);
+
+  const syncHistoryPresent = useCallback(
+    (snapshot: EditorSnapshot) => {
+      if (!historyRef.current) return;
+      historyRef.current = {
+        ...historyRef.current,
+        present: cloneEditorSnapshot(snapshot),
+      };
+      updateHistoryAvailability();
+    },
+    [updateHistoryAvailability],
+  );
+
+  const commitEditorChange = useCallback(
+    (update: (current: EditorSnapshot) => EditorSnapshot) => {
+      const current = cloneEditorSnapshot(captureEditorSnapshot());
+      const next = update(cloneEditorSnapshot(current));
+      const baseHistory = historyRef.current
+        ? { ...historyRef.current, present: current }
+        : createEditorHistory(current);
+      const nextHistory = commitEditorHistory(baseHistory, next);
+
+      historyRef.current = nextHistory;
+      applyEditorSnapshot(nextHistory.present);
+      updateHistoryAvailability(nextHistory);
+    },
+    [applyEditorSnapshot, captureEditorSnapshot, updateHistoryAvailability],
+  );
+
+  const applyLiveEditorChange = useCallback(
+    (update: (current: EditorSnapshot) => EditorSnapshot) => {
+      const next = update(cloneEditorSnapshot(captureEditorSnapshot()));
+      applyEditorSnapshot(next);
+    },
+    [applyEditorSnapshot, captureEditorSnapshot],
+  );
+
+  const beginEditorGesture = useCallback(() => {
+    if (gestureStartRef.current) return;
+    const start = cloneEditorSnapshot(captureEditorSnapshot());
+    gestureStartRef.current = start;
+    syncHistoryPresent(start);
+  }, [captureEditorSnapshot, syncHistoryPresent]);
+
+  const endEditorGesture = useCallback(() => {
+    const start = gestureStartRef.current;
+    if (!start) return;
+
+    gestureStartRef.current = null;
+    const current = cloneEditorSnapshot(captureEditorSnapshot());
+    const baseHistory = historyRef.current
+      ? { ...historyRef.current, present: cloneEditorSnapshot(start) }
+      : createEditorHistory(start);
+    const nextHistory = areEditorSnapshotsEqual(start, current)
+      ? { ...baseHistory, present: current }
+      : commitEditorHistory(baseHistory, current);
+
+    historyRef.current = nextHistory;
+    updateHistoryAvailability(nextHistory);
+  }, [captureEditorSnapshot, updateHistoryAvailability]);
+
+  const handleUndo = useCallback(() => {
+    endEditorGesture();
+    const history = historyRef.current;
+    if (!history?.past.length) return;
+
+    const nextHistory = undoEditorHistory(history);
+    historyRef.current = nextHistory;
+    applyEditorSnapshot(nextHistory.present);
+    updateHistoryAvailability(nextHistory);
+  }, [applyEditorSnapshot, endEditorGesture, updateHistoryAvailability]);
+
+  const handleRedo = useCallback(() => {
+    endEditorGesture();
+    const history = historyRef.current;
+    if (!history?.future.length) return;
+
+    const nextHistory = redoEditorHistory(history);
+    historyRef.current = nextHistory;
+    applyEditorSnapshot(nextHistory.present);
+    updateHistoryAvailability(nextHistory);
+  }, [applyEditorSnapshot, endEditorGesture, updateHistoryAvailability]);
 
   const queueDraftSave = useCallback(
     (snapshot: DesignDraftSnapshot): Promise<void> => {
@@ -157,6 +303,10 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     setLoadStatus('loading');
     setProduct(null);
     setModelConfig(null);
+    modelConfigRef.current = null;
+    historyRef.current = null;
+    gestureStartRef.current = null;
+    updateHistoryAvailability(null);
 
     Promise.all([loadDesignDraft(draftId), platformApi.catalog.listProducts(controller.signal)])
       .then(([draft, products]) => {
@@ -185,26 +335,30 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
           return;
         }
 
-        const normalizedDecals = draft.decals.map((layer) =>
-          normalizeLayerForModel(layer, matchingModelConfig),
+        modelConfigRef.current = matchingModelConfig;
+        const normalizedDecals = draft.decals.map((layer, index) =>
+          normalizeLayerForModel(layer, matchingModelConfig, index),
         );
         const restoredActiveLayer = normalizedDecals.find(
           (layer) => layer.id === draft.activeDecalId,
         );
+        const initialSnapshot: EditorSnapshot = {
+          color: matchingProduct.colors.includes(draft.color)
+            ? draft.color
+            : matchingProduct.colors[0],
+          size: draft.size,
+          selectedSurfaceId:
+            restoredActiveLayer?.surfaceId ?? matchingModelConfig.defaultSurfaceId,
+          activeDecalId: restoredActiveLayer?.id ?? null,
+          decals: normalizedDecals,
+        };
 
-        decalsRef.current = normalizedDecals;
         setProduct(matchingProduct);
         setModelConfig(matchingModelConfig);
-        setSelectedColor(
-          matchingProduct.colors.includes(draft.color) ? draft.color : matchingProduct.colors[0],
-        );
-        setSelectedSize(draft.size);
-        setSelectedSurfaceId(
-          restoredActiveLayer?.surfaceId ?? matchingModelConfig.defaultSurfaceId,
-        );
         setNotes(draft.notes);
-        setDecals(normalizedDecals);
-        setActiveDecalId(restoredActiveLayer?.id ?? null);
+        applyEditorSnapshot(initialSnapshot);
+        historyRef.current = createEditorHistory(initialSnapshot);
+        updateHistoryAvailability();
         setSaveStatus('saved');
         setLoadStatus('ready');
 
@@ -228,8 +382,11 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
       controller.abort();
       releaseDraftObjectUrls({ decals: decalsRef.current });
       decalsRef.current = [];
+      modelConfigRef.current = null;
+      historyRef.current = null;
+      gestureStartRef.current = null;
     };
-  }, [draftId, language, showToast]);
+  }, [applyEditorSnapshot, draftId, language, showToast, updateHistoryAvailability]);
 
   useEffect(() => {
     if (loadStatus !== 'ready') return undefined;
@@ -267,6 +424,27 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     return () => context.revert();
   }, [language, loadStatus]);
 
+  useEffect(() => {
+    const handleKeyboardShortcut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, [contenteditable="true"]')) return;
+      if (!(event.metaKey || event.ctrlKey)) return;
+
+      const key = event.key.toLowerCase();
+      if (key === 'z') {
+        event.preventDefault();
+        if (event.shiftKey) handleRedo();
+        else handleUndo();
+      } else if (key === 'y') {
+        event.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyboardShortcut);
+    return () => window.removeEventListener('keydown', handleKeyboardShortcut);
+  }, [handleRedo, handleUndo]);
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
@@ -288,14 +466,16 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
       return;
     }
 
-    const surface = getPrintSurface(modelConfig, selectedSurfaceId);
+    const surface = getPrintSurface(modelConfig, selectedSurfaceIdRef.current);
     const defaultTransform = createDefaultSurfaceTransform(surface);
 
     setIsUploading(true);
     try {
-      const asset = await storeArtworkFile(file);
+      const asset = await storeArtworkFile(draftId, file);
       const newLayer: DecalLayer = {
         id: createLayerId(),
+        name: createLayerName(asset.fileName, decalsRef.current.length),
+        visible: true,
         url: URL.createObjectURL(file),
         assetId: asset.id,
         fileName: asset.fileName,
@@ -307,8 +487,12 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
         scale: defaultTransform.scale,
       };
 
-      updateDecals((current) => [...current, newLayer]);
-      setActiveDecalId(newLayer.id);
+      commitEditorChange((current) => ({
+        ...current,
+        selectedSurfaceId: surface.id,
+        activeDecalId: newLayer.id,
+        decals: [...current.decals, newLayer],
+      }));
       showToast(
         language === 'ar'
           ? 'تم حفظ الصورة وإضافتها لمساحة الطباعة.'
@@ -328,40 +512,37 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   };
 
   const handleRemoveDecal = (id: string) => {
-    const removedLayer = decalsRef.current.find((layer) => layer.id === id);
-    const nextDecals = decalsRef.current.filter((layer) => layer.id !== id);
-    const nextActiveDecalId = activeDecalId === id ? null : activeDecalId;
+    commitEditorChange((current) => {
+      const index = current.decals.findIndex((layer) => layer.id === id);
+      if (index < 0) return current;
 
-    updateDecals(() => nextDecals);
-    setActiveDecalId(nextActiveDecalId);
+      const nextDecals = current.decals.filter((layer) => layer.id !== id);
+      const nextActiveLayer =
+        current.activeDecalId === id
+          ? nextDecals[Math.min(index, nextDecals.length - 1)] ?? null
+          : nextDecals.find((layer) => layer.id === current.activeDecalId) ?? null;
 
-    if (removedLayer?.url.startsWith('blob:')) {
-      URL.revokeObjectURL(removedLayer.url);
-    }
+      return {
+        ...current,
+        activeDecalId: nextActiveLayer?.id ?? null,
+        selectedSurfaceId: nextActiveLayer?.surfaceId ?? current.selectedSurfaceId,
+        decals: nextDecals,
+      };
+    });
 
-    const snapshot = createSnapshot(
-      selectedColor,
-      selectedSize,
-      notes,
-      nextActiveDecalId,
-      nextDecals,
-    );
-
-    void queueDraftSave(snapshot)
-      .then(() => (removedLayer?.assetId ? deleteArtworkAsset(removedLayer.assetId) : undefined))
-      .catch(() => undefined);
-
-    showToast(language === 'ar' ? 'تم حذف الطبقة.' : 'Layer removed.', 'info');
+    showToast(language === 'ar' ? 'تم حذف الطبقة. يمكنك التراجع.' : 'Layer removed. You can undo.', 'info');
   };
 
   const handleDecalUpdate = (id: string, updates: Partial<DecalLayer>) => {
-    if (!modelConfig) return;
+    const config = modelConfigRef.current;
+    if (!config) return;
 
-    updateDecals((current) =>
-      current.map((layer) => {
+    applyLiveEditorChange((current) => ({
+      ...current,
+      decals: current.decals.map((layer) => {
         if (layer.id !== id) return layer;
 
-        const surface = getPrintSurface(modelConfig, layer.surfaceId);
+        const surface = getPrintSurface(config, layer.surfaceId);
         const scale = clampScaleToSurface(updates.scale ?? layer.scale, surface);
         const position = clampPositionToSurface(
           updates.position ?? layer.position,
@@ -377,41 +558,136 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
           position,
         };
       }),
-    );
+    }));
   };
 
   const handleSceneDecalChange = (
     position: [number, number, number],
     rotation: [number, number, number],
   ) => {
-    if (activeDecalId) {
-      handleDecalUpdate(activeDecalId, { position, rotation });
+    if (activeDecalIdRef.current) {
+      handleDecalUpdate(activeDecalIdRef.current, { position, rotation });
     }
   };
 
   const handleSetActiveDecal = (id: string) => {
-    const layer = decalsRef.current.find((candidate) => candidate.id === id);
+    endEditorGesture();
+    const current = captureEditorSnapshot();
+    const layer = current.decals.find((candidate) => candidate.id === id);
     if (!layer) return;
-    setActiveDecalId(id);
-    setSelectedSurfaceId(layer.surfaceId);
+
+    const next = {
+      ...current,
+      activeDecalId: id,
+      selectedSurfaceId: layer.surfaceId,
+    };
+    applyEditorSnapshot(next);
+    syncHistoryPresent(next);
   };
 
   const handleSurfaceChange = (surfaceId: PrintSurfaceId) => {
-    setSelectedSurfaceId(surfaceId);
-    const activeLayer = decalsRef.current.find((layer) => layer.id === activeDecalId);
-    if (activeLayer && activeLayer.surfaceId !== surfaceId) {
-      setActiveDecalId(null);
-    }
+    endEditorGesture();
+    const current = captureEditorSnapshot();
+    const activeLayer = current.decals.find((layer) => layer.id === current.activeDecalId);
+    const next = {
+      ...current,
+      selectedSurfaceId: surfaceId,
+      activeDecalId:
+        activeLayer && activeLayer.surfaceId === surfaceId ? activeLayer.id : null,
+    };
+    applyEditorSnapshot(next);
+    syncHistoryPresent(next);
+  };
+
+  const handleColorChange = (color: string) => {
+    commitEditorChange((current) => ({ ...current, color }));
+  };
+
+  const handleSizeChange = (size: Size) => {
+    commitEditorChange((current) => ({ ...current, size }));
+  };
+
+  const handleRenameDecal = (id: string, name: string) => {
+    const normalizedName = name.trim().replace(/\s+/g, ' ').slice(0, 60);
+    if (!normalizedName) return;
+
+    commitEditorChange((current) => ({
+      ...current,
+      decals: current.decals.map((layer) =>
+        layer.id === id ? { ...layer, name: normalizedName } : layer,
+      ),
+    }));
+  };
+
+  const handleToggleDecalVisibility = (id: string) => {
+    commitEditorChange((current) => ({
+      ...current,
+      decals: current.decals.map((layer) =>
+        layer.id === id ? { ...layer, visible: !layer.visible } : layer,
+      ),
+    }));
+  };
+
+  const handleDuplicateDecal = (id: string) => {
+    const config = modelConfigRef.current;
+    if (!config) return;
+
+    commitEditorChange((current) => {
+      const index = current.decals.findIndex((layer) => layer.id === id);
+      const source = current.decals[index];
+      if (!source) return current;
+
+      const surface = getPrintSurface(config, source.surfaceId);
+      const duplicateId = createLayerId();
+      const duplicate: DecalLayer = {
+        ...source,
+        id: duplicateId,
+        name:
+          language === 'ar'
+            ? `نسخة من ${source.name}`.slice(0, 60)
+            : `Copy of ${source.name}`.slice(0, 60),
+        visible: true,
+        position: clampPositionToSurface(
+          [source.position[0] + 0.025, source.position[1] - 0.025, source.position[2]],
+          surface,
+          source.scale,
+        ),
+      };
+      const nextDecals = [...current.decals];
+      nextDecals.splice(index + 1, 0, duplicate);
+
+      return {
+        ...current,
+        selectedSurfaceId: duplicate.surfaceId,
+        activeDecalId: duplicateId,
+        decals: nextDecals,
+      };
+    });
+  };
+
+  const handleMoveDecal = (id: string, direction: LayerDirection) => {
+    commitEditorChange((current) => {
+      const index = current.decals.findIndex((layer) => layer.id === id);
+      if (index < 0) return current;
+      const targetIndex = direction === 'forward' ? index + 1 : index - 1;
+      if (targetIndex < 0 || targetIndex >= current.decals.length) return current;
+
+      const nextDecals = [...current.decals];
+      const [layer] = nextDecals.splice(index, 1);
+      nextDecals.splice(targetIndex, 0, layer);
+      return { ...current, decals: nextDecals };
+    });
   };
 
   const handleCheckout = async () => {
     if (!product) return;
 
+    endEditorGesture();
     const snapshot = createSnapshot(
-      selectedColor,
-      selectedSize,
+      selectedColorRef.current,
+      selectedSizeRef.current,
       notes,
-      activeDecalId,
+      activeDecalIdRef.current,
       decalsRef.current,
     );
 
@@ -540,6 +816,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
             type="button"
             onClick={(event) => {
               event.stopPropagation();
+              endEditorGesture();
               setIsInteracting(false);
             }}
             className="interactive absolute end-4 top-4 z-20 rounded-full bg-black/50 p-2 text-white shadow-lg backdrop-blur-md transition-colors hover:bg-black/70"
@@ -572,6 +849,8 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
             activeDecalId={activeDecalId}
             enableControls={isInteracting && !isDraggingDecal}
             onDecalChange={handleSceneDecalChange}
+            onDecalInteractionStart={beginEditorGesture}
+            onDecalInteractionEnd={endEditorGesture}
             setDraggingDecal={setIsDraggingDecal}
           />
         </div>
@@ -581,9 +860,9 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
         <Controls
           product={product}
           selectedColor={selectedColor}
-          onColorChange={setSelectedColor}
+          onColorChange={handleColorChange}
           selectedSize={selectedSize}
-          onSizeChange={setSelectedSize}
+          onSizeChange={handleSizeChange}
           surfaces={modelConfig.surfaces}
           selectedSurfaceId={selectedSurfaceId}
           onSurfaceChange={handleSurfaceChange}
@@ -593,6 +872,16 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
           onUpload={handleFileUpload}
           onRemoveDecal={handleRemoveDecal}
           onUpdateDecal={handleDecalUpdate}
+          onRenameDecal={handleRenameDecal}
+          onDuplicateDecal={handleDuplicateDecal}
+          onToggleDecalVisibility={handleToggleDecalVisibility}
+          onMoveDecal={handleMoveDecal}
+          onBeginTransform={beginEditorGesture}
+          onEndTransform={endEditorGesture}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
           notes={notes}
           onNotesChange={setNotes}
           saveStatus={saveStatus}
