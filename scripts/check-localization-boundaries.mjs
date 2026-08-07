@@ -11,6 +11,12 @@ const files = [
   'src/components/layout/Footer.tsx',
   'src/features/hero/Hero.tsx',
   'src/features/designs/Designs.tsx',
+  'src/features/customizer/Controls.tsx',
+  'src/features/customizer/InteractionModeToolbar.tsx',
+  'src/features/customizer/ArtworkQualityOverlay.tsx',
+  'src/features/customizer/FallbackPreview.tsx',
+  'src/features/customizer/ProductionExportPanel.tsx',
+  'src/features/customizer/ProductionExportDock.tsx',
 ];
 
 const contentsByFile = new Map();
@@ -90,6 +96,51 @@ requirePattern(
   /contactNavigation/,
   'the footer contact navigation must have localized accessibility copy',
 );
+requirePattern(
+  'src/features/customizer/Controls.tsx',
+  /layersTitle:\s*['"]طبقات التصميم['"]/,
+  'the dense editor must use reviewed Iraqi-Arabic layer terminology',
+);
+requirePattern(
+  'src/features/customizer/Controls.tsx',
+  /type=['"]range['"][\s\S]{0,80}dir=['"]ltr['"]/,
+  'range controls must keep a stable technical direction inside RTL layouts',
+);
+requirePattern(
+  'src/features/customizer/InteractionModeToolbar.tsx',
+  /toolbar:\s*['"]أوضاع التحكم بالمحرر['"]/,
+  'customizer interaction modes must use reviewed Iraqi-Arabic terminology',
+);
+requirePattern(
+  'src/features/customizer/ArtworkQualityOverlay.tsx',
+  /جودة التصميم للطباعة/,
+  'artwork-quality guidance must use the reviewed Arabic title',
+);
+requirePattern(
+  'src/features/customizer/ArtworkQualityOverlay.tsx',
+  /<bdi className=['"]technical-ltr['"] dir=['"]ltr['"]>/,
+  'artwork measurements must remain direction-isolated in Arabic',
+);
+requirePattern(
+  'src/features/customizer/FallbackPreview.tsx',
+  /aria-labelledby=['"]fallback-preview-title['"]/,
+  'the 2D recovery surface must expose an accessible region label',
+);
+requirePattern(
+  'src/features/customizer/FallbackPreview.tsx',
+  /المعاينة الآمنة 2D/,
+  'the 2D recovery surface must use reviewed Iraqi-Arabic wording',
+);
+requirePattern(
+  'src/features/customizer/ProductionExportPanel.tsx',
+  /localBadge:\s*['"]على هذا الجهاز['"]/,
+  'the export panel local-only badge must be localized',
+);
+requirePattern(
+  'src/features/customizer/ProductionExportDock.tsx',
+  /open:\s*['"]ملفات التسليم المحلية['"]/,
+  'the export entry point must use truthful local-handoff terminology',
+);
 
 forbidPattern(
   'src/translations.ts',
@@ -111,6 +162,16 @@ forbidPattern(
   /المتجر/,
   'prototype copy should consistently refer to the studio, not an unconfigured store operation',
 );
+forbidPattern(
+  'src/features/customizer/Controls.tsx',
+  /الطبقة المحددة|جاري حفظ الصورة/,
+  'obsolete literal editor wording must not return',
+);
+forbidPattern(
+  'src/features/customizer/ProductionExportPanel.tsx',
+  />\s*Local\s*</,
+  'the Arabic export panel must not contain an English-only local badge',
+);
 
 if (failures.length > 0) {
   console.error('\nLocalization and RTL validation failed:\n');
@@ -119,5 +180,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  'Localization and RTL validation passed: language persistence, Iraqi-Arabic terminology, truthful local-draft status, localized badges, and direction-isolation primitives are present.',
+  'Localization and RTL validation passed: language persistence, Iraqi-Arabic terminology, truthful local-draft status, dense editor guidance, localized handoff tools, and direction-isolation primitives are present.',
 );
