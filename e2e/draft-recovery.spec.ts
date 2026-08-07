@@ -63,14 +63,14 @@ test('recovers artwork, quantity, and draft-detail fields across refreshes', asy
   await expect(configuredPriceRow).toContainText(formatPrice(classicProduct.basePrice));
   await expect(configuredPriceRow).toContainText(`× ${quantity}`);
 
-  const configuredEstimateRow = page.getByText('Configured estimate').locator('..');
+  const configuredEstimateRow = page.getByText('Local estimate').locator('..');
   await expect(configuredEstimateRow).toContainText(
     formatPrice(classicProduct.basePrice * quantity),
   );
 
   await page.getByRole('button', { name: 'SAVE LOCAL DRAFT' }).click();
   await expect(page).toHaveURL(/\/draft\/BGD-/);
-  await expect(page.getByRole('heading', { name: 'Draft Saved' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Design draft saved' })).toBeVisible();
 
   await page.getByRole('button', { name: 'My Designs' }).click();
   await expect(page).toHaveURL('/designs');
