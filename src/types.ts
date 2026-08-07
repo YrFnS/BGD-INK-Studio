@@ -1,6 +1,7 @@
 export type Language = 'en' | 'ar';
 export type Theme = 'light' | 'dark';
 export type PrintSurfaceId = 'front' | 'back' | 'left-sleeve' | 'right-sleeve';
+export const DEFAULT_PRINT_SURFACE_ID: PrintSurfaceId = 'front';
 
 export enum ProductType {
   TSHIRT = 'T-Shirt',
