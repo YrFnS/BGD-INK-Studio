@@ -51,7 +51,10 @@ test('recovers artwork, quantity, and draft-detail fields across refreshes', asy
   await expect(page.getByLabel('Street / House / Landmark')).toHaveValue(
     'Street 10, near the main square',
   );
-  await expect(page.getByText(/25,000 IQD × 4/)).toBeVisible();
+
+  const configuredPriceRow = page.getByText('Configured unit price').locator('..');
+  await expect(configuredPriceRow).toContainText('25,000');
+  await expect(configuredPriceRow).toContainText('× 4');
 
   await page.getByRole('button', { name: 'SAVE LOCAL DRAFT' }).click();
   await expect(page).toHaveURL(/\/draft\/BGD-/);
