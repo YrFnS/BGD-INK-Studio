@@ -13,7 +13,7 @@ For the current roadmap:
 - The application remains a frontend-only React/Vite project.
 - Products continue to come from local typed configuration.
 - Designs and original artwork remain in browser IndexedDB on the current device.
-- Submitted designs remain local drafts; they are not accepted as real shop orders.
+- Prepared design receipts remain local drafts; they are not accepted as real shop orders.
 - No account system, staff portal, production API, database, inventory service, or object-storage integration will be built.
 - P2 and P3 focus on the 3D customizer, customer experience, accessibility, mobile behavior, visual quality, and local exports.
 
@@ -28,7 +28,7 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Preserve legacy `ashus_*` browser data through a non-destructive migration.
 - [x] Remove browser-exposed Gemini/API-key configuration.
 - [x] Remove the hardcoded client-side admin PIN and public admin entry.
-- [x] Label browser persistence and submitted designs explicitly as local prototype drafts.
+- [x] Label browser persistence and prepared design receipts explicitly as local prototype drafts.
 - [x] Keep typed local product, artwork, draft, and submission service boundaries.
 - [x] Remove misleading service-worker and offline-mode claims.
 - [x] Replace the false completed checklist with the maintained P0-P4 roadmap.
@@ -46,8 +46,8 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Add unit, component, failure-state, accessibility, Arabic RTL, and mobile interaction tests.
 - [x] Add Playwright customer recovery and mobile navigation journeys.
 - [x] Add GitHub Actions for locked install, typecheck, lint, tests, build, budgets, and browser journeys.
-- [x] Add real routes for catalog, designs, editor, checkout, and draft confirmation.
-- [x] Add recoverable IndexedDB drafts, original artwork blobs, autosave, and checkout recovery.
+- [x] Add real routes for catalog, designs, editor, draft preparation, and local receipt.
+- [x] Add recoverable IndexedDB drafts, original artwork blobs, autosave, and draft-preparation recovery.
 - [x] Add the My Designs reopen, rename, duplicate, and delete workspace.
 - [x] Replace AI Studio documentation with setup, architecture, deployment, safety, and troubleshooting guidance.
 - [x] Pin Node.js and npm, commit the lockfile, use cached `npm ci`, and cancel superseded CI runs.
@@ -149,11 +149,16 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Add unit accessibility coverage and a real English/Arabic Chromium guide journey.
 - [x] Add recoverable local quantity preparation alongside the existing size/color variant selection, including a local estimate and explicit no-stock/no-quote wording.
 - [x] Serialize contact and quantity autosaves so rapid local preparation changes cannot overwrite one another.
-- [x] Finish touch-first draft-details and confirmation polish with a local receipt, draft-ID copy, prepared variant, quantity, estimate, and direct My Designs/new-draft actions.
+- [x] Finish touch-first draft-preparation and receipt polish with a local receipt, draft-ID copy, prepared variant, quantity, estimate, and direct My Designs/new-draft actions.
+- [x] Persist the English/Iraqi-Arabic preference across refreshes and keep document `lang`, `dir`, and `data-language` synchronized.
+- [x] Complete the Iraqi-Arabic editorial pass for the homepage, catalog, global notices, footer, My Designs, and local receipt.
+- [x] Keep phone fields, number inputs, prices, sizes, draft IDs, file formats, and collection codes readable inside RTL layouts.
+- [x] Replace misleading submitted/sent workspace status with truthful prepared-locally status and expose each saved draft's quantity.
+- [x] Add a permanent localization/RTL CI gate plus mobile Chromium coverage for persisted Arabic, RTL navigation, and horizontal-overflow prevention.
 - [ ] Add official contact information after verification.
 - [ ] Add approved business policies, care guidance, and returns information.
-- [ ] Complete the Iraqi Arabic editorial and terminology review.
-- [ ] Review every RTL layout in the homepage, catalog, guide, editor, draft details, and confirmation flow.
+- [ ] Complete the remaining Iraqi-Arabic editorial and terminology review in the Studio Guide, editor controls, quality overlays, export tools, and draft-preparation edge states.
+- [ ] Complete the remaining contextual RTL review in the Studio Guide, editor controls, quality overlays, export tools, and draft-preparation edge states.
 - [ ] Validate the complete journey on representative physical phones and tablets.
 - [ ] Link future reviews to verifiable customer work or keep the review section absent.
 
