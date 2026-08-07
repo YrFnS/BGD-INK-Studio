@@ -2,7 +2,7 @@
 
 BGD/INK Studio is a bilingual English/Arabic local web application for designing and previewing custom-printed apparel in 3D.
 
-> Designs, artwork, checkout fields, and submitted draft summaries stay on the current device. They are not sent to a shop, synchronized between devices, or written to a production database.
+> Designs, artwork, checkout fields, submitted draft summaries, and generated production files stay on the current device. They are not sent to a shop, synchronized between devices, or written to a production database.
 
 ## Current scope
 
@@ -13,7 +13,7 @@ Active work includes:
 - The React/Vite storefront
 - The 3D product customizer
 - Browser-local IndexedDB drafts and original artwork blobs
-- Local design recovery and exports
+- Local design recovery, proofs, and machine-readable exports
 - Accessibility, mobile interaction, Iraqi Arabic, performance, PWA, and SEO
 
 Paused until explicitly reopened:
@@ -59,6 +59,9 @@ Completed local-customizer work includes:
 - Adaptive high, balanced, and low-power rendering profiles
 - WebGL support detection, context-loss handling, retryable recovery, and a safe 2D preview
 - Rendering pause while the page is hidden and demand rendering on constrained devices
+- Downloadable multi-surface PNG production proofs
+- URL-free JSON production specifications with centimeter placement and artwork quality metadata
+- IndexedDB draft version 4, which preserves source pixels, aspect ratio, transparency, and padding analysis for exports and recovery
 
 Still required before P2 is complete:
 
@@ -66,7 +69,6 @@ Still required before P2 is complete:
 - Genuine optimized oversized T-shirt, hoodie, and vest models
 - Calibrated sleeve and other product-specific surfaces
 - Geometry-aware seam warnings
-- Downloadable visual proofs and a local machine-readable production specification
 - Final GLB and preview-texture optimization
 
 None of this P2 work adds backend, database, account, or remote-storage infrastructure.
@@ -89,6 +91,8 @@ Brand values live only in `src/config/brand.ts`:
 - React Three Fiber, Drei, and Three.js
 - GSAP
 - IndexedDB for local drafts and original artwork blobs
+- Canvas-based local PNG proof generation
+- JSON local production specifications
 - Vitest, Testing Library, fake IndexedDB, and axe
 - Playwright for desktop and mobile Chromium journeys
 - ESLint and Prettier
@@ -130,7 +134,7 @@ environment validation
 → bundle budgets
 ```
 
-Current P2 coverage includes 39 unit/component/accessibility tests across 13 files and five Chromium customer journeys covering recovery, artwork quality, layer editing, mobile Arabic/RTL navigation, and rendering fallback behavior.
+Current P2 coverage includes **42 unit/component/accessibility tests across 14 files** and **six Chromium customer journeys** covering recovery, artwork quality, layer editing, mobile Arabic/RTL navigation, rendering fallback behavior, and real PNG/JSON downloads.
 
 Additional commands:
 
@@ -167,7 +171,7 @@ Browser Back/Forward navigation is supported. Netlify direct-route fallback is p
 
 ## Local draft model
 
-IndexedDB stores:
+IndexedDB draft version 4 stores:
 
 - Draft name, product, color, size, and notes
 - Original PNG, JPEG, or WebP artwork blobs
@@ -179,7 +183,7 @@ IndexedDB stores:
 
 The My Designs workspace can reopen, rename, duplicate, and permanently delete local designs. Duplicate designs receive independent artwork blobs.
 
-The original artwork blob remains separate from generated object URLs and Three.js preview textures. Preview URLs are recreated when a design is restored and revoked when the relevant screen closes.
+The original artwork blob remains separate from generated object URLs, Three.js preview textures, PNG proofs, and JSON specifications. Preview URLs are recreated when a design is restored and revoked when the relevant screen closes.
 
 IndexedDB is browser-local persistence, not production storage. Clearing browser data can permanently remove designs, and there is no server backup or cross-device recovery.
 
@@ -210,6 +214,38 @@ Rendering pauses while the document is hidden. Constrained devices use demand re
 
 When WebGL is unavailable, its context is lost, or the garment model cannot render, the app switches to a safe local 2D preview without discarding the draft. A supported device can retry the 3D renderer from the same design state.
 
+## Local production files
+
+The customizer route includes a collapsible **Production files** section below the editor. It reads the latest stable IndexedDB draft before generating either file.
+
+### PNG proof
+
+The PNG proof is a high-resolution, browser-generated sheet containing every configured product surface. It includes:
+
+- Product, size, color, draft name, and draft ID
+- Surface labels and physical print-area dimensions
+- Safe-margin guides
+- Visible artwork positioned and rotated from the saved centimeter placement
+- Layer order and names
+- A calibration warning
+
+### JSON specification
+
+The JSON specification contains:
+
+- Product and draft metadata
+- A documented centimeter coordinate system
+- Every configured surface
+- Visible and hidden layer state
+- Layer order, width, height, center, edge offsets, and rotation
+- Source file name, type, pixel dimensions, aspect ratio, and transparency data
+- Estimated DPI, quality level, and warnings
+- An explicit `unverified` calibration status requiring physical confirmation
+
+Temporary `blob:` preview URLs are never included. Generated files are new browser outputs and do not modify the original IndexedDB artwork.
+
+These files are planning and handoff aids, not authorization to print. The physical print areas must still be confirmed against the exact garment blank and production method.
+
 ## Source architecture
 
 ```text
@@ -235,7 +271,19 @@ Cross-area imports use `@/`. Features cannot import another feature's internals,
 
 The build manifest is measured for initial assets, lazy assets, total JavaScript, and CSS. The limits are stored in `src/config/bundle-budgets.json`. The Three.js core is kept in a dedicated lazy vendor chunk rather than being loaded with the initial storefront.
 
-The current P2 customizer route is approximately **83.34 KiB raw / 27.80 KiB gzip**. Initial JavaScript remains approximately **107.82 KiB gzip**, and all configured production budgets pass.
+Current validated measurements:
+
+| Metric | Current | Limit |
+| --- | ---: | ---: |
+| Initial JavaScript, gzip | 108.08 KiB | 140 KiB |
+| Initial CSS, gzip | 11.37 KiB | 13 KiB |
+| Largest lazy JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
+| Largest JavaScript chunk, raw | 651.41 KiB | 800 KiB |
+| Total JavaScript, gzip | 397.46 KiB | 410 KiB |
+| Total JavaScript, raw | 1,339.73 KiB | 1,400 KiB |
+| Total CSS, gzip | 11.37 KiB | 15 KiB |
+
+The customizer route is approximately **78.13 KiB raw / 25.73 KiB gzip**. The lazy PNG/JSON export engine is approximately **8.73 KiB raw / 3.70 KiB gzip**. Three.js remains isolated in its lazy vendor chunk.
 
 A budget change must be intentional and reviewed; it should not be the automatic response to a regression.
 
@@ -249,12 +297,13 @@ A budget change must be intentional and reviewed; it should not be the automatic
 - WhatsApp actions appear only when a real destination is configured.
 - PWA/offline claims remain disabled until reliable caching is implemented.
 - No backend, database, or remote object-storage integration is currently planned.
+- Generated proofs and specifications use unverified local calibration values until physically confirmed.
 
 Do not use the local prototype for real customer orders or sensitive production data.
 
 ## Troubleshooting
 
-See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for Git LFS, IndexedDB, artwork upload, WebGL, deployment routing, Playwright, runtime, and bundle-budget guidance.
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for Git LFS, IndexedDB, artwork upload, WebGL, local production exports, deployment routing, Playwright, runtime, and bundle-budget guidance.
 
 ## Roadmap
 
