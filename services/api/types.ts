@@ -1,7 +1,6 @@
 import { OrderDetails, PendingOrder, Product } from '../../types';
 
-export type PlatformDataSource = 'local-prototype' | 'frappe';
-export type SubmissionStatus = 'DRAFT' | 'PENDING';
+export type SubmissionStatus = 'DRAFT';
 
 export interface SubmitOrderInput {
   designDraftId: string;
@@ -12,7 +11,7 @@ export interface SubmitOrderInput {
 export interface SubmitOrderResult {
   success: true;
   orderId: string;
-  persistence: PlatformDataSource;
+  persistence: 'local-prototype';
   status: SubmissionStatus;
 }
 
@@ -28,7 +27,7 @@ export interface OrdersApi {
 }
 
 export interface PlatformApi {
-  source: PlatformDataSource;
+  source: 'local-prototype';
   catalog: CatalogApi;
   orders: OrdersApi;
 }
