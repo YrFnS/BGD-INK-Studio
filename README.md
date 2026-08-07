@@ -1,8 +1,32 @@
 # BGD/INK Studio
 
-BGD/INK Studio is a bilingual English/Arabic local prototype for designing and previewing custom-printed apparel in 3D.
+BGD/INK Studio is a bilingual English/Arabic local web application for designing and previewing custom-printed apparel in 3D.
 
 > Designs, artwork, checkout fields, and submitted draft summaries stay on the current device. They are not sent to a shop, synchronized between devices, or written to a production database.
+
+## Current scope
+
+The project is intentionally **frontend and local-only for now**.
+
+Active work includes:
+
+- The React/Vite storefront
+- The 3D product customizer
+- Browser-local IndexedDB drafts and original artwork blobs
+- Local design recovery and exports
+- Accessibility, mobile interaction, Iraqi Arabic, performance, PWA, and SEO
+
+Paused until explicitly reopened:
+
+- Backend development
+- Production databases
+- Remote object storage
+- User accounts and cross-device synchronization
+- Staff or administration portals
+- Real product, stock, pricing, customer, and order persistence
+- Real order acceptance, approval, tracking, or fulfillment
+
+The current checkout and confirmation flow saves a **local design draft**, not a real customer order.
 
 ## P0 and P1 status
 
@@ -17,7 +41,7 @@ P0 and P1 are complete on `agent/bgd-ink-p0-foundation`:
 - Pinned Node/npm, locked `npm ci`, CI caching, and route-aware bundle budgets
 - Troubleshooting and prototype-safety documentation
 
-P2 is the next phase and will rebuild the customizer around accurate product models, physical print areas, richer layer operations, artwork quality checks, and production proofs.
+P2 is the next active phase. It will improve the local customizer with accurate product models, physical print areas, richer layer operations, artwork quality checks, adaptive rendering, and downloadable local proofs. It will not add backend, database, account, or remote-storage infrastructure.
 
 ## Brand
 
@@ -123,6 +147,8 @@ IndexedDB stores:
 
 The My Designs workspace can reopen, rename, duplicate, and permanently delete local designs. Duplicate designs receive independent artwork blobs.
 
+IndexedDB is browser-local persistence, not production storage. Clearing browser data can permanently remove designs, and there is no server backup or cross-device recovery.
+
 ## Source architecture
 
 ```text
@@ -130,12 +156,12 @@ src/
   components/       shared presentation
   config/           brand, capability, and budget configuration
   contexts/         language, theme, and toast state
-  data/             prototype products and 3D asset metadata
+  data/             local products and 3D asset metadata
   features/         route-level customer experiences
   hooks/            shared React hooks
   routing/          History API routing
   services/         local application and IndexedDB services
-  utils/            browser prototype helpers
+  utils/            browser-local prototype helpers
   App.tsx           feature composition root
   main.tsx          browser entry point
   translations.ts   English and Iraqi Arabic copy
@@ -146,7 +172,7 @@ Cross-area imports use `@/`. Features cannot import another feature's internals,
 
 ## Performance budgets
 
-The build manifest is measured for initial assets, lazy assets, total JavaScript, and CSS. The limits are stored in `src/config/bundle-budgets.json`. The 3D ecosystem is split into dedicated lazy vendor chunks rather than one monolithic customizer file.
+The build manifest is measured for initial assets, lazy assets, total JavaScript, and CSS. The limits are stored in `src/config/bundle-budgets.json`. The Three.js core is kept in a dedicated lazy vendor chunk rather than being loaded with the initial storefront.
 
 A budget change must be intentional and reviewed; it should not be the automatic response to a regression.
 
@@ -159,6 +185,7 @@ A budget change must be intentional and reviewed; it should not be the automatic
 - There is no account recovery or cross-device synchronization.
 - WhatsApp actions appear only when a real destination is configured.
 - PWA/offline claims remain disabled until reliable caching is implemented.
+- No backend, database, or remote object-storage integration is currently planned.
 
 Do not use the local prototype for real customer orders or sensitive production data.
 
@@ -168,4 +195,4 @@ See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for Git LFS, IndexedDB, a
 
 ## Roadmap
 
-The maintained P0-P4 checklist lives in [tasks.md](tasks.md).
+The maintained P0-P4 checklist lives in [tasks.md](tasks.md). The active roadmap is frontend/local-only; paused infrastructure is listed separately and does not block P2 or P3.
