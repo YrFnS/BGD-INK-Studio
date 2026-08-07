@@ -1,6 +1,6 @@
-import { DecalLayer, OrderDetails, Size } from '@/types';
+import { DecalLayer, OrderDetails, PrintSurfaceId, Size } from '@/types';
 
-export const DESIGN_DRAFT_VERSION = 1 as const;
+export const DESIGN_DRAFT_VERSION = 2 as const;
 
 export interface StoredArtworkAsset {
   id: string;
@@ -17,6 +17,7 @@ export interface StoredDecalLayer {
   assetId: string;
   fileName: string;
   mimeType: string;
+  surfaceId: PrintSurfaceId;
   position: [number, number, number];
   rotation: [number, number, number];
   userRotation: number;
