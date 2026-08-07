@@ -51,6 +51,12 @@ const addArtworkLayer = async (draftId: string) => {
         rotation: [0, Math.PI, 0],
         userRotation: 0.25,
         scale: 0.18,
+        pixelWidth: 2400,
+        pixelHeight: 1200,
+        aspectRatio: 2,
+        hasTransparency: true,
+        transparentPixelRatio: 0.2,
+        transparentPaddingRatio: 0.1,
       },
     ],
   });
@@ -92,6 +98,7 @@ describe('IndexedDB design drafts', () => {
 
     const restored = await loadDesignDraft(draft.id);
     expect(restored).not.toBeNull();
+    expect(restored?.version).toBe(4);
     expect(restored?.assetIds).toEqual([]);
     expect(restored?.checkoutDetails).toEqual({
       fullName: 'Yasser Ahmed',
@@ -102,7 +109,7 @@ describe('IndexedDB design drafts', () => {
     });
   });
 
-  it('persists layer names, visibility, surfaces, and artwork blobs', async () => {
+  it('persists layer names, visibility, surfaces, quality metadata, and artwork blobs', async () => {
     const draft = await createDesignDraft({
       productId: 'tshirt-classic',
       color: '#000000',
@@ -126,6 +133,12 @@ describe('IndexedDB design drafts', () => {
       rotation: [0, Math.PI, 0],
       userRotation: 0.25,
       scale: 0.18,
+      pixelWidth: 2400,
+      pixelHeight: 1200,
+      aspectRatio: 2,
+      hasTransparency: true,
+      transparentPixelRatio: 0.2,
+      transparentPaddingRatio: 0.1,
     });
     expect(restored?.decals[0]?.url).toMatch(/^blob:test-/);
 
@@ -133,7 +146,7 @@ describe('IndexedDB design drafts', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
 
-  it('duplicates artwork and editable layer metadata independently', async () => {
+  it('duplicates artwork and editable quality metadata independently', async () => {
     const source = await createDesignDraft({
       productId: 'tshirt-classic',
       color: '#000000',
@@ -168,6 +181,12 @@ describe('IndexedDB design drafts', () => {
       name: 'Team logo',
       visible: true,
       surfaceId: 'back',
+      pixelWidth: 2400,
+      pixelHeight: 1200,
+      aspectRatio: 2,
+      hasTransparency: true,
+      transparentPixelRatio: 0.2,
+      transparentPaddingRatio: 0.1,
     });
     expect(duplicateDraft?.decals[0]?.assetId).not.toBe(sourceDraft?.decals[0]?.assetId);
     expect(duplicateDraft?.decals[0]?.id).not.toBe(sourceDraft?.decals[0]?.id);
