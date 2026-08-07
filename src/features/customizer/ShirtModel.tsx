@@ -7,7 +7,12 @@ import {
   type ReadyProductModelConfig,
 } from '@/data/assets3d';
 import { DecalLayer, PrintSurfaceId } from '@/types';
-import { clampPositionToSurface, isPointOnSurfaceSide } from './printArea';
+import { normalizeArtworkAspectRatio } from './artworkAnalysis';
+import {
+  clampPositionToSurface,
+  getArtworkModelDimensions,
+  isPointOnSurfaceSide,
+} from './printArea';
 import * as THREE from 'three';
 
 interface ShirtModelProps {
@@ -46,14 +51,18 @@ const cloneColoredMaterial = (source: THREE.Material, color: string): THREE.Mate
 
 const DecalItem = ({
   layer,
+  surface,
   isActive,
   order,
 }: {
   layer: DecalLayer;
+  surface: PrintSurfaceDefinition;
   isActive: boolean;
   order: number;
 }) => {
   const texture = useTexture(layer.url);
+  const aspectRatio = normalizeArtworkAspectRatio(layer.aspectRatio);
+  const dimensions = getArtworkModelDimensions(layer.scale, surface, aspectRatio);
 
   useEffect(() => {
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -78,7 +87,7 @@ const DecalItem = ({
     <Decal
       position={layer.position}
       rotation={finalRotation}
-      scale={[layer.scale, layer.scale, 0.02]}
+      scale={[dimensions.width, dimensions.height, 0.02]}
       debug={false}
       renderOrder={30 + order}
     >
@@ -194,6 +203,7 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
       [localPoint.x, localPoint.y, localPoint.z],
       surface,
       activeLayer.scale,
+      normalizeArtworkAspectRatio(activeLayer.aspectRatio),
     );
 
     onDecalChange(position, [euler.x, euler.y, euler.z]);
@@ -246,6 +256,7 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
                 <DecalItem
                   key={layer.id}
                   layer={layer}
+                  surface={getPrintSurface(modelConfig, layer.surfaceId)}
                   isActive={layer.id === activeDecalId}
                   order={order}
                 />
