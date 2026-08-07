@@ -187,6 +187,7 @@ export const Scene: React.FC<SceneProps> = ({
           interactionMode={interactionMode}
           idleAnimationEnabled={renderingProfile.idleAnimation && isPageVisible}
           textureAnisotropy={renderingProfile.textureAnisotropy}
+          renderingQuality={renderingProfile.quality}
           shadowsEnabled={renderingProfile.shadows}
           onDecalChange={onDecalChange}
           onDecalTransformChange={onDecalTransformChange}
