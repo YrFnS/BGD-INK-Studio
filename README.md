@@ -130,6 +130,8 @@ environment validation
 → bundle budgets
 ```
 
+Current P2 coverage includes 39 unit/component/accessibility tests across 13 files and five Chromium customer journeys covering recovery, artwork quality, layer editing, mobile Arabic/RTL navigation, and rendering fallback behavior.
+
 Additional commands:
 
 ```bash
@@ -232,6 +234,8 @@ Cross-area imports use `@/`. Features cannot import another feature's internals,
 ## Performance budgets
 
 The build manifest is measured for initial assets, lazy assets, total JavaScript, and CSS. The limits are stored in `src/config/bundle-budgets.json`. The Three.js core is kept in a dedicated lazy vendor chunk rather than being loaded with the initial storefront.
+
+The current P2 customizer route is approximately **83.34 KiB raw / 27.80 KiB gzip**. Initial JavaScript remains approximately **107.82 KiB gzip**, and all configured production budgets pass.
 
 A budget change must be intentional and reviewed; it should not be the automatic response to a regression.
 
