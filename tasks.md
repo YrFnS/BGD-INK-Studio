@@ -24,7 +24,7 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 
 - [x] Move Tailwind from the browser CDN into the compiled Vite pipeline.
 - [x] Enable strict TypeScript, Vite client types, ESLint flat config, and Prettier.
-- [x] Add a full `typecheck → lint → test → build` quality gate to Netlify and GitHub Actions.
+- [x] Add a full `typecheck → lint → test → build → bundle budgets` quality gate to Netlify and GitHub Actions.
 - [x] Implement a typed `PlatformApi` with local-prototype and Frappe adapters.
 - [x] Route catalog loading and order submission through the adapter boundary.
 - [x] Add catalog loading, retry, abort, validation, and accessible product-card states.
@@ -38,10 +38,12 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 - [x] Add Testing Library component coverage and an axe accessibility scan for My Designs.
 - [x] Add a Playwright Chromium journey covering upload, refresh recovery, checkout recovery, submission, and workspace status.
 - [x] Run fast tests in the deployment gate and the Chromium journey as a dependent CI job.
+- [x] Pin Node.js and npm, commit `package-lock.json`, use `npm ci`, and cache npm by lockfile hash in CI.
+- [x] Enforce route-aware initial, lazy-chunk, total JavaScript, and CSS production bundle budgets.
+- [x] Fail lint validation when any warning is introduced.
 - [ ] Move application source under `src/` and enforce import boundaries.
 - [ ] Expand automated coverage across catalog errors, customizer failures, checkout validation, Arabic RTL, and mobile interaction.
-- [ ] Add deterministic dependency locking and CI dependency caching.
-- [ ] Add bundle-size and performance budgets.
+- [ ] Reduce and split the large lazy 3D customizer bundle below the current performance baseline.
 - [ ] Implement the documented Frappe catalog, asset, quote, and order endpoints.
 - [ ] Create authenticated staff access in Frappe rather than the storefront bundle.
 - [ ] Persist products, variants, stock, pricing, customers, and orders in Frappe.
@@ -80,4 +82,4 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 
 ## Definition of done
 
-A phase is complete only when its user-facing behavior, failure states, tests, documentation, and deployment checks all pass. Visual completion alone is not completion.
+A phase is complete only when its user-facing behavior, failure states, tests, documentation, dependency lock, performance budgets, and deployment checks all pass. Visual completion alone is not completion.
