@@ -44,6 +44,7 @@ const addArtworkLayer = async (draftId: string) => {
         assetId: asset.id,
         fileName: asset.fileName,
         mimeType: asset.mimeType,
+        surfaceId: 'front',
         position: [0.1, 0.2, 0.3],
         rotation: [0, 0.1, 0],
         userRotation: 0.25,
@@ -98,7 +99,7 @@ describe('IndexedDB design drafts', () => {
     });
   });
 
-  it('persists artwork blobs and rebuilds safe preview URLs', async () => {
+  it('persists artwork blobs, print surfaces, and safe preview URLs', async () => {
     const draft = await createDesignDraft({
       productId: 'tshirt-classic',
       color: '#000000',
@@ -114,6 +115,7 @@ describe('IndexedDB design drafts', () => {
       assetId: asset.id,
       fileName: 'team-logo.png',
       mimeType: 'image/png',
+      surfaceId: 'front',
       position: [0.1, 0.2, 0.3],
       rotation: [0, 0.1, 0],
       userRotation: 0.25,
@@ -156,6 +158,7 @@ describe('IndexedDB design drafts', () => {
       house: '',
     });
     expect(duplicateDraft?.decals).toHaveLength(1);
+    expect(duplicateDraft?.decals[0]?.surfaceId).toBe('front');
     expect(duplicateDraft?.decals[0]?.assetId).not.toBe(sourceDraft?.decals[0]?.assetId);
     expect(duplicateDraft?.decals[0]?.id).not.toBe(sourceDraft?.decals[0]?.id);
 
