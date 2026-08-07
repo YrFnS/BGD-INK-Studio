@@ -15,7 +15,7 @@ Active work includes:
 - browser-local IndexedDB drafts and original artwork blobs
 - recoverable size, colour, quantity, and contact preparation
 - local design recovery, PNG proofs, and JSON specifications
-- English/Iraqi-Arabic content and RTL behavior
+- persistent English/Iraqi-Arabic content and RTL behavior
 - accessibility, touch interaction, performance, PWA, and SEO
 
 Paused until explicitly reopened:
@@ -28,7 +28,7 @@ Paused until explicitly reopened:
 - authoritative stock, pricing, customer, and order data
 - real order acceptance, payment, approval, tracking, or fulfillment
 
-The draft-details and receipt flow saves a **local design draft**, not a real customer order.
+The draft-preparation and receipt flow saves a **local design draft**, not a real customer order.
 
 ## Phase status
 
@@ -48,7 +48,7 @@ Complete on `agent/bgd-ink-p0-foundation`:
 - compiled Tailwind CSS, strict TypeScript, warning-free ESLint, and Prettier
 - application source under `src/` with the `@/` alias and enforced import boundaries
 - History API routes and direct-route hosting fallback
-- recoverable IndexedDB designs, draft details, and My Designs workspace
+- recoverable IndexedDB designs, draft preparation, and My Designs workspace
 - locked Node/npm environment, committed lockfile, cached `npm ci`, tests, CI, and bundle budgets
 
 ### P2 — production-quality local customizer
@@ -84,6 +84,11 @@ In progress on `agent/bgd-ink-p3-premium-storefront`:
 - recoverable local quantity preparation alongside size and colour
 - serialized detail/quantity autosaves that prevent lost updates
 - touch-first local draft receipt with draft-ID copy, prepared variant, quantity, local estimate, and direct My Designs/new-draft actions
+- persisted English/Iraqi-Arabic selection with synchronized document language and direction
+- Iraqi-Arabic editorial pass for the homepage, catalog, notices, footer, My Designs, and receipt
+- direction-safe phone numbers, numeric inputs, prices, sizes, identifiers, file formats, and collection codes
+- truthful prepared-locally status and quantity in My Designs
+- permanent localization/RTL validation in the production gate
 - English/Iraqi-Arabic guide and direct-route browser coverage
 - Three.js kept out of the initial storefront bundle
 
@@ -93,7 +98,7 @@ Still open in P3:
 - confirmed prices, production times, product specifications, method availability, and product-specific size charts
 - official contact channels
 - approved returns, care, privacy, and fulfillment policies
-- complete Iraqi-Arabic editorial and RTL review
+- remaining Iraqi-Arabic and contextual RTL review in the guide, dense editor controls, quality/export tools, and draft-preparation edge states
 - representative physical phone and tablet validation
 
 ## Brand
@@ -154,6 +159,7 @@ environment validation
 → architectural import-boundary validation
 → measured GLB asset budgets
 → storefront content-trust validation
+→ Iraqi-Arabic and RTL boundary validation
 → unit, component, and accessibility tests
 → production build
 → JavaScript and CSS bundle budgets
@@ -169,6 +175,7 @@ npm run check:brand
 npm run check:boundaries
 npm run check:assets
 npm run check:storefront
+npm run check:localization
 npm run test
 npm run test:unit
 npm run test:coverage
@@ -181,7 +188,7 @@ npm run check:bundle
 npm run preview
 ```
 
-The current P3 fast suite contains **55 unit/component/accessibility tests across 20 files**. Seven Chromium journeys cover draft/detail/quantity recovery, artwork quality, layer history, mobile Arabic/RTL navigation, WebGL/2D recovery, real PNG/JSON downloads, and the bilingual Studio Guide.
+The current P3 fast suite contains **56 unit/component/accessibility tests across 20 files**. Seven Chromium journeys cover draft/preparation/quantity recovery, artwork quality, layer history, persisted mobile Arabic/RTL navigation, WebGL/2D recovery, real PNG/JSON downloads, and the bilingual Studio Guide.
 
 ## Routes
 
@@ -207,11 +214,11 @@ IndexedDB draft version 5 stores:
 - layer placement, rotation, aspect ratio, and physical scale
 - source dimensions, transparency, padding, and quality metadata
 - local contact and address fields
-- local submission linkage
+- local prepared-receipt linkage
 
-My Designs can reopen, rename, duplicate, and permanently delete local drafts. Duplicated designs receive independent artwork blobs and preserve the prepared quantity while clearing contact details and submission status.
+My Designs can reopen, rename, duplicate, and permanently delete local drafts. Duplicated designs receive independent artwork blobs and preserve the prepared quantity while clearing contact details and prepared-receipt state.
 
-The draft-preparation page serializes contact and quantity writes so rapid edits cannot overwrite one another. Submit waits for the latest queued state before creating the browser-local summary.
+The draft-preparation page serializes contact and quantity writes so rapid edits cannot overwrite one another. Saving the receipt waits for the latest queued state before creating the browser-local summary.
 
 The original artwork remains separate from object URLs, Three.js preview textures, PNG proofs, and JSON specifications. Clearing browser data can permanently remove local designs; there is no server backup or account recovery.
 
@@ -228,6 +235,22 @@ After saving, the local receipt shows:
 - direct actions to My Designs, a new draft, or the homepage
 
 Refreshing the receipt route can still show the draft identifier, while My Designs remains the source for reopening browser-local content.
+
+My Designs labels that state **Prepared locally** / **مجهّزة محلياً**. It does not use “Submitted” because the draft was not transmitted to the business.
+
+## Language and RTL behavior
+
+The selected language persists in browser storage under `bgd-ink-language`. A restored Arabic session reapplies:
+
+```html
+<html lang="ar" dir="rtl" data-language="ar">
+```
+
+Arabic typography is selected from the document language. Phone fields, number inputs, prices, quantities, sizes, draft identifiers, file formats, and collection codes retain a stable internal order inside RTL layouts.
+
+`npm run check:localization` rejects regressions in language persistence, reviewed Iraqi-Arabic terminology, localized status badges, truthful local-draft status, and direction-isolation primitives.
+
+The mobile Chromium journey switches to Arabic, reloads the page, confirms Arabic remains active, navigates through the RTL menu, and verifies that the Pixel 5 viewport has no horizontal overflow.
 
 ## Customizer interaction modes
 
@@ -325,15 +348,15 @@ The P3 storefront keeps Three.js lazy. Current measured production baseline:
 
 | Metric | Current | Limit |
 | --- | ---: | ---: |
-| Initial JavaScript, gzip | 97.32 KiB | 140 KiB |
-| Initial CSS, gzip | 15.30 KiB | 16 KiB |
+| Initial JavaScript, gzip | 97.56 KiB | 140 KiB |
+| Initial CSS, gzip | 15.48 KiB | 16 KiB |
 | Largest async JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
 | Largest JavaScript chunk, raw | 651.42 KiB | 800 KiB |
-| Total JavaScript, gzip | 400.06 KiB | 410 KiB |
-| Total JavaScript, raw | 1,363.73 KiB | 1,400 KiB |
-| Total CSS, gzip | 15.30 KiB | 16.5 KiB |
+| Total JavaScript, gzip | 400.60 KiB | 410 KiB |
+| Total JavaScript, raw | 1,365.58 KiB | 1,400 KiB |
+| Total CSS, gzip | 15.48 KiB | 16.5 KiB |
 
-The CSS limit was deliberately reviewed for the P3 editorial visual system. JavaScript and CSS limits should not be raised automatically.
+No budget was raised for the Iraqi-Arabic and RTL work. JavaScript and CSS limits should not be raised automatically.
 
 ## Prototype safety boundaries
 
@@ -351,5 +374,6 @@ Do not use the local prototype for real customer orders or sensitive production 
 ## Documentation
 
 - [P3 storefront direction](docs/P3-STOREFRONT-DIRECTION.md)
+- [P3 Iraqi-Arabic and RTL sweep](docs/P3-ARABIC-RTL-SWEEP.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Roadmap](tasks.md)
