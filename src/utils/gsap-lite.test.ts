@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import gsap from './gsap-lite';
 
+const waitForMotionTick = () =>
+  new Promise<void>((resolve) => {
+    window.setTimeout(resolve, 0);
+  });
+
 describe('lightweight motion compatibility layer', () => {
   it('supports the combined translate and opacity fromTo animation used by toasts', async () => {
     const element = document.createElement('div');
@@ -19,13 +24,44 @@ describe('lightweight motion compatibility layer', () => {
     expect(element.style.getPropertyValue('translate')).toBe('50px 0px');
     expect(element.style.opacity).toBe('0');
 
-    await new Promise<void>((resolve) => {
-      window.setTimeout(resolve, 0);
-    });
+    await waitForMotionTick();
 
     expect(element.style.getPropertyValue('translate')).toBe('0px 0px');
     expect(element.style.opacity).toBe('1');
     expect(onComplete).toHaveBeenCalledOnce();
+  });
+
+  it('supports timeline fromTo, stagger-compatible transforms, and clearProps', async () => {
+    const element = document.createElement('div');
+    Object.defineProperty(element, 'animate', {
+      configurable: true,
+      value: undefined,
+    });
+
+    gsap
+      .timeline({ defaults: { ease: 'power4.out' } })
+      .fromTo(
+        element,
+        { y: 54, opacity: 0, scale: 0.975, skewY: 2 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          skewY: 0,
+          duration: 0,
+          clearProps: 'transform',
+        },
+      );
+
+    expect(element.style.getPropertyValue('translate')).toBe('0px 54px');
+    expect(element.style.opacity).toBe('0');
+    expect(element.style.transform).toContain('skewY(2deg)');
+
+    await waitForMotionTick();
+
+    expect(element.style.getPropertyValue('translate')).toBe('');
+    expect(element.style.transform).toBe('');
+    expect(element.style.opacity).toBe('1');
   });
 
   it('restores inline styles when a scoped context is reverted', () => {
