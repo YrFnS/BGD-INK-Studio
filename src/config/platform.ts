@@ -1,6 +1,5 @@
-import { Language } from '@/types';
-import { BRAND } from './brand';
-import { LocalizedText } from './brand';
+import type { Language } from '@/types';
+import { BRAND, type LocalizedText } from './brand';
 
 export const PLATFORM_STATUS = {
   phase: 'prototype',
@@ -9,15 +8,15 @@ export const PLATFORM_STATUS = {
   pwaEnabled: false,
   notice: {
     en: 'Preview mode — drafts stay in this browser and are not sent to the studio yet.',
-    ar: 'نسخة تجريبية — المسودات تبقى بهذا المتصفح ولا تُرسل إلى المتجر حالياً.',
+    ar: 'نسخة تجريبية — المسودات تبقى بهذا المتصفح وما تنرسل للستوديو حالياً.',
   } satisfies LocalizedText,
   savedDraftTitle: {
     en: 'Design draft saved',
-    ar: 'تم حفظ مسودة التصميم',
+    ar: 'انحفظت مسودة التصميم',
   } satisfies LocalizedText,
   savedDraftMessage: {
     en: `This draft is stored only on this device. It is not a confirmed order and has not been sent to ${BRAND.displayName}.`,
-    ar: `هذه المسودة محفوظة على هذا الجهاز فقط. ليست طلباً مؤكداً ولم تُرسل إلى ${BRAND.displayName}.`,
+    ar: `هذه المسودة محفوظة على هذا الجهاز فقط. مو طلب مؤكد وما انرسلت إلى ${BRAND.displayName}.`,
   } satisfies LocalizedText,
   draftIdLabel: {
     en: 'Draft ID',
