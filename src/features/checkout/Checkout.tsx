@@ -1,5 +1,11 @@
 import gsap from 'gsap';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  calculateLocalDraftEstimate,
+  MAX_DRAFT_QUANTITY,
+  MIN_DRAFT_QUANTITY,
+  normalizeDraftQuantity,
+} from '@/config/draft';
 import { useAppContext } from '@/contexts/AppContext';
 import { isAbortError, platformApi, PlatformApiError, SubmitOrderResult } from '@/services/api';
 import {
@@ -9,6 +15,7 @@ import {
   markDesignDraftSubmitted,
   releaseDraftObjectUrls,
   saveCheckoutDetails,
+  saveDraftQuantity,
 } from '@/services/drafts';
 import { OrderDetails, PendingOrder, Product } from '@/types';
 import { submitOrder } from './services';
@@ -31,6 +38,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
   const [loadStatus, setLoadStatus] = useState<DraftLoadStatus>('loading');
   const [draft, setDraft] = useState<HydratedDesignDraft | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
+  const [quantity, setQuantity] = useState(MIN_DRAFT_QUANTITY);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSaveFailed, setFormSaveFailed] = useState(false);
@@ -77,6 +85,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
         restoredDraftRef.current = nextDraft;
         setDraft(nextDraft);
         setProduct(matchingProduct);
+        setQuantity(normalizeDraftQuantity(nextDraft.quantity));
         setFormData(nextDraft.checkoutDetails);
         setLoadStatus('ready');
       })
@@ -101,11 +110,14 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
     setFormSaveFailed(false);
     const timer = window.setTimeout(() => {
-      void saveCheckoutDetails(draftId, formData).catch(() => setFormSaveFailed(true));
+      void Promise.all([
+        saveCheckoutDetails(draftId, formData),
+        saveDraftQuantity(draftId, quantity),
+      ]).catch(() => setFormSaveFailed(true));
     }, 500);
 
     return () => window.clearTimeout(timer);
-  }, [draftId, formData, loadStatus]);
+  }, [draftId, formData, loadStatus, quantity]);
 
   useEffect(() => {
     if (loadStatus !== 'ready' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -134,10 +146,15 @@ export const Checkout: React.FC<CheckoutProps> = ({
       basePrice: product.basePrice,
       color: draft.color,
       size: draft.size,
+      quantity,
       decals: draft.decals,
       notes: draft.notes,
     };
-  }, [draft, product]);
+  }, [draft, product, quantity]);
+
+  const localEstimate = pendingOrder
+    ? calculateLocalDraftEstimate(pendingOrder.basePrice, pendingOrder.quantity)
+    : 0;
 
   const handleChange = (field: keyof OrderDetails, value: string) => {
     setFormData((current) => ({ ...current, [field]: value }));
@@ -150,6 +167,11 @@ export const Checkout: React.FC<CheckoutProps> = ({
         return nextErrors;
       });
     }
+  };
+
+  const handleQuantityChange = (value: number) => {
+    setQuantity(normalizeDraftQuantity(value));
+    setSubmitError(null);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -177,7 +199,10 @@ export const Checkout: React.FC<CheckoutProps> = ({
     submitControllerRef.current = controller;
 
     try {
-      await saveCheckoutDetails(draftId, normalizedDetails);
+      await Promise.all([
+        saveCheckoutDetails(draftId, normalizedDetails),
+        saveDraftQuantity(draftId, pendingOrder.quantity),
+      ]);
       const result = await submitOrder(draftId, pendingOrder, normalizedDetails, controller.signal);
       await markDesignDraftSubmitted(draftId, result.orderId);
       onSuccess(result, pendingOrder, normalizedDetails);
@@ -185,13 +210,13 @@ export const Checkout: React.FC<CheckoutProps> = ({
       if (isAbortError(error)) return;
 
       setSubmitError(
-        error instanceof PlatformApiError && error.code === 'ARTWORK_NOT_UPLOADED'
+        error instanceof PlatformApiError && error.code === 'ARTWORK_NOT_PERSISTED'
           ? language === 'ar'
-            ? 'يجب رفع ملفات التصميم إلى التخزين الدائم قبل إنشاء طلب حقيقي.'
-            : 'Artwork must be uploaded to permanent storage before creating a real order.'
+            ? 'لازم تنحفظ ملفات التصميم على هذا الجهاز قبل حفظ ملخص المسودة.'
+            : 'Artwork must be stored on this device before saving the draft summary.'
           : language === 'ar'
-            ? 'تعذر حفظ الطلب. تحقق من الاتصال وحاول مرة ثانية.'
-            : 'The order could not be saved. Check the connection and try again.',
+            ? 'تعذر حفظ المسودة. حاول مرة ثانية.'
+            : 'The local draft could not be saved. Try again.',
       );
     } finally {
       if (submitControllerRef.current === controller) submitControllerRef.current = null;
@@ -205,7 +230,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-black dark:border-gray-800 dark:border-t-white" />
           <p className="text-sm font-medium text-gray-500">
-            {language === 'ar' ? 'جاري استرجاع الطلب…' : 'Restoring checkout…'}
+            {language === 'ar' ? 'جاري استرجاع معلومات المسودة…' : 'Restoring draft details…'}
           </p>
         </div>
       </div>
@@ -216,11 +241,11 @@ export const Checkout: React.FC<CheckoutProps> = ({
     const message =
       loadStatus === 'missing'
         ? language === 'ar'
-          ? 'مسودة التصميم غير موجودة، لذلك لا يمكن متابعة الطلب.'
-          : 'The design draft is missing, so checkout cannot continue.'
+          ? 'مسودة التصميم غير موجودة، لذلك ما نكدر نكمل المعلومات.'
+          : 'The design draft is missing, so its details cannot be completed.'
         : language === 'ar'
-          ? 'تعذر استرجاع معلومات الطلب.'
-          : 'Checkout information could not be restored.';
+          ? 'تعذر استرجاع معلومات المسودة.'
+          : 'The draft details could not be restored.';
 
     return (
       <div className="flex min-h-[70vh] items-center justify-center px-4 pt-24 text-center">
@@ -240,6 +265,15 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
   const formatPrice = (price: number): string =>
     new Intl.NumberFormat(language === 'ar' ? 'ar-IQ' : 'en-US').format(price);
+  const quantityLabel = language === 'ar' ? 'الكمية المحلية' : 'Local quantity';
+  const decreaseQuantityLabel = language === 'ar' ? 'تقليل الكمية' : 'Decrease quantity';
+  const increaseQuantityLabel = language === 'ar' ? 'زيادة الكمية' : 'Increase quantity';
+  const unitPriceLabel = language === 'ar' ? 'سعر القطعة المحدد' : 'Configured unit price';
+  const estimateLabel = language === 'ar' ? 'تقدير محلي' : 'Local estimate';
+  const quantityNote =
+    language === 'ar'
+      ? 'للتجهيز والمقارنة فقط. ماكو حجز مخزون أو عرض سعر مؤكد.'
+      : 'For preparation and comparison only. No stock is reserved and this is not a confirmed quote.';
 
   return (
     <div
@@ -260,26 +294,26 @@ export const Checkout: React.FC<CheckoutProps> = ({
               stroke="currentColor"
               aria-hidden="true"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             <span className="font-medium">{t('common.back')}</span>
           </button>
 
-          <h2 className="mb-8 text-3xl font-bold uppercase tracking-tight">
+          <p className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-accent">
+            {language === 'ar' ? 'تفاصيل محلية قابلة للاسترجاع' : 'Recoverable local preparation'}
+          </p>
+          <h2 className="mb-3 text-3xl font-bold uppercase tracking-tight">
             {t('checkout.title')}
           </h2>
+          <p className="mb-8 max-w-xl text-sm leading-7 text-gray-500 dark:text-gray-400">
+            {language === 'ar'
+              ? 'هذه المعلومات تنحفظ على هذا الجهاز ويا المسودة. ما تنرسل للمحل وما تعتبر طلب.'
+              : 'These details stay with the draft on this device. They are not sent to a shop and do not create an order.'}
+          </p>
 
           <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" noValidate>
             <div className="form-group">
-              <label
-                htmlFor="checkout-full-name"
-                className="mb-2 block text-sm font-bold uppercase text-gray-500 dark:text-gray-400"
-              >
+              <label htmlFor="checkout-full-name" className="mb-2 block text-sm font-bold uppercase text-gray-500 dark:text-gray-400">
                 {t('checkout.name')}
               </label>
               <input
@@ -301,10 +335,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
             </div>
 
             <div className="form-group">
-              <label
-                htmlFor="checkout-phone"
-                className="mb-2 block text-sm font-bold uppercase text-gray-500 dark:text-gray-400"
-              >
+              <label htmlFor="checkout-phone" className="mb-2 block text-sm font-bold uppercase text-gray-500 dark:text-gray-400">
                 {t('checkout.phone')}
               </label>
               <input
@@ -328,10 +359,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
             </div>
 
             <div className="form-group">
-              <label
-                htmlFor="checkout-area"
-                className="mb-2 block text-sm font-bold uppercase text-gray-500 dark:text-gray-400"
-              >
+              <label htmlFor="checkout-area" className="mb-2 block text-sm font-bold uppercase text-gray-500 dark:text-gray-400">
                 {t('checkout.area')}
               </label>
               <div className="relative">
@@ -352,22 +380,9 @@ export const Checkout: React.FC<CheckoutProps> = ({
                     </option>
                   ))}
                 </select>
-                <div
-                  className={`pointer-events-none absolute inset-y-0 ${isRTL ? 'left-4' : 'right-4'} flex items-center text-gray-500`}
-                >
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
+                <div className={`pointer-events-none absolute inset-y-0 ${isRTL ? 'left-4' : 'right-4'} flex items-center text-gray-500`}>
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
               </div>
@@ -379,10 +394,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
             </div>
 
             <div className="form-group">
-              <label
-                htmlFor="checkout-address"
-                className="mb-2 block text-sm font-bold uppercase text-gray-500 dark:text-gray-400"
-              >
+              <label htmlFor="checkout-address" className="mb-2 block text-sm font-bold uppercase text-gray-500 dark:text-gray-400">
                 {t('checkout.address')}
               </label>
               <textarea
@@ -405,16 +417,13 @@ export const Checkout: React.FC<CheckoutProps> = ({
             {formSaveFailed && (
               <p className="text-sm text-amber-700 dark:text-amber-300" role="status">
                 {language === 'ar'
-                  ? 'تعذر حفظ آخر تغييرات العنوان تلقائياً.'
-                  : 'The latest address changes could not be autosaved.'}
+                  ? 'تعذر حفظ آخر تغييرات المعلومات أو الكمية تلقائياً.'
+                  : 'The latest detail or quantity change could not be autosaved.'}
               </p>
             )}
 
             {submitError && (
-              <p
-                className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100"
-                role="alert"
-              >
+              <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100" role="alert">
                 {submitError}
               </p>
             )}
@@ -433,87 +442,135 @@ export const Checkout: React.FC<CheckoutProps> = ({
           </form>
         </div>
 
-        <div className="order-summary h-fit rounded-3xl border border-gray-200 bg-gray-50 p-8 dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="mb-6 text-xl font-bold uppercase tracking-tight">
-            {t('checkout.summary')}
-          </h3>
+        <div className="order-summary h-fit rounded-[2rem] border border-black/10 bg-[#ece7de] p-6 dark:border-white/10 dark:bg-[#0d0d0d] sm:p-8">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <h3 className="text-xl font-bold uppercase tracking-tight">{t('checkout.summary')}</h3>
+            <span className="rounded-full border border-black/10 bg-white/50 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.13em] text-black/55 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/48">
+              {language === 'ar' ? 'محلي فقط' : 'Local only'}
+            </span>
+          </div>
 
-          <div className="relative mb-6 aspect-square overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-zinc-800 dark:bg-black">
-            <img
-              src={product.image}
-              alt={t(product.name)}
-              className="h-full w-full object-cover opacity-80"
-            />
-            <div
-              className="absolute inset-0 opacity-50 mix-blend-multiply"
-              style={{ backgroundColor: pendingOrder.color }}
-            />
+          <div className="relative mb-6 aspect-square overflow-hidden rounded-2xl border border-black/10 bg-[#f4f1ea] dark:border-white/10 dark:bg-black">
+            <img src={product.image} alt={t(product.name)} className="h-full w-full object-contain p-5 opacity-90" />
+            <div className="absolute inset-0 opacity-30 mix-blend-multiply" style={{ backgroundColor: pendingOrder.color }} />
 
-            {pendingOrder.decals.map((layer) => (
-              <div
-                key={layer.id}
-                className="pointer-events-none absolute inset-0 flex items-center justify-center"
-              >
-                <img
-                  src={layer.url}
-                  alt={layer.fileName ?? 'Custom print'}
-                  style={{
-                    width: `${layer.scale * 300}%`,
-                    transform: `translate(${layer.position[0] * 100}px, ${-layer.position[1] * 100}px) rotate(${layer.userRotation}rad)`,
-                  }}
-                  className="object-contain"
-                />
-              </div>
-            ))}
+            {pendingOrder.decals
+              .filter((layer) => layer.visible)
+              .map((layer) => (
+                <div key={layer.id} className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <img
+                    src={layer.url}
+                    alt={layer.fileName ?? 'Custom print'}
+                    style={{
+                      width: `${layer.scale * 300}%`,
+                      transform: `translate(${layer.position[0] * 100}px, ${-layer.position[1] * 100}px) rotate(${layer.userRotation}rad)`,
+                    }}
+                    className="object-contain"
+                  />
+                </div>
+              ))}
           </div>
 
           <div className="space-y-4 text-sm">
-            <div className="flex justify-between border-b border-gray-200 py-3 dark:border-zinc-800">
-              <span className="text-gray-500 dark:text-gray-400">{t(product.name)}</span>
+            <div className="flex justify-between border-b border-black/10 py-3 dark:border-white/10">
+              <span className="text-black/48 dark:text-white/42">{language === 'ar' ? 'القطعة' : 'Garment'}</span>
               <span className="font-bold">{t(pendingOrder.productName)}</span>
             </div>
 
-            <div className="flex justify-between border-b border-gray-200 py-3 dark:border-zinc-800">
-              <span className="text-gray-500 dark:text-gray-400">{t('customizer.size')}</span>
-              <span className="font-bold">{pendingOrder.size}</span>
-            </div>
-
-            <div className="flex justify-between border-b border-gray-200 py-3 dark:border-zinc-800">
-              <span className="text-gray-500 dark:text-gray-400">{t('customizer.color')}</span>
-              <div className="flex items-center gap-2">
-                <span
-                  className="h-4 w-4 rounded-full border border-gray-300"
-                  style={{ backgroundColor: pendingOrder.color }}
-                />
-                <span className="font-bold uppercase">{pendingOrder.color}</span>
+            <div className="grid grid-cols-2 gap-3 border-b border-black/10 py-4 dark:border-white/10">
+              <div className="rounded-xl border border-black/10 bg-white/45 p-3 dark:border-white/10 dark:bg-white/[0.035]">
+                <span className="block text-[9px] font-black uppercase tracking-[0.14em] text-black/38 dark:text-white/34">
+                  {t('customizer.size')}
+                </span>
+                <span className="mt-2 block text-lg font-black">{pendingOrder.size}</span>
+              </div>
+              <div className="rounded-xl border border-black/10 bg-white/45 p-3 dark:border-white/10 dark:bg-white/[0.035]">
+                <span className="block text-[9px] font-black uppercase tracking-[0.14em] text-black/38 dark:text-white/34">
+                  {t('customizer.color')}
+                </span>
+                <span className="mt-2 flex items-center gap-2 font-bold uppercase">
+                  <span className="h-4 w-4 rounded-full border border-black/20 dark:border-white/20" style={{ backgroundColor: pendingOrder.color }} />
+                  {pendingOrder.color}
+                </span>
               </div>
             </div>
 
+            <div className="border-b border-black/10 py-4 dark:border-white/10">
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <div>
+                  <span className="block font-bold">{quantityLabel}</span>
+                  <span className="mt-1 block text-xs text-black/42 dark:text-white/38">
+                    {MIN_DRAFT_QUANTITY}–{MAX_DRAFT_QUANTITY}
+                  </span>
+                </div>
+                <div className="flex items-center rounded-full border border-black/10 bg-white/55 p-1 dark:border-white/10 dark:bg-white/[0.05]">
+                  <button
+                    type="button"
+                    aria-label={decreaseQuantityLabel}
+                    disabled={quantity <= MIN_DRAFT_QUANTITY}
+                    onClick={() => handleQuantityChange(quantity - 1)}
+                    className="grid h-10 w-10 place-items-center rounded-full text-xl font-black transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-white dark:hover:text-black"
+                  >
+                    −
+                  </button>
+                  <input
+                    aria-label={quantityLabel}
+                    type="number"
+                    inputMode="numeric"
+                    min={MIN_DRAFT_QUANTITY}
+                    max={MAX_DRAFT_QUANTITY}
+                    value={quantity}
+                    onChange={(event) => handleQuantityChange(Number(event.target.value))}
+                    className="h-10 w-14 border-0 bg-transparent text-center font-mono text-lg font-black outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                  <button
+                    type="button"
+                    aria-label={increaseQuantityLabel}
+                    disabled={quantity >= MAX_DRAFT_QUANTITY}
+                    onClick={() => handleQuantityChange(quantity + 1)}
+                    className="grid h-10 w-10 place-items-center rounded-full text-xl font-black transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-white dark:hover:text-black"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs leading-6 text-black/45 dark:text-white/40">{quantityNote}</p>
+            </div>
+
             {pendingOrder.decals.length > 0 && (
-              <div className="flex justify-between border-b border-gray-200 py-3 dark:border-zinc-800">
-                <span className="text-gray-500 dark:text-gray-400">
-                  {language === 'ar' ? 'ملفات التصميم' : 'Artwork layers'}
+              <div className="flex justify-between border-b border-black/10 py-3 dark:border-white/10">
+                <span className="text-black/48 dark:text-white/42">
+                  {language === 'ar' ? 'طبقات التصميم' : 'Artwork layers'}
                 </span>
                 <span className="font-bold">{pendingOrder.decals.length}</span>
               </div>
             )}
 
             {pendingOrder.notes && (
-              <div className="border-b border-gray-200 py-3 dark:border-zinc-800">
-                <span className="mb-1 block text-gray-500 dark:text-gray-400">
-                  {t('customizer.notes')}
-                </span>
-                <p className="font-medium italic text-gray-600 dark:text-gray-300">
-                  “{pendingOrder.notes}”
-                </p>
+              <div className="border-b border-black/10 py-3 dark:border-white/10">
+                <span className="mb-1 block text-black/48 dark:text-white/42">{t('customizer.notes')}</span>
+                <p className="font-medium italic text-black/62 dark:text-white/55">“{pendingOrder.notes}”</p>
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-4 text-lg">
-              <span className="font-bold">{t('checkout.total')}</span>
-              <span className="text-2xl font-bold">
-                {formatPrice(pendingOrder.basePrice)} {t('common.price')}
-              </span>
+            <div className="space-y-2 pt-4">
+              <div className="flex items-center justify-between text-xs text-black/45 dark:text-white/40">
+                <span>{unitPriceLabel}</span>
+                <span>
+                  {formatPrice(pendingOrder.basePrice)} {t('common.price')} × {pendingOrder.quantity}
+                </span>
+              </div>
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <span className="block text-lg font-bold">{estimateLabel}</span>
+                  <span className="mt-1 block text-[10px] leading-5 text-black/42 dark:text-white/38">
+                    {language === 'ar' ? 'مو عرض سعر أو طلب مؤكد' : 'Not a quote or confirmed order'}
+                  </span>
+                </div>
+                <span className="text-end text-2xl font-black tracking-[-0.03em]">
+                  {formatPrice(localEstimate)} {t('common.price')}
+                </span>
+              </div>
             </div>
           </div>
         </div>
