@@ -1,4 +1,5 @@
 import { BRAND } from '@/config/brand';
+import { normalizeDraftQuantity } from '@/config/draft';
 import {
   DEFAULT_PRINT_SURFACE_ID,
   OrderDetails,
@@ -57,10 +58,11 @@ type LegacyStoredDecalLayer = Omit<
 
 type LegacyDesignDraftRecord = Omit<
   DesignDraftRecord,
-  'version' | 'name' | 'decals' | 'assetIds'
+  'version' | 'name' | 'quantity' | 'decals' | 'assetIds'
 > & {
   version?: unknown;
   name?: unknown;
+  quantity?: unknown;
   decals?: LegacyStoredDecalLayer[];
   assetIds?: unknown;
 };
@@ -138,6 +140,7 @@ const normalizeDraftRecord = (draft: LegacyDesignDraftRecord): DesignDraftRecord
     ...draft,
     version: DESIGN_DRAFT_VERSION,
     name: typeof draft.name === 'string' ? draft.name : '',
+    quantity: normalizeDraftQuantity(draft.quantity),
     decals,
     assetIds: Array.from(
       new Set([...storedAssetIds, ...decals.map((layer) => layer.assetId)]),
@@ -346,6 +349,7 @@ export const createDesignDraft = async ({
   productId,
   color,
   size = Size.L,
+  quantity = 1,
 }: CreateDesignDraftInput): Promise<DesignDraftRecord> => {
   const now = new Date().toISOString();
   const draft: DesignDraftRecord = {
@@ -355,6 +359,7 @@ export const createDesignDraft = async ({
     productId,
     color,
     size,
+    quantity: normalizeDraftQuantity(quantity),
     notes: '',
     activeDecalId: null,
     decals: [],
@@ -393,6 +398,7 @@ export const listDesignDrafts = async (): Promise<DesignDraftSummary[]> => {
       productId: draft.productId,
       color: draft.color,
       size: draft.size,
+      quantity: draft.quantity,
       layerCount: draft.decals.length,
       previewUrl: previewAsset ? URL.createObjectURL(previewAsset.blob) : null,
       submittedOrderId: draft.submittedOrderId,
@@ -630,6 +636,16 @@ export const saveCheckoutDetails = async (
   updateDraftRecord(draftId, (draft) => ({
     ...draft,
     checkoutDetails,
+    updatedAt: new Date().toISOString(),
+  }));
+
+export const saveDraftQuantity = async (
+  draftId: string,
+  quantity: number,
+): Promise<DesignDraftRecord> =>
+  updateDraftRecord(draftId, (draft) => ({
+    ...draft,
+    quantity: normalizeDraftQuantity(quantity),
     updatedAt: new Date().toISOString(),
   }));
 
