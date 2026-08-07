@@ -1,6 +1,6 @@
 import { DecalLayer, OrderDetails, PrintSurfaceId, Size } from '@/types';
 
-export const DESIGN_DRAFT_VERSION = 3 as const;
+export const DESIGN_DRAFT_VERSION = 4 as const;
 
 export interface StoredArtworkAsset {
   id: string;
@@ -24,6 +24,12 @@ export interface StoredDecalLayer {
   rotation: [number, number, number];
   userRotation: number;
   scale: number;
+  pixelWidth?: number;
+  pixelHeight?: number;
+  aspectRatio?: number;
+  hasTransparency?: boolean;
+  transparentPixelRatio?: number;
+  transparentPaddingRatio?: number;
 }
 
 export interface DesignDraftRecord {
