@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Center, Decal, useGLTF, useTexture } from '@react-three/drei';
+import { Center, Decal, useGLTF } from '@react-three/drei';
 import { ThreeEvent, useFrame } from '@react-three/fiber';
 import {
   getPrintSurface,
@@ -8,6 +8,7 @@ import {
 } from '@/data/assets3d';
 import { DecalLayer, PrintSurfaceId } from '@/types';
 import { normalizeArtworkAspectRatio } from './artworkAnalysis';
+import { useOptimizedArtworkTexture } from './artworkTexture';
 import {
   calculateMultiPointerTransform,
   calculateSinglePointerTransform,
@@ -20,6 +21,7 @@ import {
   getArtworkModelDimensions,
   isPointOnSurfaceSide,
 } from './printArea';
+import type { RenderingQuality } from './renderingCapabilities';
 import * as THREE from 'three';
 
 interface ShirtModelProps {
@@ -31,6 +33,7 @@ interface ShirtModelProps {
   interactionMode: CustomizerInteractionMode;
   idleAnimationEnabled: boolean;
   textureAnisotropy: 2 | 4 | 8;
+  renderingQuality: RenderingQuality;
   shadowsEnabled: boolean;
   onDecalChange: (pos: [number, number, number], rot: [number, number, number]) => void;
   onDecalTransformChange: (scale: number, rotation: number) => void;
@@ -82,22 +85,22 @@ const DecalItem = ({
   isActive,
   order,
   textureAnisotropy,
+  renderingQuality,
 }: {
   layer: DecalLayer;
   surface: PrintSurfaceDefinition;
   isActive: boolean;
   order: number;
   textureAnisotropy: 2 | 4 | 8;
+  renderingQuality: RenderingQuality;
 }) => {
-  const texture = useTexture(layer.url);
+  const texture = useOptimizedArtworkTexture(
+    layer.url,
+    renderingQuality,
+    textureAnisotropy,
+  );
   const aspectRatio = normalizeArtworkAspectRatio(layer.aspectRatio);
   const dimensions = getArtworkModelDimensions(layer.scale, surface, aspectRatio);
-
-  useEffect(() => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = textureAnisotropy;
-    texture.needsUpdate = true;
-  }, [texture, textureAnisotropy]);
 
   const finalRotation = useMemo(() => {
     const orientation = new THREE.Euler(...layer.rotation);
@@ -111,6 +114,8 @@ const DecalItem = ({
     );
     return [finalEuler.x, finalEuler.y, finalEuler.z] as [number, number, number];
   }, [layer.rotation, layer.userRotation]);
+
+  if (!texture) return null;
 
   return (
     <Decal
@@ -174,6 +179,7 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
   interactionMode,
   idleAnimationEnabled,
   textureAnisotropy,
+  renderingQuality,
   shadowsEnabled,
   onDecalChange,
   onDecalTransformChange,
@@ -414,6 +420,7 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
                   isActive={layer.id === activeDecalId}
                   order={order}
                   textureAnisotropy={textureAnisotropy}
+                  renderingQuality={renderingQuality}
                 />
               ) : null,
             )}
