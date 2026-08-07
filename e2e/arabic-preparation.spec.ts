@@ -17,12 +17,12 @@ test('validates and saves an Iraqi-Arabic local draft preparation without RTL ov
   await expect(page).toHaveURL(/\/checkout\/draft-/);
 
   await expect(page.getByRole('heading', { name: 'تجهيز المسودة' })).toBeVisible();
-  await expect(page.getByLabel('المنطقة / الحي').getByRole('option', { name: 'المنصور' })).toHaveValue(
-    'Al-Mansour',
-  );
+  await expect(
+    page.getByLabel('المنطقة / الحي').getByRole('option', { name: 'المنصور' }),
+  ).toHaveAttribute('value', 'Al-Mansour');
   await expect(
     page.getByLabel('المنطقة / الحي').getByRole('option', { name: 'بغداد الجديدة' }),
-  ).toHaveValue('Baghdad Al-Jadida');
+  ).toHaveAttribute('value', 'Baghdad Al-Jadida');
   await expect(page.getByLabel('رقم الموبايل (07...)')).toHaveAttribute('dir', 'ltr');
   await expect(page.getByLabel('الكمية المحلية')).toHaveAttribute('dir', 'ltr');
 
