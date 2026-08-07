@@ -10,6 +10,7 @@ export {
   renameDesignDraft,
   saveCheckoutDetails,
   saveDesignDraft,
+  saveDraftQuantity,
   storeArtworkFile,
 } from './indexedDb';
 export { releaseDraftSummaryObjectUrls } from './objectUrls';
