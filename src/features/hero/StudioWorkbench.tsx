@@ -1,4 +1,5 @@
 import React from 'react';
+import { BRAND } from '@/config/brand';
 import { useAppContext } from '@/contexts/AppContext';
 
 export const StudioWorkbench: React.FC = () => {
@@ -48,7 +49,7 @@ export const StudioWorkbench: React.FC = () => {
             </span>
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">
-                BGD/INK Studio
+                {BRAND.productName}
               </p>
               <p className="mt-1 text-xs font-semibold text-white/90">{copy.draft} / 001</p>
             </div>
