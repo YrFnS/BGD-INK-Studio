@@ -54,3 +54,22 @@ export default defineConfig({
 });
 `,
 );
+
+const mobileTestPath = 'e2e/mobile-navigation.spec.ts';
+let mobileTestContent = readFileSync(mobileTestPath, 'utf8');
+const ambiguousMobileClick =
+  "  await page.getByRole('button', { name: 'الموديلات' }).click();";
+const scopedMobileClick = `  await page
+    .getByRole('navigation', { name: 'Mobile navigation' })
+    .getByRole('button', { name: 'الموديلات' })
+    .click();`;
+
+if (
+  !mobileTestContent.includes(ambiguousMobileClick) &&
+  !mobileTestContent.includes(scopedMobileClick)
+) {
+  throw new Error('The Arabic mobile catalog navigation selector was not found.');
+}
+
+mobileTestContent = mobileTestContent.replace(ambiguousMobileClick, scopedMobileClick);
+writeFileSync(mobileTestPath, mobileTestContent);
