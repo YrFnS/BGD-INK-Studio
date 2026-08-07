@@ -1,11 +1,11 @@
 {
   "models": {
-    "maximumBytes": 1572864,
-    "maximumTriangles": 150000,
-    "maximumMeshes": 8,
-    "maximumMaterials": 8,
-    "maximumTextureDimension": 2048,
-    "maximumEmbeddedTextureBytes": 1572864
+    "maximumBytes": 1400000,
+    "maximumTriangles": 25000,
+    "maximumMeshes": 4,
+    "maximumMaterials": 4,
+    "maximumTextureDimension": 1024,
+    "maximumEmbeddedTextureBytes": 1100000
   },
   "artworkTextures": {
     "highMaximumDimension": 2048,
