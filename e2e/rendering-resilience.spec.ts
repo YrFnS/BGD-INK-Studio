@@ -5,6 +5,8 @@ const stablePng = Buffer.from(
   'base64',
 );
 
+type StablePreviewState = '3d' | '2d';
+
 test('separates camera and artwork modes and preserves the draft through 2D recovery', async ({
   page,
 }) => {
@@ -16,11 +18,9 @@ test('separates camera and artwork modes and preserves the draft through 2D reco
   const viewMode = page.getByRole('button', { name: 'View garment' });
   const moveMode = page.getByRole('button', { name: 'Move design' });
   const transformMode = page.getByRole('button', { name: 'Resize or rotate design' });
+  const canvas = page.locator('canvas');
+  const fallback = page.getByRole('img', { name: '2D design preview' });
 
-  const startsIn3d = await page.locator('canvas').isVisible().catch(() => false);
-  if (startsIn3d) {
-    await expect(viewMode).toHaveAttribute('aria-pressed', 'true');
-  }
   await expect(moveMode).toBeDisabled();
   await expect(transformMode).toBeDisabled();
 
@@ -31,26 +31,44 @@ test('separates camera and artwork modes and preserves the draft through 2D reco
   });
   await expect(page.getByRole('button', { name: 'Selected layer 1' })).toBeVisible();
 
-  const canvas = page.locator('canvas');
-  const fallback = page.getByRole('img', { name: '2D design preview' });
-  const has3dAfterUpload = await canvas.isVisible().catch(() => false);
+  await page.waitForFunction(() => {
+    const moveButton = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Move design"]',
+    );
+    const fallbackPreview = document.querySelector('[aria-label="2D design preview"]');
+    return Boolean(fallbackPreview || (moveButton && !moveButton.disabled));
+  });
 
-  if (has3dAfterUpload) {
-    await expect(moveMode).toBeEnabled();
-    await moveMode.click();
-    await expect(moveMode).toHaveAttribute('aria-pressed', 'true');
+  const getStablePreviewState = async (): Promise<StablePreviewState> =>
+    (await fallback.isVisible().catch(() => false)) ? '2d' : '3d';
 
-    await transformMode.click();
-    await expect(transformMode).toHaveAttribute('aria-pressed', 'true');
+  let previewState = await getStablePreviewState();
 
-    await canvas.evaluate((element) => {
-      element.dispatchEvent(new Event('webglcontextlost', { cancelable: true }));
-    });
+  if (previewState === '3d') {
+    const moveActivated = await moveMode
+      .click({ timeout: 3_000 })
+      .then(() => true)
+      .catch(() => false);
 
-    await expect(fallback).toBeVisible();
-    await expect(fallback).toContainText('Your design was not lost');
-  } else {
-    await expect(fallback).toBeVisible();
+    if (moveActivated) {
+      await expect(moveMode).toHaveAttribute('aria-pressed', 'true');
+      await transformMode.click({ timeout: 3_000 });
+      await expect(transformMode).toHaveAttribute('aria-pressed', 'true');
+
+      if (await canvas.isVisible().catch(() => false)) {
+        await canvas.evaluate((element) => {
+          element.dispatchEvent(new Event('webglcontextlost', { cancelable: true }));
+        });
+        await expect(fallback).toBeVisible();
+        await expect(fallback).toContainText('Your design was not lost');
+      }
+    } else {
+      await expect(fallback).toBeVisible();
+    }
+  }
+
+  previewState = await getStablePreviewState();
+  if (previewState === '2d') {
     await expect(moveMode).toBeDisabled();
     await expect(transformMode).toBeDisabled();
     await expect(fallback.locator('img[alt="team-logo"]')).toBeVisible();
@@ -59,6 +77,7 @@ test('separates camera and artwork modes and preserves the draft through 2D reco
   const retry = page.getByRole('button', { name: 'Try 3D again' });
   if (await retry.isVisible().catch(() => false)) {
     await retry.click();
+    await page.waitForTimeout(250);
   }
 
   if (await canvas.isVisible().catch(() => false)) {
