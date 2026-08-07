@@ -137,7 +137,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
       'Prepare a browser-local custom apparel draft with model-aware 3D placement, physical print dimensions, image-quality guidance, and production handoff files.',
     'seo.catalog.title': 'Verified Garment Catalog | {{product}}',
     'seo.catalog.description':
-      'Review locally configured garments and open only products with approved matching 3D geometry in the BGD/INK editor.',
+      'Review locally configured garments and open only products with approved matching 3D geometry in the {{product}} editor.',
     'seo.designs.title': 'My Designs | {{product}}',
     'seo.designs.description':
       'Reopen and manage custom apparel drafts saved in this browser with {{product}}.',
@@ -225,7 +225,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
       'جهّز مسودة طباعة ملابس محلية مع توزيع 3D يناسب الموديل، قياسات فعلية، إرشادات لجودة الصورة، وملفات تسليم للإنتاج.',
     'seo.catalog.title': 'موديلات موثوقة | {{product}}',
     'seo.catalog.description':
-      'راجع القطع المحددة محلياً وافتح فقط المنتجات اللي عدها موديل 3D مطابق ومعتمد داخل محرر BGD/INK.',
+      'راجع القطع المحددة محلياً وافتح فقط المنتجات اللي عدها موديل 3D مطابق ومعتمد داخل محرر {{product}}.',
     'seo.designs.title': 'تصاميمي | {{product}}',
     'seo.designs.description':
       'افتح وأدر مسودات الملابس المحفوظة بهذا المتصفح باستخدام {{product}}.',
