@@ -30,6 +30,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      gsap: fileURLToPath(new URL('./src/utils/gsap-lite.ts', import.meta.url)),
     },
   },
 });
