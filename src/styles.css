@@ -93,7 +93,6 @@
 
   html {
     min-width: 320px;
-    min-height: 100%;
     overflow-x: clip;
     background: var(--color-paper);
     scroll-behavior: smooth;
@@ -109,7 +108,6 @@
     min-height: 100dvh;
     margin: 0;
     overflow-x: clip;
-    overscroll-behavior-x: none;
     background: var(--color-paper);
     color: var(--color-ink);
     -webkit-tap-highlight-color: transparent;
@@ -118,7 +116,6 @@
 
   #root {
     min-height: 100dvh;
-    isolation: isolate;
   }
 
   html[lang='ar'] body {
@@ -188,10 +185,6 @@ bdi[dir='ltr'] {
 
 .min-h-screen {
   min-height: 100dvh;
-}
-
-.h-screen {
-  height: 100dvh;
 }
 
 header.fixed.top-0 {
