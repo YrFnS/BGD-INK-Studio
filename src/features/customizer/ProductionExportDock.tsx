@@ -159,16 +159,16 @@ export const ProductionExportDock: React.FC<ProductionExportDockProps> = ({ draf
   };
 
   return (
-    <details className="pointer-events-none fixed end-4 top-28 z-[70] w-fit group">
+    <details className="group mx-auto mb-10 mt-4 w-[min(48rem,calc(100%-2rem))]">
       <summary
         data-testid="production-export-toggle"
         aria-label={copy.open}
-        className="pointer-events-auto ms-auto flex w-fit cursor-pointer list-none items-center gap-2 rounded-full border border-amber-300 bg-amber-100 px-4 py-2 text-xs font-black uppercase tracking-wider text-amber-950 shadow-xl transition-transform hover:scale-[1.02] dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100 [&::-webkit-details-marker]:hidden"
+        className="mx-auto flex w-fit cursor-pointer list-none items-center gap-2 rounded-full border border-amber-300 bg-amber-100 px-5 py-3 text-xs font-black uppercase tracking-wider text-amber-950 shadow-lg transition-transform hover:scale-[1.02] dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100 [&::-webkit-details-marker]:hidden"
       >
         <span aria-hidden="true">⇩</span>
         <span>{copy.open}</span>
       </summary>
-      <div className="pointer-events-auto mt-2 w-[min(22rem,calc(100vw-2rem))]">
+      <div className="mt-3 w-full">
         <ProductionExportPanel
           hasVisibleArtwork={null}
           isExporting={isExporting}
