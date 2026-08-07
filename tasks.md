@@ -2,7 +2,22 @@
 
 ## Project objective
 
-Build a production-grade bilingual custom-printing platform for Baghdad with an accurate 3D editor, durable artwork storage, secure order processing, and practical staff operations.
+Build a high-quality bilingual custom-printing experience for Baghdad with an accurate 3D editor, strong local draft recovery, and a polished customer journey.
+
+## Current scope decision — frontend and local-only
+
+Backend, production database, and remote file storage work are paused until explicitly reopened.
+
+For the current roadmap:
+
+- The application remains a frontend-only React/Vite project.
+- Products continue to come from local typed configuration.
+- Designs and original artwork remain in browser IndexedDB on the current device.
+- Submitted designs remain local drafts; they are not accepted as real shop orders.
+- No account system, staff portal, production API, database, inventory service, or object-storage integration will be built.
+- P2 and P3 focus on the 3D customizer, customer experience, accessibility, mobile behavior, visual quality, and local exports.
+
+The paused infrastructure work is listed near the end of this file so it does not block the active frontend roadmap.
 
 ## P0 — Safe foundation and rebrand — COMPLETE
 
@@ -38,17 +53,9 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 - [x] Pin Node.js and npm, commit the lockfile, use cached `npm ci`, and cancel superseded CI runs.
 - [x] Split the 3D dependency graph into lazy vendor chunks and enforce tighter production bundle budgets.
 
-## Deferred production decisions — not a P1 blocker
+## P2 — Production-quality local customizer
 
-- [ ] Confirm business, hosting, inventory, staff, order, and data-retention requirements.
-- [ ] Select and implement a secure production catalog and order architecture.
-- [ ] Add authenticated staff operations outside the public storefront.
-- [ ] Store products, variants, pricing, stock, customers, and orders in the selected production system.
-- [ ] Store original artwork and generated derivatives in durable object storage.
-
-## P2 — Production-grade customizer
-
-- [ ] Use a genuine optimized 3D model for every sellable product.
+- [ ] Use a genuine optimized 3D model for every locally configured product.
 - [ ] Define front, back, sleeve, and other physical print areas in centimeters.
 - [ ] Add front, back, and sleeve surface selection.
 - [ ] Constrain artwork to printable surfaces and warn about seams or unsafe placement.
@@ -56,36 +63,45 @@ Build a production-grade bilingual custom-printing platform for Baghdad with an 
 - [ ] Add layer duplicate, visibility, ordering, and rename controls.
 - [ ] Add precise physical dimensions.
 - [ ] Add image-resolution, transparency, aspect-ratio, and estimated-DPI checks.
-- [ ] Add permanent production upload before accepting a real order.
 - [ ] Distinguish mobile camera gestures from artwork movement.
 - [ ] Add adaptive render quality, WebGL fallback, and context recovery.
-- [ ] Generate a saved 2D proof and machine-readable production specification.
-- [ ] Keep original artwork separate from preview and production derivatives.
-- [ ] Optimize GLB assets and production textures with measured limits.
+- [ ] Generate a downloadable 2D proof and machine-readable local production specification.
+- [ ] Keep the original IndexedDB artwork blob separate from preview textures and generated exports.
+- [ ] Optimize GLB assets and preview textures with measured limits.
 
 ## P3 — Premium storefront and customer journey
 
 - [ ] Establish the complete BGD/INK identity and owned visual asset library.
 - [ ] Replace generic stock imagery, emoji, and unverified testimonials.
 - [ ] Add real product photography and completed customer work.
-- [ ] Add price ranges, production times, size guides, and printing-method explanations.
-- [ ] Add quantities, variants, stock, delivery fees, and estimated delivery dates.
+- [ ] Add locally configured price ranges, production times, size guides, and printing-method explanations.
+- [ ] Add quantity and variant-selection UX using local product data.
 - [ ] Complete the Iraqi Arabic and RTL content review.
 - [ ] Add real contact information, policies, care guidance, and frequently asked questions.
 - [ ] Keep motion intentional, accessible, and restrained.
-- [ ] Finish a touch-first mobile customizer and checkout.
-- [ ] Link reviews to real orders or remove them.
+- [ ] Finish a touch-first mobile customizer and draft-checkout experience.
+- [ ] Link reviews to verifiable customer work or remove them.
 
-## P4 — Operations, PWA, SEO, and growth
+## P4 — Frontend delivery, PWA, SEO, and growth
 
-- [ ] Add production queues, artwork approval, status timelines, and staff audit trails.
-- [ ] Create production work orders and inventory reservations from validated customer orders.
-- [ ] Add WhatsApp notifications as a communication channel, not the order database.
-- [ ] Add delivery tracking, coupons, campaigns, corporate accounts, bulk orders, and repeat orders.
-- [ ] Add consent-aware analytics and error monitoring.
-- [ ] Add structured product data, canonical URLs, social cards, sitemap, and robots controls.
+- [ ] Add a clear WhatsApp handoff for locally prepared design drafts without treating WhatsApp as a database.
 - [ ] Add owned PWA icons and reliable Workbox caching with upgrade handling.
+- [ ] Add structured product data, canonical URLs, social cards, sitemap, and robots controls.
+- [ ] Add consent-aware analytics and client-side error monitoring.
+- [ ] Add frontend campaign, coupon, bulk-design, and repeat-design experiences using local configuration where appropriate.
 - [x] Enforce production performance budgets.
+
+## Paused infrastructure — not part of the active roadmap
+
+The following will remain untouched until backend, database, and storage work is explicitly reopened:
+
+- Selecting or implementing a production backend.
+- Creating a production database for products, customers, inventory, pricing, or orders.
+- Building account synchronization or cross-device recovery.
+- Uploading artwork to remote object storage.
+- Building authenticated staff or administration operations.
+- Accepting, tracking, approving, or fulfilling real production orders.
+- Authoritative stock reservations, delivery tracking, production queues, or work orders.
 
 ## Definition of done
 
