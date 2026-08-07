@@ -102,7 +102,10 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Generate a downloadable multi-surface PNG proof for every configured print surface.
 - [x] Generate a machine-readable local production specification with centimeter placement and quality data.
 - [x] Keep generated proof assets separate from the original artwork blob and omit temporary preview URLs from specifications.
-- [ ] Optimize final GLB assets and preview textures with measured limits.
+- [x] Cap derived Three.js artwork textures by rendering profile while preserving the original IndexedDB artwork.
+- [x] Audit every current GLB in CI for file size, triangles, meshes, materials, embedded texture dimensions, and embedded texture bytes.
+- [x] Establish measured GLB and artwork-texture budgets from the current Classic T-shirt baseline.
+- [ ] Compress and re-audit the approved final garment GLBs and their embedded textures after genuine product assets are available.
 
 ## P3 — Premium storefront and customer journey
 
