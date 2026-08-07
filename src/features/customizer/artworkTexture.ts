@@ -65,27 +65,15 @@ export const useOptimizedArtworkTexture = (
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
   useEffect(() => {
+    setTexture(null);
     let disposed = false;
     let ownedTexture: THREE.Texture | null = null;
     let fallbackTexture: THREE.Texture | null = null;
     const image = new Image();
-    const timer = window.setTimeout(() => {
-      image.src = '';
-      if (!disposed) {
-        fallbackTexture = new THREE.TextureLoader().load(url, (loaded) => {
-          if (disposed) {
-            loaded.dispose();
-            return;
-          }
-          ownedTexture = configureTexture(loaded, anisotropy);
-          setTexture(ownedTexture);
-          invalidate();
-        });
-      }
-    }, IMAGE_LOAD_TIMEOUT_MS);
 
-    const useOriginalTexture = () => {
+    const loadOriginalTexture = () => {
       if (disposed || fallbackTexture) return;
+      image.src = '';
       fallbackTexture = new THREE.TextureLoader().load(url, (loaded) => {
         if (disposed) {
           loaded.dispose();
@@ -97,10 +85,12 @@ export const useOptimizedArtworkTexture = (
       });
     };
 
+    const timer = window.setTimeout(loadOriginalTexture, IMAGE_LOAD_TIMEOUT_MS);
+
     image.decoding = 'async';
     image.onload = () => {
       window.clearTimeout(timer);
-      if (disposed) return;
+      if (disposed || fallbackTexture) return;
 
       const configuredLimit = getArtworkTextureDimensionLimit(quality);
       const hardwareLimit = Math.max(1, gl.capabilities.maxTextureSize || configuredLimit);
@@ -115,7 +105,7 @@ export const useOptimizedArtworkTexture = (
       const context = canvas.getContext('2d');
 
       if (!context) {
-        useOriginalTexture();
+        loadOriginalTexture();
         return;
       }
 
@@ -127,7 +117,7 @@ export const useOptimizedArtworkTexture = (
     };
     image.onerror = () => {
       window.clearTimeout(timer);
-      useOriginalTexture();
+      loadOriginalTexture();
     };
     image.src = url;
 
