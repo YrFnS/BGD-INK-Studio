@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   fitArtworkTextureDimensions,
   getArtworkTextureDimensionLimit,
-} from './artworkTexture';
+} from './artworkTextureBudget';
 
 describe('artwork texture budgets', () => {
   it('uses stricter caps for balanced and low-power rendering', () => {
