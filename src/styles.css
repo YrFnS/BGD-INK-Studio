@@ -138,13 +138,6 @@
     font: inherit;
   }
 
-  input,
-  select,
-  textarea,
-  [tabindex]:not([tabindex='-1']) {
-    scroll-margin-top: calc(var(--app-header-height) + 1rem);
-  }
-
   html[dir='rtl'] input,
   html[dir='rtl'] select,
   html[dir='rtl'] textarea {
@@ -205,7 +198,6 @@ header.fixed.top-0 + [role='status'] {
 #mobile-navigation {
   top: var(--app-header-height) !important;
   height: calc(100dvh - var(--app-header-height)) !important;
-  max-height: calc(100dvh - var(--app-header-height));
   padding-inline-start: max(1.25rem, var(--safe-area-left));
   padding-inline-end: max(1.25rem, var(--safe-area-right));
   padding-bottom: max(2rem, calc(1rem + var(--safe-area-bottom)));
@@ -214,8 +206,6 @@ header.fixed.top-0 + [role='status'] {
 }
 
 footer {
-  padding-inline-start: var(--safe-area-left);
-  padding-inline-end: var(--safe-area-right);
   padding-bottom: max(3rem, calc(3rem + var(--safe-area-bottom)));
 }
 
