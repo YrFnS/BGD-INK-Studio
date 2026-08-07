@@ -42,12 +42,20 @@ import {
   type EditorHistory,
   type EditorSnapshot,
 } from './editorHistory';
+import { FallbackPreview } from './FallbackPreview';
+import { InteractionModeToolbar } from './InteractionModeToolbar';
+import type { CustomizerInteractionMode } from './interactionGestures';
 import {
   clampPositionToSurface,
   clampScaleToSurface,
   createDefaultSurfaceTransform,
 } from './printArea';
+import type {
+  PreviewMode,
+  RenderingFallbackReason,
+} from './renderingCapabilities';
 import { Scene } from './Scene';
+import { useRenderingEnvironment } from './useRenderingEnvironment';
 import { validateArtworkFile } from './artworkValidation';
 
 interface CustomizerProps {
@@ -127,6 +135,12 @@ const analyzeRestoredLayer = async (layer: DecalLayer): Promise<DecalLayer> => {
 export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onMissingDraft }) => {
   const { theme, t, language } = useAppContext();
   const { showToast } = useToast();
+  const {
+    isPageVisible,
+    renderingProfile,
+    webglSupport,
+    recheckWebGLSupport,
+  } = useRenderingEnvironment();
 
   useSEO('seo.customizer.title', 'seo.customizer.description');
 
@@ -142,7 +156,14 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   const [notes, setNotes] = useState('');
   const [decals, setDecals] = useState<DecalLayer[]>([]);
   const [activeDecalId, setActiveDecalId] = useState<string | null>(null);
-  const [isInteracting, setIsInteracting] = useState(false);
+  const [interactionMode, setInteractionMode] = useState<CustomizerInteractionMode>('view');
+  const [previewMode, setPreviewMode] = useState<PreviewMode>(
+    webglSupport === 'unsupported' ? '2d' : '3d',
+  );
+  const [fallbackReason, setFallbackReason] = useState<RenderingFallbackReason>(
+    webglSupport === 'unsupported' ? 'unsupported' : 'manual',
+  );
+  const [sceneKey, setSceneKey] = useState(0);
   const [isDraggingDecal, setIsDraggingDecal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
@@ -318,12 +339,22 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   );
 
   useEffect(() => {
+    if (webglSupport !== 'unsupported') return;
+    endEditorGesture();
+    setInteractionMode('view');
+    setPreviewMode('2d');
+    setFallbackReason('unsupported');
+    setIsDraggingDecal(false);
+  }, [endEditorGesture, webglSupport]);
+
+  useEffect(() => {
     mountedRef.current = true;
     const controller = new AbortController();
     let disposed = false;
     setLoadStatus('loading');
     setProduct(null);
     setModelConfig(null);
+    setInteractionMode('view');
     modelConfigRef.current = null;
     historyRef.current = null;
     gestureStartRef.current = null;
@@ -611,6 +642,15 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     }
   };
 
+  const handleSceneTransformChange = (scale: number, rotation: number) => {
+    if (activeDecalIdRef.current) {
+      handleDecalUpdate(activeDecalIdRef.current, {
+        scale,
+        userRotation: rotation,
+      });
+    }
+  };
+
   const handleSetActiveDecal = (id: string) => {
     endEditorGesture();
     const current = captureEditorSnapshot();
@@ -721,6 +761,81 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     });
   };
 
+  const handleInteractionModeChange = (mode: CustomizerInteractionMode) => {
+    const activeLayer = decalsRef.current.find(
+      (layer) => layer.id === activeDecalIdRef.current && layer.visible,
+    );
+    if (mode !== 'view' && !activeLayer) return;
+
+    endEditorGesture();
+    setIsDraggingDecal(false);
+    setInteractionMode(mode);
+  };
+
+  const handleContextLost = useCallback(() => {
+    endEditorGesture();
+    setIsDraggingDecal(false);
+    setInteractionMode('view');
+    setFallbackReason('context-lost');
+    setPreviewMode('2d');
+    showToast(
+      language === 'ar'
+        ? 'توقفت المعاينة 3D مؤقتاً، لكن تصميمك محفوظ.'
+        : 'The 3D preview paused, but your design is still safe.',
+      'error',
+    );
+  }, [endEditorGesture, language, showToast]);
+
+  const handleContextRestored = useCallback(() => {
+    showToast(
+      language === 'ar'
+        ? 'عاد اتصال الرسوم ويمكنك تجربة 3D مرة ثانية.'
+        : 'Graphics recovered. You can try the 3D preview again.',
+      'success',
+    );
+  }, [language, showToast]);
+
+  const handleModelError = useCallback(() => {
+    endEditorGesture();
+    setIsDraggingDecal(false);
+    setInteractionMode('view');
+    setFallbackReason('model-error');
+    setPreviewMode('2d');
+  }, [endEditorGesture]);
+
+  const handleRetry3d = () => {
+    const support = recheckWebGLSupport();
+    if (support === 'unsupported') {
+      setFallbackReason('unsupported');
+      setPreviewMode('2d');
+      showToast(
+        language === 'ar'
+          ? 'WebGL غير متوفر على هذا الجهاز حالياً.'
+          : 'WebGL is still unavailable on this device.',
+        'error',
+      );
+      return;
+    }
+
+    endEditorGesture();
+    setInteractionMode('view');
+    setIsDraggingDecal(false);
+    setSceneKey((value) => value + 1);
+    setPreviewMode('3d');
+  };
+
+  const handleTogglePreview = () => {
+    if (previewMode === '3d') {
+      endEditorGesture();
+      setInteractionMode('view');
+      setIsDraggingDecal(false);
+      setFallbackReason('manual');
+      setPreviewMode('2d');
+    } else {
+      handleRetry3d();
+    }
+  };
+
   const handleCheckout = async () => {
     if (!product) return;
 
@@ -798,6 +913,17 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   const activeQualitySurface = activeQualityLayer
     ? getPrintSurface(modelConfig, activeQualityLayer.surfaceId)
     : selectedSurface;
+  const hasActiveVisibleLayer = Boolean(activeQualityLayer?.visible);
+  const cursorClass =
+    previewMode === '2d'
+      ? 'cursor-default'
+      : isDraggingDecal
+        ? 'cursor-grabbing'
+        : interactionMode === 'view'
+          ? 'cursor-grab'
+          : interactionMode === 'move'
+            ? 'cursor-move'
+            : 'cursor-nwse-resize';
 
   return (
     <div
@@ -808,7 +934,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
         ref={viewerRef}
         className="relative min-h-[45vh] flex-1 overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-900"
       >
-        <div className="pointer-events-none absolute start-6 top-6 z-10">
+        <div className="pointer-events-none absolute start-6 top-6 z-20">
           <h2 className="text-3xl font-bold uppercase tracking-tighter text-black opacity-50 dark:text-white">
             {t(product.name)}
           </h2>
@@ -831,81 +957,51 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
           language={language}
         />
 
-        {!isInteracting && (
-          <button
-            type="button"
-            className="interactive absolute inset-0 z-20 flex items-center justify-center bg-black/5 backdrop-blur-[2px] transition-all hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10"
-            onClick={() => setIsInteracting(true)}
-          >
-            <span className="flex items-center gap-2 rounded-full bg-white px-6 py-3 font-bold text-black shadow-lg transition-transform hover:scale-105 dark:bg-black dark:text-white">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7Z"
-                />
-              </svg>
-              {t('customizer.interact')}
-            </span>
-          </button>
-        )}
-
-        {isInteracting && (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              endEditorGesture();
-              setIsInteracting(false);
-            }}
-            className="interactive absolute end-4 top-4 z-20 rounded-full bg-black/50 p-2 text-white shadow-lg backdrop-blur-md transition-colors hover:bg-black/70"
-            aria-label={t('customizer.exitInteract')}
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm10-10V7a4 4 0 0 0-8 0v4h8Z"
-              />
-            </svg>
-          </button>
-        )}
-
-        <div className={`h-full w-full ${isDraggingDecal ? 'cursor-grabbing' : ''}`}>
-          <Scene
-            modelConfig={modelConfig}
-            selectedSurfaceId={selectedSurfaceId}
-            color={selectedColor}
-            theme={theme}
-            decals={decals}
-            activeDecalId={activeDecalId}
-            enableControls={isInteracting && !isDraggingDecal}
-            onDecalChange={handleSceneDecalChange}
-            onDecalInteractionStart={beginEditorGesture}
-            onDecalInteractionEnd={endEditorGesture}
-            setDraggingDecal={setIsDraggingDecal}
-          />
+        <div className={`h-full w-full ${cursorClass}`}>
+          {previewMode === '3d' ? (
+            <Scene
+              key={sceneKey}
+              modelConfig={modelConfig}
+              selectedSurfaceId={selectedSurfaceId}
+              color={selectedColor}
+              theme={theme}
+              decals={decals}
+              activeDecalId={activeDecalId}
+              interactionMode={interactionMode}
+              renderingProfile={renderingProfile}
+              isPageVisible={isPageVisible}
+              onDecalChange={handleSceneDecalChange}
+              onDecalTransformChange={handleSceneTransformChange}
+              onDecalInteractionStart={beginEditorGesture}
+              onDecalInteractionEnd={endEditorGesture}
+              onContextLost={handleContextLost}
+              onContextRestored={handleContextRestored}
+              onModelError={handleModelError}
+              setDraggingDecal={setIsDraggingDecal}
+            />
+          ) : (
+            <FallbackPreview
+              productName={t(product.name)}
+              color={selectedColor}
+              surface={selectedSurface}
+              decals={decals}
+              activeDecalId={activeDecalId}
+              reason={fallbackReason}
+              canRetry3d={webglSupport !== 'unsupported'}
+              onRetry3d={handleRetry3d}
+            />
+          )}
         </div>
+
+        <InteractionModeToolbar
+          mode={interactionMode}
+          onModeChange={handleInteractionModeChange}
+          hasActiveLayer={hasActiveVisibleLayer}
+          previewMode={previewMode}
+          onTogglePreview={handleTogglePreview}
+          renderingQuality={renderingProfile.quality}
+          webglSupport={webglSupport}
+        />
       </div>
 
       <div ref={controlsRef} className="h-full lg:w-[400px]">
