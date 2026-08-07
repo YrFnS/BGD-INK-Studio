@@ -119,6 +119,7 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Remove fabricated-looking anonymous testimonials instead of presenting them as customer proof.
 - [x] Remove unsupported material, printing-method, wash-performance, superlative, and delivery claims.
 - [x] Add a permanent CI trust gate for stock imagery, fabricated reviews, emoji icons, and unsupported promises.
+- [x] Add a verified-versus-pending information system so unconfirmed prices, timing, measurements, and business details are visibly separated from implemented editor capabilities.
 - [ ] Add approved real product photography.
 - [ ] Add approved completed-customer-work photography.
 - [ ] Finish the complete BGD/INK identity and owned campaign asset library.
@@ -132,6 +133,9 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Add explicit local-price and no-real-order context.
 - [x] Redesign the desktop header, RTL-aware mobile navigation, prototype notice, and footer.
 - [x] Migrate legacy stored product records to owned canonical imagery while preserving local price, color, and stock values.
+- [x] Add the `/guide` route with measurement instructions, method education, draft-preparation guidance, policies, and FAQs.
+- [x] Explain that exact size charts, production timing, and price quotations remain pending rather than inventing values.
+- [x] Add reference-only DTF, screen-printing, and embroidery explanations without claiming current availability.
 - [ ] Confirm final price ranges with the business.
 - [ ] Add confirmed production times.
 - [ ] Add approved product-specific size guides.
@@ -139,11 +143,15 @@ The paused infrastructure work is listed near the end of this file so it does no
 
 ### Customer journey and business information
 
+- [x] Add prototype-specific local-data, artwork-rights, colour-preview, calibration, and no-commerce policies.
+- [x] Add an honest bilingual FAQ covering orders, local storage, file formats, sizes, mobile editing, and pending contact channels.
+- [x] Add an Iraqi-Arabic first pass for the guide, navigation labels, and mobile accessibility names.
+- [x] Add unit accessibility coverage and a real English/Arabic Chromium guide journey.
 - [ ] Add quantity and variant-selection UX using local product data.
 - [ ] Add official contact information after verification.
-- [ ] Add approved policies, care guidance, and frequently asked questions.
+- [ ] Add approved business policies, care guidance, and returns information.
 - [ ] Complete the Iraqi Arabic editorial and terminology review.
-- [ ] Review every RTL layout in the homepage, catalog, editor, draft details, and confirmation flow.
+- [ ] Review every RTL layout in the homepage, catalog, guide, editor, draft details, and confirmation flow.
 - [ ] Finish touch-first draft-details and confirmation polish.
 - [ ] Validate the complete journey on representative physical phones and tablets.
 - [ ] Link future reviews to verifiable customer work or keep the review section absent.
