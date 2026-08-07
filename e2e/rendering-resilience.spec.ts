@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const stablePng = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAMgAAABkCAYAAADDhn8LAAABBklEQVR4nO3TsQ2AMAADwYT9dw5luhcFUhC6m8CFfwwAAAAAAAAAYJunB7xljbFOb2CbP/nWdXoAfJlAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBAAAAAAAAACAh26jZgKgUj3ijQAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAAMgAAABkCAYAAADDhn8LAAABBklEQVR4nO3TsQ2AMAADwYT9dw5luhcFUhC6m8CFfwwAAAAAAAAAYJunB7xljbFOb2CbP/nWdXoAfJlAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBAAAAAAAAACAh26jZgKgUj3ijQAAAABJRU5ErkJggg==',
   'base64',
 );
 
@@ -19,7 +19,7 @@ test('separates camera and artwork modes and preserves the draft through 2D reco
   const moveMode = page.getByRole('button', { name: 'Move design' });
   const transformMode = page.getByRole('button', { name: 'Resize or rotate design' });
   const canvas = page.locator('canvas');
-  const fallback = page.getByRole('img', { name: '2D design preview' });
+  const fallback = page.locator('section[aria-labelledby="fallback-preview-title"]');
   const isFallbackVisible = (): Promise<boolean> => fallback.isVisible().catch(() => false);
 
   await expect(moveMode).toBeDisabled();
@@ -36,7 +36,9 @@ test('separates camera and artwork modes and preserves the draft through 2D reco
     const moveButton = document.querySelector<HTMLButtonElement>(
       'button[aria-label="Move design"]',
     );
-    const fallbackPreview = document.querySelector('[aria-label="2D design preview"]');
+    const fallbackPreview = document.querySelector(
+      'section[aria-labelledby="fallback-preview-title"]',
+    );
     return Boolean(fallbackPreview || (moveButton && !moveButton.disabled));
   });
 
