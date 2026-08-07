@@ -1,4 +1,4 @@
-import type { LocalizedText } from '@/config/brand';
+import { BRAND, type LocalizedText } from '@/config/brand';
 
 export type StudioIconId = 'garment' | 'placement' | 'export' | 'local' | 'surface' | 'language';
 
@@ -28,29 +28,17 @@ export interface ProductPresentation {
 export const STOREFRONT_CONTENT = {
   hero: {
     eyebrow: {
-      en: 'BGD/INK — Baghdad design studio',
-      ar: 'BGD/INK — ستوديو تصميم ببغداد',
+      en: `${BRAND.displayName} — Baghdad design studio`,
+      ar: `${BRAND.displayName} — ستوديو تصميم ببغداد`,
     },
-    titlePrimary: {
-      en: 'YOUR ARTWORK.',
-      ar: 'تصميمك.',
-    },
-    titleAccent: {
-      en: 'BUILT FOR THE GARMENT.',
-      ar: 'بمكانه الصحيح على القطعة.',
-    },
+    titlePrimary: { en: 'YOUR ARTWORK.', ar: 'تصميمك.' },
+    titleAccent: { en: 'BUILT FOR THE GARMENT.', ar: 'بمكانه الصحيح على القطعة.' },
     description: {
       en: 'Choose a model-ready garment, place artwork on the front or back, inspect its physical size and image quality, then keep or export the draft from your device.',
       ar: 'اختار قطعة جاهزة للمعاينة، رتّب تصميمك على الأمام أو الخلف، راقب القياس وجودة الصورة، وبعدها احفظ أو صدّر المسودة من جهازك.',
     },
-    primaryCta: {
-      en: 'Open the studio',
-      ar: 'افتح الستوديو',
-    },
-    secondaryCta: {
-      en: 'My saved designs',
-      ar: 'تصاميمي المحفوظة',
-    },
+    primaryCta: { en: 'Open the studio', ar: 'افتح الستوديو' },
+    secondaryCta: { en: 'My saved designs', ar: 'تصاميمي المحفوظة' },
     privacy: {
       en: 'No account. No remote upload. Artwork stays on this device.',
       ar: 'بدون حساب وبدون رفع للسيرفر. التصميم يبقى على جهازك.',
@@ -131,15 +119,33 @@ export const STOREFRONT_CONTENT = {
     },
     readyTitle: { en: 'Ready now', ar: 'جاهز حالياً' },
     readyItems: [
-      { en: 'Classic T-shirt 3D editor with front and back surfaces', ar: 'محرر 3D للتيشيرت الكلاسيك مع الأمام والخلف' },
-      { en: 'Local artwork analysis, undo/redo, and draft recovery', ar: 'تحليل محلي للصورة، تراجع وإعادة، واسترجاع المسودات' },
-      { en: 'Multi-surface PNG proof and URL-free JSON specification', ar: 'إثبات PNG للجهات وملف JSON بدون روابط مؤقتة' },
+      {
+        en: 'Classic T-shirt 3D editor with front and back surfaces',
+        ar: 'محرر 3D للتيشيرت الكلاسيك مع الأمام والخلف',
+      },
+      {
+        en: 'Local artwork analysis, undo/redo, and draft recovery',
+        ar: 'تحليل محلي للصورة، تراجع وإعادة، واسترجاع المسودات',
+      },
+      {
+        en: 'Multi-surface PNG proof and URL-free JSON specification',
+        ar: 'إثبات PNG للجهات وملف JSON بدون روابط مؤقتة',
+      },
     ] satisfies LocalizedText[],
     guardrailTitle: { en: 'Deliberate guardrails', ar: 'حدود مقصودة' },
     guardrailItems: [
-      { en: 'Unapproved garment models remain unavailable', ar: 'الموديلات غير المعتمدة تبقى غير متاحة' },
-      { en: 'Physical print measurements remain marked unverified', ar: 'قياسات الطباعة تبقى مذكورة كغير مؤكدة' },
-      { en: 'Drafts remain local and are not treated as real orders', ar: 'المسودات تبقى محلية وما تنحسب طلبات حقيقية' },
+      {
+        en: 'Unapproved garment models remain unavailable',
+        ar: 'الموديلات غير المعتمدة تبقى غير متاحة',
+      },
+      {
+        en: 'Physical print measurements remain marked unverified',
+        ar: 'قياسات الطباعة تبقى مذكورة كغير مؤكدة',
+      },
+      {
+        en: 'Drafts remain local and are not treated as real orders',
+        ar: 'المسودات تبقى محلية وما تنحسب طلبات حقيقية',
+      },
     ] satisfies LocalizedText[],
   },
   finalCta: {
@@ -218,10 +224,7 @@ export const getProductPresentation = (productId: string): ProductPresentation =
   PRODUCT_PRESENTATION[productId] ?? {
     index: '--',
     collectionCode: 'LOCAL / --',
-    description: {
-      en: 'Local product configuration.',
-      ar: 'إعداد محلي للمنتج.',
-    },
+    description: { en: 'Local product configuration.', ar: 'إعداد محلي للمنتج.' },
     readyNote: { en: 'Editor available', ar: 'المحرر متاح' },
     pendingNote: { en: 'Approved model required', ar: 'يحتاج موديل معتمد' },
   };
