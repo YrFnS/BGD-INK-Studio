@@ -10,6 +10,50 @@ git lfs pull
 
 Confirm the model files are not small Git LFS pointer text files. The editor switches to a safe 2D preview when the garment model cannot render, so the local design remains available even though the 3D garment is unavailable.
 
+The validation gate also checks this condition:
+
+```bash
+npm run check:assets
+```
+
+An unresolved LFS pointer fails immediately instead of reaching production as a broken garment asset.
+
+## A GLB asset budget fails
+
+Run:
+
+```bash
+git lfs pull
+npm run check:assets
+```
+
+The report measures every GLB under `public/` and prints:
+
+- File size
+- Mesh and primitive count
+- Estimated triangle count
+- Material count
+- Embedded image count
+- Embedded PNG, JPEG, or WebP dimensions and bytes
+- Whether Meshopt or Draco geometry compression is declared
+- Whether KTX2/Basis texture compression is declared
+
+The limits live in `src/config/asset-budgets.json`. Optimize the model, remove unused meshes or materials, reduce embedded texture dimensions, or compress approved assets instead of automatically raising a limit.
+
+The current Classic T-shirt baseline is approximately 1.25 MiB with 7,202 triangles, one mesh, one material, and three 1024 px textures. It currently has no geometry or KTX2 texture compression, so compression remains work for the final approved asset set.
+
+## Uploaded artwork uses too much GPU memory
+
+The original PNG, JPEG, or WebP remains unchanged in IndexedDB. The Three.js renderer creates a separate canvas-derived preview texture and caps its largest dimension according to the rendering profile:
+
+- High: 2048 px
+- Balanced: 1536 px
+- Low power: 1024 px
+
+The cap also respects the browser-reported WebGL texture limit. It preserves aspect ratio and does not enlarge smaller files.
+
+A generated preview texture is disposed when its layer, source URL, rendering quality, or component lifetime changes. This does not delete or recompress the original local artwork.
+
 ## The editor opened in 2D mode
 
 The safe 2D preview can appear when:
@@ -36,7 +80,7 @@ Use **View Garment** to orbit and zoom the product, **Move Design** to change pl
 
 ## Rendering is slow on a phone or low-power device
 
-The editor automatically selects a high, balanced, or low-power profile from available browser hints. It can reduce device pixel ratio, antialiasing, shadows, shadow-map size, texture anisotropy, and idle animation.
+The editor automatically selects a high, balanced, or low-power profile from available browser hints. It can reduce device pixel ratio, antialiasing, shadows, shadow-map size, texture anisotropy, artwork-texture dimensions, and idle animation.
 
 Rendering pauses while the page is hidden. Reduced-motion and data-saving preferences also select a lighter profile. The current automatic profile is shown in the interaction toolbar.
 
