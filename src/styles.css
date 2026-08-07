@@ -78,6 +78,10 @@
     font-family: var(--font-sans);
   }
 
+  :root[lang='ar'] {
+    font-family: var(--font-arabic);
+  }
+
   :root.dark {
     color-scheme: dark;
   }
@@ -102,6 +106,14 @@
     text-rendering: optimizeLegibility;
   }
 
+  html[lang='ar'] body {
+    font-family: var(--font-arabic);
+  }
+
+  html[lang='ar'] .font-display {
+    font-family: var(--font-arabic);
+  }
+
   .dark body {
     background: var(--color-background);
     color: var(--color-primary);
@@ -114,6 +126,20 @@
     font: inherit;
   }
 
+  html[dir='rtl'] input,
+  html[dir='rtl'] select,
+  html[dir='rtl'] textarea {
+    text-align: start;
+  }
+
+  input[type='tel'],
+  input[type='email'],
+  input[type='url'] {
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: isolate;
+  }
+
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']) {
     cursor: pointer;
@@ -123,6 +149,12 @@
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
   }
+}
+
+.technical-ltr,
+bdi[dir='ltr'] {
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .studio-garment-drift {
