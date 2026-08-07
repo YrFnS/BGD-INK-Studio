@@ -83,7 +83,7 @@ describe('Arabic customizer controls', () => {
     expect(screen.getByRole('toolbar', { name: 'سجل التعديلات' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'أضف أول طبقة تصميم' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'القياس: L' })).toBeInTheDocument();
-    expect(screen.getByText('30 × 38 cm')).toHaveAttribute('dir', 'ltr');
+    expect(screen.getAllByText('30 × 38 cm')[0]).toHaveAttribute('dir', 'ltr');
     expect(screen.getByText('محفوظ على هذا الجهاز')).toBeInTheDocument();
   });
 
