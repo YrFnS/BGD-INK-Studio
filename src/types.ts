@@ -27,6 +27,15 @@ export interface Product {
   inStock: boolean;
 }
 
+export interface ArtworkSourceMetadata {
+  pixelWidth: number;
+  pixelHeight: number;
+  aspectRatio: number;
+  hasTransparency: boolean;
+  transparentPixelRatio: number;
+  transparentPaddingRatio: number;
+}
+
 export interface DecalLayer {
   id: string;
   name: string;
@@ -40,6 +49,12 @@ export interface DecalLayer {
   rotation: [number, number, number];
   userRotation: number;
   scale: number;
+  pixelWidth?: number;
+  pixelHeight?: number;
+  aspectRatio?: number;
+  hasTransparency?: boolean;
+  transparentPixelRatio?: number;
+  transparentPaddingRatio?: number;
 }
 
 export interface CustomizationState {
