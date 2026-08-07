@@ -53,21 +53,33 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Pin Node.js and npm, commit the lockfile, use cached `npm ci`, and cancel superseded CI runs.
 - [x] Split the 3D dependency graph into lazy vendor chunks and enforce tighter production bundle budgets.
 
-## P2 — Production-quality local customizer
+## P2 — Production-quality local customizer — IN PROGRESS
+
+### Models and physical surfaces
 
 - [ ] Use a genuine optimized 3D model for every locally configured product.
-- [ ] Define front, back, sleeve, and other physical print areas in centimeters.
-- [ ] Add front, back, and sleeve surface selection.
-- [ ] Constrain artwork to printable surfaces and warn about seams or unsafe placement.
-- [ ] Add undo and redo.
-- [ ] Add layer duplicate, visibility, ordering, and rename controls.
-- [ ] Add precise physical dimensions.
+- [x] Stop substituting the T-shirt GLB for products without matching geometry.
+- [x] Define initial front and back physical print areas for the Classic T-shirt.
+- [x] Add Classic T-shirt front/back surface selection and surface-specific camera views.
+- [x] Constrain artwork movement and scale to the configured safe print boundary.
+- [ ] Confirm Classic T-shirt measurements against the exact garment and printing process.
+- [ ] Add genuine oversized T-shirt, hoodie, and vest models and calibrate their surfaces.
+- [ ] Add sleeve and other supported surfaces where genuine model geometry permits them.
+- [ ] Add explicit seam and unsafe-placement warnings.
+
+### Editing and local persistence
+
+- [x] Add bounded undo and redo for color, size, layer operations, placement, scale, and rotation.
+- [x] Add layer rename, duplicate, visibility, ordering, selection, and deletion controls.
+- [x] Preserve layer names, visibility, order, surfaces, and retained artwork assets in IndexedDB.
+- [x] Add keyboard undo/redo shortcuts and gesture-aware history grouping.
+- [ ] Add precise physical width and height for aspect-ratio-aware artwork.
 - [ ] Add image-resolution, transparency, aspect-ratio, and estimated-DPI checks.
 - [ ] Distinguish mobile camera gestures from artwork movement.
 - [ ] Add adaptive render quality, WebGL fallback, and context recovery.
 - [ ] Generate a downloadable 2D proof and machine-readable local production specification.
 - [ ] Keep the original IndexedDB artwork blob separate from preview textures and generated exports.
-- [ ] Optimize GLB assets and preview textures with measured limits.
+- [ ] Optimize final GLB assets and preview textures with measured limits.
 
 ## P3 — Premium storefront and customer journey
 
