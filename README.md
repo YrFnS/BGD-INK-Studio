@@ -2,7 +2,7 @@
 
 BGD/INK Studio is a bilingual English/Iraqi-Arabic web application for preparing custom-apparel design drafts in a model-aware 3D editor.
 
-> The project is intentionally frontend and local-only. Designs, original artwork, draft details, quantities, and generated production files stay on the current device. They are not sent to a shop, synchronized between devices, or written to a production database.
+> The project is intentionally frontend and browser-local. Designs, original artwork, preparation details, quantities, and generated production files stay on the current device. They are not sent to a shop, synchronized between devices, or written to a production database.
 
 ## Current scope
 
@@ -12,11 +12,11 @@ Active work includes:
 - the premium editorial print-lab identity
 - owned local garment illustrations
 - the product-aware 3D customizer
-- browser-local IndexedDB drafts and original artwork blobs
+- IndexedDB drafts and original artwork blobs
 - recoverable size, colour, quantity, and contact preparation
-- local design recovery, PNG proofs, and JSON specifications
+- local PNG proofs and JSON specifications
 - persistent English/Iraqi-Arabic content and RTL behavior
-- accessibility, touch interaction, performance, PWA, and SEO
+- accessibility, touch interaction, safe-area behavior, performance, PWA, and SEO
 
 Paused until explicitly reopened:
 
@@ -28,7 +28,7 @@ Paused until explicitly reopened:
 - authoritative stock, pricing, customer, and order data
 - real order acceptance, payment, approval, tracking, or fulfillment
 
-The draft-preparation and receipt flow saves a **local design draft**, not a real customer order.
+The preparation and receipt flow saves a **local design draft**, not a real customer order.
 
 ## Phase status
 
@@ -37,72 +37,73 @@ The draft-preparation and receipt flow saves a **local design draft**, not a rea
 Complete on `agent/bgd-ink-p0-foundation`:
 
 - centralized BGD/INK brand configuration
-- removed public prototype admin access, hardcoded PINs, browser-exposed secrets, and false offline claims
-- migrated old local browser keys without destroying recovery data
+- removed public prototype administration, hardcoded PINs, browser-exposed secrets, and false offline claims
+- migrated legacy browser keys without destroying recoverable data
 - added a permanent brand source-of-truth check
 
 ### P1 — engineering foundation
 
 Complete on `agent/bgd-ink-p0-foundation`:
 
-- compiled Tailwind CSS, strict TypeScript, warning-free ESLint, and Prettier
+- compiled Tailwind CSS, strict TypeScript, zero-warning ESLint, and Prettier
 - application source under `src/` with the `@/` alias and enforced import boundaries
 - History API routes and direct-route hosting fallback
-- recoverable IndexedDB designs, draft preparation, and My Designs workspace
-- locked Node/npm environment, committed lockfile, cached `npm ci`, tests, CI, and bundle budgets
+- IndexedDB recovery and My Designs
+- pinned Node/npm, committed lockfile, cached deterministic installation, CI, tests, and bundle budgets
 
 ### P2 — production-quality local customizer
 
 In progress on `agent/bgd-ink-p2-models-print-areas`:
 
-- honest product-model readiness; no unrelated garment geometry is substituted
-- Classic T-shirt front/back surfaces, centimeter placement, safe boundaries, and surface-specific cameras
+Implemented:
+
+- honest product-model readiness
+- Classic T-shirt front/back print surfaces
+- centimetre placement and safe boundaries
 - aspect-ratio-aware artwork dimensions
 - source pixels, transparency, padding, effective DPI, and quality warnings
 - undo/redo and complete layer controls
 - explicit View, Move, and Resize/Rotate modes
-- one- and two-pointer gestures
-- adaptive rendering profiles, WebGL recovery, and safe 2D fallback
-- downloadable multi-surface PNG proof and URL-free JSON specification
-- profile-aware GPU preview textures that preserve original IndexedDB artwork
-- measured GLB geometry and embedded-texture budgets
+- touch gestures and adaptive rendering
+- WebGL recovery and safe 2D fallback
+- multi-surface PNG proof and URL-free JSON specification
+- GPU preview-texture limits and measured GLB budgets
 
-P2 still depends on real physical inputs: confirmed Classic T-shirt calibration, genuine oversized T-shirt/hoodie/vest models, supported sleeve surfaces, geometry-aware seam warnings, and final asset compression.
+Still dependent on real physical inputs:
+
+- confirmed Classic T-shirt calibration
+- genuine oversized T-shirt, hoodie, and vest models
+- supported sleeve surfaces
+- geometry-aware seam warnings
+- final garment-model compression and re-audit
 
 ### P3 — premium storefront and customer journey
 
 In progress on `agent/bgd-ink-p3-premium-storefront`:
 
+Implemented:
+
 - editorial print-lab homepage and model-aware Studio Workbench
-- owned local SVG garment library for the four configured products
-- owned icon system instead of emoji process art
-- removal of remote stock imagery, fabricated-looking testimonials, and unsupported product or delivery promises
-- catalog hierarchy built around model readiness, availability, local starting price, configured colours, and editor sizes
-- premium header, RTL-aware mobile navigation, footer, and prototype notice
-- permanent storefront trust gate
-- `/guide` route with verified-versus-pending expectations, garment-measurement instructions, reference-only method education, artwork preparation, prototype policies, and FAQs
-- recoverable local quantity preparation alongside size and colour
-- serialized detail/quantity autosaves that prevent lost updates
-- touch-first local draft receipt with draft-ID copy, prepared variant, quantity, local estimate, and direct My Designs/new-draft actions
-- persisted English/Iraqi-Arabic selection with synchronized document language and direction
-- Iraqi-Arabic editorial pass for the homepage, catalog, notices, footer, My Designs, and receipt
-- reviewed Iraqi-Arabic customizer controls, interaction modes, quality guidance, 2D recovery, and local handoff tools
-- direction-safe phone numbers, numeric inputs, range controls, prices, sizes, identifiers, file formats, collection codes, centimeters, pixels, DPI, degrees, and 2D/3D labels
-- truthful prepared-locally status and quantity in My Designs
-- accessible safe-2D recovery with its retry action outside image semantics
-- permanent localization/RTL validation in the production gate
-- English/Iraqi-Arabic guide, mobile navigation, and dense-editor browser coverage
-- Three.js kept out of the initial storefront bundle
+- owned local garment illustrations and interface icons
+- removal of remote stock photography, fabricated-looking reviews, and unsupported promises
+- model-aware catalog with truthful unavailable states
+- bilingual Studio Guide
+- Iraqi-Arabic and contextual RTL review across the storefront, editor, preparation flow, receipt, and Guide
+- recoverable quantity and preparation details
+- accessible validation, draft-load retry, and autosave retry
+- localized Baghdad areas with stable stored values
+- touch-first local receipt
+- safe-area and dynamic-viewport shell
+- iPhone portrait/short-landscape and iPad Arabic orientation-sized browser coverage
+- lightweight Web Animations motion runtime replacing the shipped GSAP runtime
 
-Still open in P3:
+Still pending:
 
-- approved real product and completed-work photography
-- confirmed prices, production times, product specifications, method availability, and product-specific size charts
+- approved product and completed-work photography
+- confirmed prices, production times, garment specifications, method availability, and size charts
 - official contact channels
 - approved returns, care, privacy, and fulfillment policies
-- final human Iraqi-Arabic review of the Studio Guide's long-form educational content and draft-preparation failure/edge states
-- contextual RTL review of the Guide's densest sections and draft-preparation failure/edge states
-- representative physical phone and tablet validation
+- representative physical Android, iPhone, and tablet validation
 
 ## Brand
 
@@ -113,19 +114,19 @@ Brand values live in `src/config/brand.ts`:
 - tagline: **Design it. Wear it.** / **صمّمها والبسها**
 - primary market: Baghdad, Iraq
 
-`npm run check:brand` prevents customer-facing source files from reintroducing old or hardcoded brand literals.
+`npm run check:brand` prevents customer-facing source files from reintroducing obsolete or duplicated brand literals.
 
 ## Technology
 
 - React 18 and strict TypeScript
 - Vite and compiled Tailwind CSS 4
 - React Three Fiber, Drei, and Three.js
-- GSAP
-- IndexedDB for local drafts and original artwork blobs
-- Canvas-based local PNG proof generation
+- a repository-specific Web Animations compatibility layer for UI motion
+- IndexedDB for local drafts and original artwork
+- Canvas-based PNG proof generation
 - JSON local production specifications
 - Vitest, Testing Library, fake IndexedDB, and axe
-- Playwright for desktop and mobile Chromium journeys
+- Playwright for desktop, phone, and tablet Chromium journeys
 - ESLint and Prettier
 
 ## Requirements
@@ -139,7 +140,7 @@ Brand values live in `src/config/brand.ts`:
 ```bash
 git lfs install
 nvm use
-npm ci
+npm ci --include=dev
 npm run dev
 ```
 
@@ -157,15 +158,16 @@ The fast gate runs:
 ```text
 environment validation
 → strict TypeScript
-→ warning-free ESLint
+→ zero-warning ESLint
 → brand source-of-truth validation
-→ architectural import-boundary validation
-→ measured GLB asset budgets
-→ storefront content-trust validation
-→ Iraqi-Arabic and RTL boundary validation
+→ import-boundary validation
+→ measured GLB budgets
+→ storefront trust validation
+→ Iraqi-Arabic and RTL validation
+→ responsive-shell validation
 → unit, component, and accessibility tests
 → production build
-→ JavaScript and CSS bundle budgets
+→ JavaScript and CSS budgets
 ```
 
 Useful commands:
@@ -179,6 +181,7 @@ npm run check:boundaries
 npm run check:assets
 npm run check:storefront
 npm run check:localization
+npm run check:responsive
 npm run test
 npm run test:unit
 npm run test:coverage
@@ -191,7 +194,12 @@ npm run check:bundle
 npm run preview
 ```
 
-The current P3 fast suite contains **64 unit/component/accessibility tests across 24 files**. Eight Chromium journeys cover draft/preparation/quantity recovery, artwork quality, layer history, persisted mobile Arabic/RTL navigation, the Arabic dense customizer and handoff tools, WebGL/2D recovery, real PNG/JSON downloads, and the bilingual Studio Guide.
+Current validated coverage:
+
+```text
+71 unit/component/accessibility tests across 26 files
+11 passing Chromium journeys
+```
 
 ## Routes
 
@@ -199,7 +207,7 @@ The current P3 fast suite contains **64 unit/component/accessibility tests acros
 | --- | --- |
 | `/` | Premium landing page |
 | `/catalog` | Model-aware garment selection |
-| `/guide` | Size preparation, methods, policies, and FAQ |
+| `/guide` | Measurement, method, policy, and FAQ guidance |
 | `/designs` | Recent local designs |
 | `/studio/:draftId` | Recoverable 3D editor |
 | `/checkout/:draftId` | Recoverable local draft preparation |
@@ -214,70 +222,22 @@ IndexedDB draft version 5 stores:
 - draft name, product, colour, size, quantity, and notes
 - original PNG, JPEG, or WebP artwork blobs
 - layer names, visibility, order, active selection, and print surfaces
-- layer placement, rotation, aspect ratio, and physical scale
+- placement, rotation, aspect ratio, and physical scale
 - source dimensions, transparency, padding, and quality metadata
 - local contact and address fields
-- local prepared-receipt linkage
+- local receipt linkage
 
-My Designs can reopen, rename, duplicate, and permanently delete local drafts. Duplicated designs receive independent artwork blobs and preserve the prepared quantity while clearing contact details and prepared-receipt state.
+My Designs can reopen, rename, duplicate, and permanently delete local drafts. Duplicated designs receive independent artwork blobs and preserve prepared quantity while clearing contact details and receipt state.
 
-The draft-preparation page serializes contact and quantity writes so rapid edits cannot overwrite one another. Saving the receipt waits for the latest queued state before creating the browser-local summary.
+Clearing browser data can permanently remove designs. There is no server backup or account recovery.
 
-The original artwork remains separate from object URLs, Three.js preview textures, PNG proofs, and JSON specifications. Clearing browser data can permanently remove local designs; there is no server backup or account recovery.
-
-## Local quantity and receipt
-
-The size and colour selected in the editor are joined by a recoverable local quantity from 1 to 50. The interface calculates a local estimate from the configured unit price and repeats that it is not a quotation, stock reservation, or confirmed order.
-
-After saving, the local receipt shows:
-
-- draft identifier with copy action
-- garment, size, and colour
-- local quantity
-- local estimate
-- direct actions to My Designs, a new draft, or the homepage
-
-Refreshing the receipt route can still show the draft identifier, while My Designs remains the source for reopening browser-local content.
-
-My Designs labels that state **Prepared locally** / **مجهّزة محلياً**. It does not use “Submitted” because the draft was not transmitted to the business.
-
-## Language and RTL behavior
-
-The selected language persists in browser storage under `bgd-ink-language`. A restored Arabic session reapplies:
-
-```html
-<html lang="ar" dir="rtl" data-language="ar">
-```
-
-Arabic typography is selected from the document language. Phone fields, number inputs, prices, quantities, sizes, draft identifiers, file formats, collection codes, centimeters, pixels, DPI, degrees, and 2D/3D labels retain a stable internal order inside RTL layouts.
-
-The dense customizer has reviewed Arabic labels for layers, history, interaction modes, quality warnings, 2D recovery, and local handoff files. Layer names and notes use automatic direction detection, while range controls keep a predictable left-to-right progression.
-
-`npm run check:localization` rejects regressions in language persistence, reviewed Iraqi-Arabic terminology, localized status badges, truthful local-draft status, dense editor guidance, local-handoff copy, accessibility structure, and direction-isolation primitives.
-
-The mobile Chromium journeys switch to Arabic, reload the page, confirm Arabic remains active, navigate through the RTL menu, upload artwork in the Arabic editor, inspect quality guidance, exercise GPU-portable 2D recovery, open the local handoff tools, and verify that Pixel 5 pages have no horizontal overflow.
-
-## Customizer interaction modes
+## Customizer interaction
 
 - **View Garment:** orbit and zoom the product camera
-- **Move Design:** drag the selected visible layer within its safe print surface
-- **Resize/Rotate:** drag or use two pointers for pinch-and-twist transforms
+- **Move Design:** drag the selected visible layer inside its safe surface
+- **Resize/Rotate:** use pointer or pinch-and-twist transforms
 
-Artwork modes remain disabled until a visible layer is selected. Continuous gestures are grouped into one undoable history action.
-
-## Rendering and texture resilience
-
-The editor selects high, balanced, or low-power settings from available device hints. Profiles can adjust DPR, antialiasing, shadows, anisotropy, idle animation, power preference, and maximum derived artwork-texture dimensions.
-
-| Profile | Maximum preview dimension |
-| --- | ---: |
-| High | 2048 px |
-| Balanced | 1536 px |
-| Low power | 1024 px |
-
-The cap also respects the WebGL hardware limit. Smaller files are not enlarged, aspect ratio is preserved, and generated GPU textures are disposed when no longer needed.
-
-Rendering pauses while the page is hidden. When WebGL is unavailable or loses context, the app switches to a safe local 2D preview without discarding the draft. The retry button remains an ordinary interactive control outside the fallback image role so assistive technology can reach it.
+Continuous gestures become one undoable history action. Rendering adapts to device capabilities and falls back to a local 2D preview when WebGL is unavailable or loses context.
 
 ## Local production files
 
@@ -289,89 +249,57 @@ The customizer can generate:
 - product, size, colour, draft name, and ID
 - physical print-area dimensions and safe margins
 - visible artwork placement, rotation, order, and layer names
-- an explicit calibration warning
+- an explicit physical-calibration warning
 
 ### JSON specification
 
 - product and draft metadata
-- documented viewer-facing centimeter coordinates
-- every configured surface
+- documented viewer-facing centimetre coordinates
+- configured surfaces
 - visible and hidden layers
-- physical dimensions, center and edge offsets, and rotation
-- source file metadata, dimensions, aspect ratio, and transparency
-- estimated DPI, quality level, and warnings
+- dimensions, offsets, rotation, source metadata, transparency, estimated DPI, and warnings
 - explicit `unverified` physical calibration
 
-Temporary `blob:` preview URLs are excluded. These files are planning and local handoff aids, not authorization to print. The export UI remains bilingual and explicitly states that generation happens on the current device.
+Temporary `blob:` preview URLs are excluded. These outputs are planning and handoff aids, not authorization to print.
 
-## Studio Guide
+## Bilingual and responsive behavior
 
-The `/guide` route deliberately separates verified implementation facts from information that still needs real business or production confirmation.
+- language preference persists under `bgd-ink-language`
+- document `lang`, `dir`, and `data-language` stay synchronized
+- technical values remain direction-safe inside RTL layouts
+- same-page Guide navigation scrolls explicitly and keeps the URL hash synchronized
+- reduced-motion preferences disable smooth section scrolling and decorative motion
+- the viewport opts into `viewport-fit=cover` and software-keyboard resizing
+- the fixed header, prototype notice, mobile menu, and footer account for safe-area insets
+- the mobile menu remains scrollable in short landscape viewports
 
-It includes:
+The browser matrix includes Pixel 5, iPhone 13, and iPad Mini-sized journeys, but real physical-device validation remains required.
 
-- current storefront expectations
-- how to measure an existing garment rather than guessing body measurements
-- a clear pending state for exact product size charts
-- reference-only DTF, screen-printing, and embroidery trade-offs
-- artwork-preparation checklist
-- local-data, artwork-rights, colour-preview, calibration, and no-commerce policies
-- bilingual FAQ
+## Performance baseline
 
-The method descriptions do not claim that those methods are currently offered. Prototype policies do not replace approved business policies.
-
-## 3D asset budgets
-
-`npm run check:assets` validates every GLB under `public/` after Git LFS checkout. It rejects unresolved LFS pointers, invalid glTF 2.0 binaries, and assets that exceed reviewed limits.
-
-| Metric | Limit |
-| --- | ---: |
-| GLB file size | 1,400,000 bytes |
-| Triangle count | 25,000 |
-| Mesh count | 4 |
-| Material count | 4 |
-| Embedded texture dimension | 1024 px |
-| Embedded texture size | 1,100,000 bytes |
-
-Current Classic T-shirt baseline:
-
-| Metric | Current |
-| --- | ---: |
-| GLB file size | 1,284.25 KiB |
-| Geometry | 1 mesh, 1 primitive, 7,202 triangles |
-| Materials | 1 |
-| Embedded textures | 3 at 1024 × 1024 |
-| Largest embedded texture | 986.63 KiB JPEG |
-| Geometry compression | None |
-| Texture compression | None |
-
-Final approved models should be tested with Meshopt or Draco and KTX2/Basis where the visual and compatibility trade-offs are acceptable.
-
-## Performance budgets
-
-The P3 storefront keeps Three.js lazy. Current measured production baseline:
+Three.js remains lazy and is excluded from the initial storefront.
 
 | Metric | Current | Limit |
 | --- | ---: | ---: |
-| Initial JavaScript, gzip | 97.56 KiB | 140 KiB |
-| Initial CSS, gzip | 15.51 KiB | 16 KiB |
-| Largest async JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
-| Largest JavaScript chunk, raw | 651.42 KiB | 800 KiB |
-| Total JavaScript, gzip | 401.45 KiB | 410 KiB |
-| Total JavaScript, raw | 1,368.65 KiB | 1,400 KiB |
-| Total CSS, gzip | 15.51 KiB | 17 KiB |
+| Initial JavaScript, gzip | 71.07 KiB | 90 KiB |
+| Initial CSS, gzip | 15.91 KiB | 16 KiB |
+| Largest async JavaScript chunk, gzip | 168.08 KiB | 200 KiB |
+| Largest JavaScript chunk, raw | 651.42 KiB | 725 KiB |
+| Total JavaScript, gzip | 377.29 KiB | 390 KiB |
+| Total JavaScript, raw | 1,312.92 KiB | 1,350 KiB |
+| Total CSS, gzip | 15.91 KiB | 16.5 KiB |
 
-No budget was raised for the dense Iraqi-Arabic and RTL work. JavaScript and CSS limits should not be raised automatically.
+Replacing the shipped GSAP runtime reduced initial JavaScript from 97.56 KiB to 71.07 KiB gzip and total JavaScript from 403.79 KiB to 377.29 KiB gzip.
 
 ## Prototype safety boundaries
 
-- no public admin portal
+- no public administration portal
 - no browser-exposed API keys
-- no real order, payment, inventory reservation, delivery promise, or fulfillment workflow
+- no real order, payment, inventory reservation, delivery promise, or fulfillment flow
 - no account recovery or cross-device synchronization
 - no remote artwork upload
 - official contact actions appear only after verified destinations are configured
-- generated proofs and specifications use unverified physical calibration until confirmed
+- generated proofs and specifications use unverified calibration until physically confirmed
 - PWA/offline claims remain disabled until reliable caching exists
 
 Do not use the local prototype for real customer orders or sensitive production data.
@@ -380,6 +308,8 @@ Do not use the local prototype for real customer orders or sensitive production 
 
 - [P3 storefront direction](docs/P3-STOREFRONT-DIRECTION.md)
 - [P3 Iraqi-Arabic and RTL sweep](docs/P3-ARABIC-RTL-SWEEP.md)
-- [P3 dense editor Arabic and RTL review](docs/P3-DENSE-EDITOR-ARABIC-RTL.md)
+- [P3 dense editor Arabic and RTL](docs/P3-DENSE-EDITOR-ARABIC-RTL.md)
+- [P3 Guide and preparation RTL review](docs/P3-GUIDE-PREPARATION-RTL.md)
+- [P3 performance and responsive finalization](docs/P3-PERFORMANCE-RESPONSIVE-FINALIZATION.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Roadmap](tasks.md)
