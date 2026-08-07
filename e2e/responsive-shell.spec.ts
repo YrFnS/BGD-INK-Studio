@@ -1,5 +1,19 @@
 import { devices, expect, type Page, test } from '@playwright/test';
 
+const getDeviceOptions = (name: string) => {
+  const descriptor = devices[name];
+  if (!descriptor) throw new Error(`Playwright device descriptor is missing: ${name}`);
+
+  return {
+    userAgent: descriptor.userAgent,
+    viewport: descriptor.viewport,
+    screen: descriptor.screen,
+    deviceScaleFactor: descriptor.deviceScaleFactor,
+    isMobile: descriptor.isMobile,
+    hasTouch: descriptor.hasTouch,
+  };
+};
+
 const expectNoHorizontalOverflow = async (page: Page) => {
   const overflow = await page.evaluate(() => {
     const root = document.documentElement;
@@ -31,7 +45,7 @@ const expectNavigationFitsViewport = async (page: Page) => {
 };
 
 test.describe('iPhone 13 responsive shell', () => {
-  test.use({ ...devices['iPhone 13'] });
+  test.use(getDeviceOptions('iPhone 13'));
 
   test('keeps the safe-area shell usable through portrait and short landscape', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -63,7 +77,7 @@ test.describe('iPhone 13 responsive shell', () => {
 });
 
 test.describe('iPad Mini responsive shell', () => {
-  test.use({ ...devices['iPad Mini'] });
+  test.use(getDeviceOptions('iPad Mini'));
 
   test('preserves the Guide route and RTL layout through tablet orientation changes', async ({ page }) => {
     await page.addInitScript(() => {
