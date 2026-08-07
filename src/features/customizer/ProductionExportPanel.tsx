@@ -2,7 +2,7 @@ import React from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 
 interface ProductionExportPanelProps {
-  hasVisibleArtwork: boolean;
+  hasVisibleArtwork: boolean | null;
   isExporting: boolean;
   onDownloadProof: () => void | Promise<void>;
   onDownloadSpecification: () => void | Promise<void>;
@@ -38,13 +38,19 @@ export const ProductionExportPanel: React.FC<ProductionExportPanelProps> = ({
           caution: 'Confirm the exact garment and print-process measurements before production.',
         };
 
-  const disabled = !hasVisibleArtwork || isExporting;
+  const disabled = hasVisibleArtwork === false || isExporting;
 
   return (
-    <section className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 shadow-sm dark:border-amber-900/70 dark:bg-amber-950/35" aria-labelledby="production-export-title">
+    <section
+      className="rounded-2xl border border-amber-200 bg-amber-50/95 p-4 shadow-xl dark:border-amber-900/70 dark:bg-amber-950/90"
+      aria-labelledby="production-export-title"
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 id="production-export-title" className="text-sm font-black uppercase tracking-wider text-amber-950 dark:text-amber-100">
+          <h3
+            id="production-export-title"
+            className="text-sm font-black uppercase tracking-wider text-amber-950 dark:text-amber-100"
+          >
             {copy.title}
           </h3>
           <p className="mt-1 text-xs leading-relaxed text-amber-900/75 dark:text-amber-100/75">
@@ -56,7 +62,7 @@ export const ProductionExportPanel: React.FC<ProductionExportPanelProps> = ({
         </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
         <button
           type="button"
           onClick={() => void onDownloadProof()}
@@ -75,8 +81,12 @@ export const ProductionExportPanel: React.FC<ProductionExportPanelProps> = ({
         </button>
       </div>
 
-      <p className="mt-3 text-[11px] font-semibold leading-relaxed text-amber-900/80 dark:text-amber-100/75" role="status" aria-live="polite">
-        {!hasVisibleArtwork ? copy.empty : copy.caution}
+      <p
+        className="mt-3 text-[11px] font-semibold leading-relaxed text-amber-900/80 dark:text-amber-100/75"
+        role="status"
+        aria-live="polite"
+      >
+        {hasVisibleArtwork === false ? copy.empty : copy.caution}
       </p>
     </section>
   );
