@@ -29,7 +29,7 @@ const addArtworkLayer = async (draftId: string) => {
     type: 'image/png',
     lastModified: 1_700_000_000_000,
   });
-  const asset = await storeArtworkFile(file);
+  const asset = await storeArtworkFile(draftId, file);
   const layerId = 'layer-team-logo';
 
   await saveDesignDraft(draftId, {
@@ -40,13 +40,15 @@ const addArtworkLayer = async (draftId: string) => {
     decals: [
       {
         id: layerId,
+        name: 'Team logo',
+        visible: true,
         url: 'blob:temporary-preview',
         assetId: asset.id,
         fileName: asset.fileName,
         mimeType: asset.mimeType,
-        surfaceId: 'front',
-        position: [0.1, 0.2, 0.3],
-        rotation: [0, 0.1, 0],
+        surfaceId: 'back',
+        position: [0.1, 0.2, -0.3],
+        rotation: [0, Math.PI, 0],
         userRotation: 0.25,
         scale: 0.18,
       },
@@ -90,6 +92,7 @@ describe('IndexedDB design drafts', () => {
 
     const restored = await loadDesignDraft(draft.id);
     expect(restored).not.toBeNull();
+    expect(restored?.assetIds).toEqual([]);
     expect(restored?.checkoutDetails).toEqual({
       fullName: 'Yasser Ahmed',
       phone: '07701234567',
@@ -99,7 +102,7 @@ describe('IndexedDB design drafts', () => {
     });
   });
 
-  it('persists artwork blobs, print surfaces, and safe preview URLs', async () => {
+  it('persists layer names, visibility, surfaces, and artwork blobs', async () => {
     const draft = await createDesignDraft({
       productId: 'tshirt-classic',
       color: '#000000',
@@ -109,15 +112,18 @@ describe('IndexedDB design drafts', () => {
     const restored = await loadDesignDraft(draft.id);
     expect(restored).not.toBeNull();
     expect(restored?.missingAssetCount).toBe(0);
+    expect(restored?.assetIds).toContain(asset.id);
     expect(restored?.decals).toHaveLength(1);
     expect(restored?.decals[0]).toMatchObject({
       id: 'layer-team-logo',
+      name: 'Team logo',
+      visible: true,
       assetId: asset.id,
       fileName: 'team-logo.png',
       mimeType: 'image/png',
-      surfaceId: 'front',
-      position: [0.1, 0.2, 0.3],
-      rotation: [0, 0.1, 0],
+      surfaceId: 'back',
+      position: [0.1, 0.2, -0.3],
+      rotation: [0, Math.PI, 0],
       userRotation: 0.25,
       scale: 0.18,
     });
@@ -127,7 +133,7 @@ describe('IndexedDB design drafts', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
 
-  it('duplicates artwork atomically and keeps the copy independent', async () => {
+  it('duplicates artwork and editable layer metadata independently', async () => {
     const source = await createDesignDraft({
       productId: 'tshirt-classic',
       color: '#000000',
@@ -158,7 +164,11 @@ describe('IndexedDB design drafts', () => {
       house: '',
     });
     expect(duplicateDraft?.decals).toHaveLength(1);
-    expect(duplicateDraft?.decals[0]?.surfaceId).toBe('front');
+    expect(duplicateDraft?.decals[0]).toMatchObject({
+      name: 'Team logo',
+      visible: true,
+      surfaceId: 'back',
+    });
     expect(duplicateDraft?.decals[0]?.assetId).not.toBe(sourceDraft?.decals[0]?.assetId);
     expect(duplicateDraft?.decals[0]?.id).not.toBe(sourceDraft?.decals[0]?.id);
 
