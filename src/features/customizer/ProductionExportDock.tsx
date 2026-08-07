@@ -80,20 +80,22 @@ export const ProductionExportDock: React.FC<ProductionExportDockProps> = ({ draf
   const copy =
     language === 'ar'
       ? {
-          open: 'ملفات الإنتاج',
-          successProof: 'تم تنزيل إثبات الطباعة المحلي.',
-          successSpecification: 'تم تنزيل ملف مواصفات الإنتاج المحلي.',
-          noArtwork: 'أضف طبقة ظاهرة واحدة على الأقل قبل إنشاء ملفات الإنتاج.',
-          unavailable: 'لا يمكن إنشاء ملفات الإنتاج لهذه المسودة حالياً.',
-          failed: 'تعذر إنشاء ملف الإنتاج على هذا الجهاز.',
+          open: 'ملفات التسليم المحلية',
+          successProof: 'تم تنزيل إثبات PNG على هذا الجهاز.',
+          successSpecification: 'تم تنزيل ملف مواصفات JSON على هذا الجهاز.',
+          noArtwork: 'أضف طبقة ظاهرة واحدة على الأقل قبل إنشاء ملفات التسليم.',
+          unavailable: 'ملفات التسليم مو متاحة لهذه المسودة حالياً.',
+          missing: 'هذه المسودة مو موجودة أو انحذفت من هذا الجهاز.',
+          failed: 'ما گدرنا ننشئ ملف التسليم على هذا الجهاز. جرّب مرة ثانية.',
         }
       : {
-          open: 'Production files',
-          successProof: 'The local production proof was downloaded.',
-          successSpecification: 'The local production specification was downloaded.',
-          noArtwork: 'Add at least one visible artwork layer before generating production files.',
-          unavailable: 'Production files are not available for this draft yet.',
-          failed: 'The production file could not be generated on this device.',
+          open: 'Local handoff files',
+          successProof: 'The PNG proof was downloaded to this device.',
+          successSpecification: 'The JSON specification was downloaded to this device.',
+          noArtwork: 'Add at least one visible artwork layer before generating handoff files.',
+          unavailable: 'Handoff files are not available for this draft yet.',
+          missing: 'This draft is missing or was deleted from this device.',
+          failed: 'The handoff file could not be generated on this device. Try again.',
         };
 
   const runExport = async (kind: ExportKind): Promise<void> => {
@@ -150,8 +152,8 @@ export const ProductionExportDock: React.FC<ProductionExportDockProps> = ({ draf
         );
         showToast(copy.successSpecification, 'success');
       }
-    } catch {
-      showToast(copy.failed, 'error');
+    } catch (error: unknown) {
+      showToast(error instanceof Error && error.message === 'DRAFT_NOT_FOUND' ? copy.missing : copy.failed, 'error');
     } finally {
       if (draft) releaseDraftObjectUrls(draft);
       setIsExporting(false);
@@ -159,10 +161,14 @@ export const ProductionExportDock: React.FC<ProductionExportDockProps> = ({ draf
   };
 
   return (
-    <details className="group mx-auto mb-10 mt-4 w-[min(48rem,calc(100%-2rem))]">
+    <details
+      className="group mx-auto mb-10 mt-4 w-[min(48rem,calc(100%-2rem))]"
+      dir={language === 'ar' ? 'rtl' : 'ltr'}
+    >
       <summary
         data-testid="production-export-toggle"
         aria-label={copy.open}
+        aria-busy={isExporting}
         className="mx-auto flex w-fit cursor-pointer list-none items-center gap-2 rounded-full border border-amber-300 bg-amber-100 px-5 py-3 text-xs font-black uppercase tracking-wider text-amber-950 shadow-lg transition-transform hover:scale-[1.02] dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100 [&::-webkit-details-marker]:hidden"
       >
         <span aria-hidden="true">⇩</span>
