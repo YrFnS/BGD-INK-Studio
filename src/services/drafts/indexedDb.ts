@@ -1,5 +1,10 @@
 import { BRAND } from '@/config/brand';
-import { OrderDetails, Size } from '@/types';
+import {
+  DEFAULT_PRINT_SURFACE_ID,
+  OrderDetails,
+  PrintSurfaceId,
+  Size,
+} from '@/types';
 import {
   CreateDesignDraftInput,
   DESIGN_DRAFT_VERSION,
@@ -17,11 +22,23 @@ const DATABASE_VERSION = 1;
 const DRAFT_STORE = 'design-drafts';
 const ASSET_STORE = 'artwork-assets';
 const MAX_DRAFT_NAME_LENGTH = 80;
+const PRINT_SURFACE_IDS: readonly PrintSurfaceId[] = [
+  'front',
+  'back',
+  'left-sleeve',
+  'right-sleeve',
+];
 
 let databasePromise: Promise<IDBDatabase> | null = null;
 
-type LegacyDesignDraftRecord = Omit<DesignDraftRecord, 'name'> & {
+type LegacyStoredDecalLayer = Omit<StoredDecalLayer, 'surfaceId'> & {
+  surfaceId?: unknown;
+};
+
+type LegacyDesignDraftRecord = Omit<DesignDraftRecord, 'version' | 'name' | 'decals'> & {
+  version?: unknown;
   name?: unknown;
+  decals?: LegacyStoredDecalLayer[];
 };
 
 const emptyCheckoutDetails = (): OrderDetails => ({
@@ -44,9 +61,21 @@ const createId = (prefix: string): string => {
 const normalizeDraftName = (name: string): string =>
   name.trim().replace(/\s+/g, ' ').slice(0, MAX_DRAFT_NAME_LENGTH);
 
+const isPrintSurfaceId = (value: unknown): value is PrintSurfaceId =>
+  typeof value === 'string' && PRINT_SURFACE_IDS.includes(value as PrintSurfaceId);
+
+const normalizeStoredLayer = (layer: LegacyStoredDecalLayer): StoredDecalLayer => ({
+  ...layer,
+  surfaceId: isPrintSurfaceId(layer.surfaceId)
+    ? layer.surfaceId
+    : DEFAULT_PRINT_SURFACE_ID,
+});
+
 const normalizeDraftRecord = (draft: LegacyDesignDraftRecord): DesignDraftRecord => ({
   ...draft,
+  version: DESIGN_DRAFT_VERSION,
   name: typeof draft.name === 'string' ? draft.name : '',
+  decals: Array.isArray(draft.decals) ? draft.decals.map(normalizeStoredLayer) : [],
 });
 
 const requestToPromise = <T>(request: IDBRequest<T>): Promise<T> =>
@@ -226,6 +255,7 @@ const serializeLayer = (layer: DesignDraftSnapshot['decals'][number]): StoredDec
     assetId: layer.assetId,
     fileName: layer.fileName ?? 'artwork',
     mimeType: layer.mimeType ?? 'application/octet-stream',
+    surfaceId: layer.surfaceId,
     position: layer.position,
     rotation: layer.rotation,
     userRotation: layer.userRotation,
@@ -321,6 +351,7 @@ export const loadDesignDraft = async (draftId: string): Promise<HydratedDesignDr
         assetId: layer.assetId,
         fileName: layer.fileName || asset.fileName,
         mimeType: layer.mimeType || asset.mimeType,
+        surfaceId: layer.surfaceId,
         position: layer.position,
         rotation: layer.rotation,
         userRotation: layer.userRotation,
@@ -515,11 +546,5 @@ export const deleteDesignDraft = async (draftId: string): Promise<void> => {
 export const releaseDraftObjectUrls = (draft: Pick<HydratedDesignDraft, 'decals'>): void => {
   draft.decals.forEach((layer) => {
     if (layer.url.startsWith('blob:')) URL.revokeObjectURL(layer.url);
-  });
-};
-
-export const releaseDraftSummaryObjectUrls = (summaries: DesignDraftSummary[]): void => {
-  summaries.forEach((summary) => {
-    if (summary.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(summary.previewUrl);
   });
 };
