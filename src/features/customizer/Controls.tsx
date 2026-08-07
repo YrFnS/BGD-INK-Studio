@@ -338,7 +338,11 @@ export const Controls: React.FC<ControlsProps> = ({
                       type="button"
                       key={layer.id}
                       onClick={() => onSetActiveDecal(layer.id)}
-                      aria-label={`${copy.selectedLayer}: ${layer.name}`}
+                      aria-label={
+                        language === 'ar'
+                          ? `${copy.selectedLayer}: ${layer.name}`
+                          : `${copy.selectedLayer} ${index + 1}`
+                      }
                       aria-pressed={activeDecalId === layer.id}
                       aria-posinset={index + 1}
                       aria-setsize={decals.length}
