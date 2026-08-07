@@ -31,14 +31,32 @@ test('keeps the Arabic customizer, quality guidance, fallback, and handoff tools
 
   await expect(page.getByRole('button', { name: /الطبقة المختارة: team-logo/ })).toBeVisible();
   await expect(page.getByRole('toolbar', { name: 'أوضاع التحكم بالمحرر' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'تحريك التصميم' })).toBeEnabled();
-  await expect(page.getByRole('button', { name: 'تغيير الحجم والتدوير' })).toBeEnabled();
   await expect(page.getByTestId('artwork-quality-overlay')).toContainText('جودة التصميم للطباعة');
   await expect(page.getByTestId('artwork-quality-overlay')).toContainText('200 × 100 px');
 
-  const switchTo2d = page.getByRole('button', { name: 'استخدم المعاينة 2D' });
-  if (await switchTo2d.isVisible()) await switchTo2d.click();
-  await expect(page.getByText('المعاينة الآمنة 2D', { exact: true })).toBeVisible();
+  const moveMode = page.getByRole('button', { name: 'تحريك التصميم' });
+  const transformMode = page.getByRole('button', { name: 'تغيير الحجم والتدوير' });
+  const fallbackTitle = page.getByText('المعاينة الآمنة 2D', { exact: true });
+
+  await page.waitForFunction(() => {
+    const moveButton = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="تحريك التصميم"]',
+    );
+    const fallback = Array.from(document.querySelectorAll('p')).some(
+      (element) => element.textContent?.trim() === 'المعاينة الآمنة 2D',
+    );
+    return Boolean(fallback || (moveButton && !moveButton.disabled));
+  });
+
+  if (await fallbackTitle.isVisible().catch(() => false)) {
+    await expect(moveMode).toBeDisabled();
+    await expect(transformMode).toBeDisabled();
+  } else {
+    await expect(moveMode).toBeEnabled();
+    await expect(transformMode).toBeEnabled();
+    await page.getByRole('button', { name: 'استخدم المعاينة 2D' }).click();
+    await expect(fallbackTitle).toBeVisible();
+  }
 
   const exportToggle = page.getByTestId('production-export-toggle');
   await exportToggle.scrollIntoViewIfNeeded();
