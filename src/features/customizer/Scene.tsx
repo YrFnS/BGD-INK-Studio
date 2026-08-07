@@ -18,6 +18,8 @@ interface SceneProps {
   activeDecalId: string | null;
   enableControls: boolean;
   onDecalChange: (pos: [number, number, number], rot: [number, number, number]) => void;
+  onDecalInteractionStart: () => void;
+  onDecalInteractionEnd: () => void;
   setDraggingDecal: (dragging: boolean) => void;
 }
 
@@ -69,10 +71,17 @@ export const Scene: React.FC<SceneProps> = ({
   activeDecalId,
   enableControls,
   onDecalChange,
+  onDecalInteractionStart,
+  onDecalInteractionEnd,
   setDraggingDecal,
 }) => {
   const isDark = theme === 'dark';
   const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
+
+  const stopDecalInteraction = () => {
+    setDraggingDecal(false);
+    onDecalInteractionEnd();
+  };
 
   return (
     <Canvas
@@ -81,7 +90,7 @@ export const Scene: React.FC<SceneProps> = ({
       camera={{ position: selectedSurface.cameraPosition, fov: 45 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       style={{ background: 'transparent' }}
-      onPointerMissed={() => setDraggingDecal(false)}
+      onPointerMissed={stopDecalInteraction}
     >
       <CameraRig surface={selectedSurface} />
 
@@ -108,6 +117,8 @@ export const Scene: React.FC<SceneProps> = ({
           decals={decals}
           activeDecalId={activeDecalId}
           onDecalChange={onDecalChange}
+          onDecalInteractionStart={onDecalInteractionStart}
+          onDecalInteractionEnd={onDecalInteractionEnd}
           setDraggingDecal={setDraggingDecal}
         />
       </ModelErrorBoundary>
