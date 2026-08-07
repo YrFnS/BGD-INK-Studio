@@ -339,6 +339,8 @@ export const Controls: React.FC<ControlsProps> = ({
                       onClick={() => onSetActiveDecal(layer.id)}
                       aria-label={`${copy.selectedLayer}: ${layer.name}`}
                       aria-pressed={activeDecalId === layer.id}
+                      aria-posinset={index + 1}
+                      aria-setsize={decals.length}
                       className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
                         activeDecalId === layer.id
                           ? 'border-accent ring-2 ring-accent/20'
