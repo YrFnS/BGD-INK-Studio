@@ -99,7 +99,7 @@ export const ArtworkQualityOverlay: React.FC<ArtworkQualityOverlayProps> = ({
 
   return (
     <aside
-      className="pointer-events-none absolute bottom-4 start-4 z-10 w-[min(24rem,calc(100%-2rem))] rounded-2xl border border-white/60 bg-white/90 p-4 text-xs shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/75"
+      className="pointer-events-none absolute bottom-32 start-4 z-10 max-h-[calc(100%-12rem)] w-[min(24rem,calc(100%-2rem))] overflow-y-auto rounded-2xl border border-white/60 bg-white/90 p-4 text-xs shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/75"
       aria-label={copy.title}
       role="status"
       aria-live="polite"
