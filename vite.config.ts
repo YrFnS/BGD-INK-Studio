@@ -9,6 +9,9 @@ export default defineConfig({
     host: '0.0.0.0',
   },
   plugins: [tailwindcss(), react()],
+  build: {
+    manifest: true,
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('.', import.meta.url)),
