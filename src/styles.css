@@ -211,7 +211,6 @@ footer {
 
 .studio-garment-drift {
   animation: studio-garment-drift 6s ease-in-out infinite;
-  will-change: transform;
 }
 
 .studio-workbench::after {
