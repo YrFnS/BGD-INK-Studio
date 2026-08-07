@@ -86,10 +86,12 @@ In progress on `agent/bgd-ink-p3-premium-storefront`:
 - touch-first local draft receipt with draft-ID copy, prepared variant, quantity, local estimate, and direct My Designs/new-draft actions
 - persisted English/Iraqi-Arabic selection with synchronized document language and direction
 - Iraqi-Arabic editorial pass for the homepage, catalog, notices, footer, My Designs, and receipt
-- direction-safe phone numbers, numeric inputs, prices, sizes, identifiers, file formats, and collection codes
+- reviewed Iraqi-Arabic customizer controls, interaction modes, quality guidance, 2D recovery, and local handoff tools
+- direction-safe phone numbers, numeric inputs, range controls, prices, sizes, identifiers, file formats, collection codes, centimeters, pixels, DPI, degrees, and 2D/3D labels
 - truthful prepared-locally status and quantity in My Designs
+- accessible safe-2D recovery with its retry action outside image semantics
 - permanent localization/RTL validation in the production gate
-- English/Iraqi-Arabic guide and direct-route browser coverage
+- English/Iraqi-Arabic guide, mobile navigation, and dense-editor browser coverage
 - Three.js kept out of the initial storefront bundle
 
 Still open in P3:
@@ -98,7 +100,8 @@ Still open in P3:
 - confirmed prices, production times, product specifications, method availability, and product-specific size charts
 - official contact channels
 - approved returns, care, privacy, and fulfillment policies
-- remaining Iraqi-Arabic and contextual RTL review in the guide, dense editor controls, quality/export tools, and draft-preparation edge states
+- final human Iraqi-Arabic review of the Studio Guide's long-form educational content and draft-preparation failure/edge states
+- contextual RTL review of the Guide's densest sections and draft-preparation failure/edge states
 - representative physical phone and tablet validation
 
 ## Brand
@@ -188,7 +191,7 @@ npm run check:bundle
 npm run preview
 ```
 
-The current P3 fast suite contains **56 unit/component/accessibility tests across 20 files**. Seven Chromium journeys cover draft/preparation/quantity recovery, artwork quality, layer history, persisted mobile Arabic/RTL navigation, WebGL/2D recovery, real PNG/JSON downloads, and the bilingual Studio Guide.
+The current P3 fast suite contains **64 unit/component/accessibility tests across 24 files**. Eight Chromium journeys cover draft/preparation/quantity recovery, artwork quality, layer history, persisted mobile Arabic/RTL navigation, the Arabic dense customizer and handoff tools, WebGL/2D recovery, real PNG/JSON downloads, and the bilingual Studio Guide.
 
 ## Routes
 
@@ -246,11 +249,13 @@ The selected language persists in browser storage under `bgd-ink-language`. A re
 <html lang="ar" dir="rtl" data-language="ar">
 ```
 
-Arabic typography is selected from the document language. Phone fields, number inputs, prices, quantities, sizes, draft identifiers, file formats, and collection codes retain a stable internal order inside RTL layouts.
+Arabic typography is selected from the document language. Phone fields, number inputs, prices, quantities, sizes, draft identifiers, file formats, collection codes, centimeters, pixels, DPI, degrees, and 2D/3D labels retain a stable internal order inside RTL layouts.
 
-`npm run check:localization` rejects regressions in language persistence, reviewed Iraqi-Arabic terminology, localized status badges, truthful local-draft status, and direction-isolation primitives.
+The dense customizer has reviewed Arabic labels for layers, history, interaction modes, quality warnings, 2D recovery, and local handoff files. Layer names and notes use automatic direction detection, while range controls keep a predictable left-to-right progression.
 
-The mobile Chromium journey switches to Arabic, reloads the page, confirms Arabic remains active, navigates through the RTL menu, and verifies that the Pixel 5 viewport has no horizontal overflow.
+`npm run check:localization` rejects regressions in language persistence, reviewed Iraqi-Arabic terminology, localized status badges, truthful local-draft status, dense editor guidance, local-handoff copy, accessibility structure, and direction-isolation primitives.
+
+The mobile Chromium journeys switch to Arabic, reload the page, confirm Arabic remains active, navigate through the RTL menu, upload artwork in the Arabic editor, inspect quality guidance, exercise GPU-portable 2D recovery, open the local handoff tools, and verify that Pixel 5 pages have no horizontal overflow.
 
 ## Customizer interaction modes
 
@@ -272,7 +277,7 @@ The editor selects high, balanced, or low-power settings from available device h
 
 The cap also respects the WebGL hardware limit. Smaller files are not enlarged, aspect ratio is preserved, and generated GPU textures are disposed when no longer needed.
 
-Rendering pauses while the page is hidden. When WebGL is unavailable or loses context, the app switches to a safe local 2D preview without discarding the draft.
+Rendering pauses while the page is hidden. When WebGL is unavailable or loses context, the app switches to a safe local 2D preview without discarding the draft. The retry button remains an ordinary interactive control outside the fallback image role so assistive technology can reach it.
 
 ## Local production files
 
@@ -297,7 +302,7 @@ The customizer can generate:
 - estimated DPI, quality level, and warnings
 - explicit `unverified` physical calibration
 
-Temporary `blob:` preview URLs are excluded. These files are planning and handoff aids, not authorization to print.
+Temporary `blob:` preview URLs are excluded. These files are planning and local handoff aids, not authorization to print. The export UI remains bilingual and explicitly states that generation happens on the current device.
 
 ## Studio Guide
 
@@ -349,14 +354,14 @@ The P3 storefront keeps Three.js lazy. Current measured production baseline:
 | Metric | Current | Limit |
 | --- | ---: | ---: |
 | Initial JavaScript, gzip | 97.56 KiB | 140 KiB |
-| Initial CSS, gzip | 15.48 KiB | 16 KiB |
+| Initial CSS, gzip | 15.51 KiB | 16 KiB |
 | Largest async JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
 | Largest JavaScript chunk, raw | 651.42 KiB | 800 KiB |
-| Total JavaScript, gzip | 400.60 KiB | 410 KiB |
-| Total JavaScript, raw | 1,365.58 KiB | 1,400 KiB |
-| Total CSS, gzip | 15.48 KiB | 16.5 KiB |
+| Total JavaScript, gzip | 401.45 KiB | 410 KiB |
+| Total JavaScript, raw | 1,368.65 KiB | 1,400 KiB |
+| Total CSS, gzip | 15.51 KiB | 17 KiB |
 
-No budget was raised for the Iraqi-Arabic and RTL work. JavaScript and CSS limits should not be raised automatically.
+No budget was raised for the dense Iraqi-Arabic and RTL work. JavaScript and CSS limits should not be raised automatically.
 
 ## Prototype safety boundaries
 
@@ -375,5 +380,6 @@ Do not use the local prototype for real customer orders or sensitive production 
 
 - [P3 storefront direction](docs/P3-STOREFRONT-DIRECTION.md)
 - [P3 Iraqi-Arabic and RTL sweep](docs/P3-ARABIC-RTL-SWEEP.md)
+- [P3 dense editor Arabic and RTL review](docs/P3-DENSE-EDITOR-ARABIC-RTL.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Roadmap](tasks.md)
