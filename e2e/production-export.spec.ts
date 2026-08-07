@@ -20,7 +20,9 @@ test('downloads a multi-surface PNG proof and URL-free JSON specification', asyn
   await expect(page.getByRole('button', { name: 'Selected layer 1' })).toBeVisible();
   await expect(page.getByText('Saved on this device', { exact: true })).toBeVisible();
 
-  await page.getByText('Production files', { exact: true }).click();
+  const exportToggle = page.getByTestId('production-export-toggle');
+  await expect(exportToggle).toBeVisible();
+  await exportToggle.click();
 
   const proofDownloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download PNG proof' }).click();
