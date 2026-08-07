@@ -132,6 +132,13 @@
     text-align: start;
   }
 
+  html[dir='rtl'] .font-mono,
+  html[dir='rtl'] input[type='number'],
+  html[dir='rtl'] [data-technical] {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
   input[type='tel'],
   input[type='email'],
   input[type='url'] {
