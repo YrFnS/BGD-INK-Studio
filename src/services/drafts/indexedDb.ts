@@ -34,11 +34,25 @@ let databasePromise: Promise<IDBDatabase> | null = null;
 
 type LegacyStoredDecalLayer = Omit<
   StoredDecalLayer,
-  'surfaceId' | 'name' | 'visible'
+  | 'surfaceId'
+  | 'name'
+  | 'visible'
+  | 'pixelWidth'
+  | 'pixelHeight'
+  | 'aspectRatio'
+  | 'hasTransparency'
+  | 'transparentPixelRatio'
+  | 'transparentPaddingRatio'
 > & {
   surfaceId?: unknown;
   name?: unknown;
   visible?: unknown;
+  pixelWidth?: unknown;
+  pixelHeight?: unknown;
+  aspectRatio?: unknown;
+  hasTransparency?: unknown;
+  transparentPixelRatio?: unknown;
+  transparentPaddingRatio?: unknown;
 };
 
 type LegacyDesignDraftRecord = Omit<
@@ -82,6 +96,14 @@ const createLayerName = (fileName: string, index: number): string => {
 const isPrintSurfaceId = (value: unknown): value is PrintSurfaceId =>
   typeof value === 'string' && PRINT_SURFACE_IDS.includes(value as PrintSurfaceId);
 
+const normalizeOptionalPositiveNumber = (value: unknown): number | undefined =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
+
+const normalizeOptionalFraction = (value: unknown): number | undefined =>
+  typeof value === 'number' && Number.isFinite(value)
+    ? Math.min(1, Math.max(0, value))
+    : undefined;
+
 const normalizeStoredLayer = (
   layer: LegacyStoredDecalLayer,
   index: number,
@@ -95,6 +117,13 @@ const normalizeStoredLayer = (
   surfaceId: isPrintSurfaceId(layer.surfaceId)
     ? layer.surfaceId
     : DEFAULT_PRINT_SURFACE_ID,
+  pixelWidth: normalizeOptionalPositiveNumber(layer.pixelWidth),
+  pixelHeight: normalizeOptionalPositiveNumber(layer.pixelHeight),
+  aspectRatio: normalizeOptionalPositiveNumber(layer.aspectRatio),
+  hasTransparency:
+    typeof layer.hasTransparency === 'boolean' ? layer.hasTransparency : undefined,
+  transparentPixelRatio: normalizeOptionalFraction(layer.transparentPixelRatio),
+  transparentPaddingRatio: normalizeOptionalFraction(layer.transparentPaddingRatio),
 });
 
 const normalizeDraftRecord = (draft: LegacyDesignDraftRecord): DesignDraftRecord => {
@@ -303,6 +332,13 @@ const serializeLayer = (
     rotation: layer.rotation,
     userRotation: layer.userRotation,
     scale: layer.scale,
+    pixelWidth: normalizeOptionalPositiveNumber(layer.pixelWidth),
+    pixelHeight: normalizeOptionalPositiveNumber(layer.pixelHeight),
+    aspectRatio: normalizeOptionalPositiveNumber(layer.aspectRatio),
+    hasTransparency:
+      typeof layer.hasTransparency === 'boolean' ? layer.hasTransparency : undefined,
+    transparentPixelRatio: normalizeOptionalFraction(layer.transparentPixelRatio),
+    transparentPaddingRatio: normalizeOptionalFraction(layer.transparentPaddingRatio),
   };
 };
 
@@ -402,6 +438,12 @@ export const loadDesignDraft = async (draftId: string): Promise<HydratedDesignDr
         rotation: layer.rotation,
         userRotation: layer.userRotation,
         scale: layer.scale,
+        pixelWidth: layer.pixelWidth,
+        pixelHeight: layer.pixelHeight,
+        aspectRatio: layer.aspectRatio,
+        hasTransparency: layer.hasTransparency,
+        transparentPixelRatio: layer.transparentPixelRatio,
+        transparentPaddingRatio: layer.transparentPaddingRatio,
       },
     ];
   });
