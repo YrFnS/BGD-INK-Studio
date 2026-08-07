@@ -1,0 +1,78 @@
+{
+  "id": "/",
+  "name": "BGD/INK Studio",
+  "short_name": "BGD/INK",
+  "description": "Prepare model-aware custom-apparel design drafts locally in your browser.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "orientation": "any",
+  "lang": "en",
+  "dir": "auto",
+  "categories": ["design", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/brand/app/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/app/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/app/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Choose a garment",
+      "short_name": "Catalog",
+      "description": "Open the local garment catalog.",
+      "url": "/catalog",
+      "icons": [
+        {
+          "src": "/brand/app/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "My local designs",
+      "short_name": "My Designs",
+      "description": "Open drafts stored in this browser.",
+      "url": "/designs",
+      "icons": [
+        {
+          "src": "/brand/app/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Studio Guide",
+      "short_name": "Guide",
+      "description": "Open measurement, artwork, and prototype guidance.",
+      "url": "/guide",
+      "icons": [
+        {
+          "src": "/brand/app/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
