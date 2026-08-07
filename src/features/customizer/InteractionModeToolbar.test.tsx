@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { axe } from 'jest-axe';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '@/contexts/AppContext';
 import { InteractionModeToolbar } from './InteractionModeToolbar';
 import type { CustomizerInteractionMode } from './interactionGestures';
@@ -35,6 +35,10 @@ const renderToolbar = ({
 
   return { ...result, onModeChange, onTogglePreview };
 };
+
+afterEach(() => {
+  window.localStorage.clear();
+});
 
 describe('InteractionModeToolbar', () => {
   it('keeps artwork modes disabled until a visible layer is selected', async () => {
@@ -71,5 +75,18 @@ describe('InteractionModeToolbar', () => {
     expect(screen.getByRole('button', { name: 'Move design' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Resize or rotate design' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Try 3D preview' })).toBeEnabled();
+  });
+
+  it('uses reviewed Iraqi-Arabic labels without reversing technical preview modes', () => {
+    window.localStorage.setItem('bgd-ink-language', 'ar');
+    const { container } = renderToolbar({ hasActiveLayer: true });
+
+    expect(container.firstElementChild).toHaveAttribute('dir', 'rtl');
+    expect(screen.getByRole('toolbar', { name: 'أوضاع التحكم بالمحرر' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'عرض القطعة' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'تحريك التصميم' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'تغيير الحجم والتدوير' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'استخدم المعاينة 2D' })).toBeInTheDocument();
+    expect(screen.getAllByText('2D')[0]).toHaveAttribute('dir', 'ltr');
   });
 });
