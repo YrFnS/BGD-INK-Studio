@@ -52,26 +52,6 @@
   }
 }
 
-@keyframes studio-scan {
-  0% {
-    transform: translateY(-120%);
-    opacity: 0;
-  }
-
-  20% {
-    opacity: 0.22;
-  }
-
-  80% {
-    opacity: 0.12;
-  }
-
-  100% {
-    transform: translateY(620%);
-    opacity: 0;
-  }
-}
-
 @layer base {
   :root {
     color-scheme: light;
@@ -211,18 +191,6 @@ footer {
 
 .studio-garment-drift {
   animation: studio-garment-drift 6s ease-in-out infinite;
-}
-
-.studio-workbench::after {
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  z-index: 2;
-  height: 22%;
-  content: '';
-  pointer-events: none;
-  background: linear-gradient(to bottom, transparent, rgb(225 59 45 / 9%), transparent);
-  animation: studio-scan 7s linear infinite;
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
