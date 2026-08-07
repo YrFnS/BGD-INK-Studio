@@ -2,6 +2,11 @@ import gsap from 'gsap';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/contexts/ToastContext';
+import {
+  getPrintSurface,
+  getReadyProductModelConfig,
+  type ReadyProductModelConfig,
+} from '@/data/assets3d';
 import { useSEO } from '@/hooks/useSEO';
 import { isAbortError, platformApi } from '@/services/api';
 import {
@@ -14,8 +19,19 @@ import {
   saveDesignDraft,
   storeArtworkFile,
 } from '@/services/drafts';
-import { DecalLayer, Product, Size } from '@/types';
+import {
+  DEFAULT_PRINT_SURFACE_ID,
+  DecalLayer,
+  PrintSurfaceId,
+  Product,
+  Size,
+} from '@/types';
 import { Controls } from './Controls';
+import {
+  clampPositionToSurface,
+  clampScaleToSurface,
+  createDefaultSurfaceTransform,
+} from './printArea';
 import { Scene } from './Scene';
 import { validateArtworkFile } from './artworkValidation';
 
@@ -24,6 +40,8 @@ interface CustomizerProps {
   onCheckout: (draftId: string) => void;
   onMissingDraft: () => void;
 }
+
+type CustomizerLoadStatus = DraftLoadStatus | 'model-unavailable';
 
 const createLayerId = (): string => {
   const token =
@@ -47,17 +65,42 @@ const createSnapshot = (
   decals,
 });
 
+const normalizeLayerForModel = (
+  layer: DecalLayer,
+  modelConfig: ReadyProductModelConfig,
+): DecalLayer => {
+  const hasSupportedSurface = modelConfig.surfaces.some(
+    (surface) => surface.id === layer.surfaceId,
+  );
+  const surface = getPrintSurface(
+    modelConfig,
+    hasSupportedSurface ? layer.surfaceId : modelConfig.defaultSurfaceId,
+  );
+  const scale = clampScaleToSurface(layer.scale, surface);
+
+  return {
+    ...layer,
+    surfaceId: surface.id,
+    scale,
+    position: clampPositionToSurface(layer.position, surface, scale),
+  };
+};
+
 export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onMissingDraft }) => {
   const { theme, t, language } = useAppContext();
   const { showToast } = useToast();
 
   useSEO('seo.customizer.title', 'seo.customizer.description');
 
-  const [loadStatus, setLoadStatus] = useState<DraftLoadStatus>('loading');
+  const [loadStatus, setLoadStatus] = useState<CustomizerLoadStatus>('loading');
   const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>('saved');
   const [product, setProduct] = useState<Product | null>(null);
+  const [modelConfig, setModelConfig] = useState<ReadyProductModelConfig | null>(null);
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState<Size>(Size.L);
+  const [selectedSurfaceId, setSelectedSurfaceId] = useState<PrintSurfaceId>(
+    DEFAULT_PRINT_SURFACE_ID,
+  );
   const [notes, setNotes] = useState('');
   const [decals, setDecals] = useState<DecalLayer[]>([]);
   const [activeDecalId, setActiveDecalId] = useState<string | null>(null);
@@ -113,6 +156,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     let disposed = false;
     setLoadStatus('loading');
     setProduct(null);
+    setModelConfig(null);
 
     Promise.all([loadDesignDraft(draftId), platformApi.catalog.listProducts(controller.signal)])
       .then(([draft, products]) => {
@@ -133,19 +177,34 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
           return;
         }
 
-        const restoredActiveLayer = draft.decals.some((layer) => layer.id === draft.activeDecalId)
-          ? draft.activeDecalId
-          : null;
+        const matchingModelConfig = getReadyProductModelConfig(matchingProduct.id);
+        if (!matchingModelConfig) {
+          releaseDraftObjectUrls(draft);
+          setProduct(matchingProduct);
+          setLoadStatus('model-unavailable');
+          return;
+        }
 
-        decalsRef.current = draft.decals;
+        const normalizedDecals = draft.decals.map((layer) =>
+          normalizeLayerForModel(layer, matchingModelConfig),
+        );
+        const restoredActiveLayer = normalizedDecals.find(
+          (layer) => layer.id === draft.activeDecalId,
+        );
+
+        decalsRef.current = normalizedDecals;
         setProduct(matchingProduct);
+        setModelConfig(matchingModelConfig);
         setSelectedColor(
           matchingProduct.colors.includes(draft.color) ? draft.color : matchingProduct.colors[0],
         );
         setSelectedSize(draft.size);
+        setSelectedSurfaceId(
+          restoredActiveLayer?.surfaceId ?? matchingModelConfig.defaultSurfaceId,
+        );
         setNotes(draft.notes);
-        setDecals(draft.decals);
-        setActiveDecalId(restoredActiveLayer);
+        setDecals(normalizedDecals);
+        setActiveDecalId(restoredActiveLayer?.id ?? null);
         setSaveStatus('saved');
         setLoadStatus('ready');
 
@@ -212,7 +271,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     const input = event.currentTarget;
     const file = input.files?.[0];
     input.value = '';
-    if (!file) return;
+    if (!file || !modelConfig) return;
 
     const validationError = validateArtworkFile(file);
     if (validationError) {
@@ -229,6 +288,9 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
       return;
     }
 
+    const surface = getPrintSurface(modelConfig, selectedSurfaceId);
+    const defaultTransform = createDefaultSurfaceTransform(surface);
+
     setIsUploading(true);
     try {
       const asset = await storeArtworkFile(file);
@@ -238,18 +300,19 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
         assetId: asset.id,
         fileName: asset.fileName,
         mimeType: asset.mimeType,
-        position: [0, 0.04, 0.15],
-        rotation: [0, 0, 0],
+        surfaceId: surface.id,
+        position: defaultTransform.position,
+        rotation: defaultTransform.rotation,
         userRotation: 0,
-        scale: 0.15,
+        scale: defaultTransform.scale,
       };
 
       updateDecals((current) => [...current, newLayer]);
       setActiveDecalId(newLayer.id);
       showToast(
         language === 'ar'
-          ? 'تم حفظ الصورة وإضافتها للمسودة.'
-          : 'Artwork saved and added to the draft.',
+          ? 'تم حفظ الصورة وإضافتها لمساحة الطباعة.'
+          : 'Artwork saved and added to the selected print surface.',
         'success',
       );
     } catch {
@@ -292,8 +355,28 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   };
 
   const handleDecalUpdate = (id: string, updates: Partial<DecalLayer>) => {
+    if (!modelConfig) return;
+
     updateDecals((current) =>
-      current.map((layer) => (layer.id === id ? { ...layer, ...updates } : layer)),
+      current.map((layer) => {
+        if (layer.id !== id) return layer;
+
+        const surface = getPrintSurface(modelConfig, layer.surfaceId);
+        const scale = clampScaleToSurface(updates.scale ?? layer.scale, surface);
+        const position = clampPositionToSurface(
+          updates.position ?? layer.position,
+          surface,
+          scale,
+        );
+
+        return {
+          ...layer,
+          ...updates,
+          surfaceId: surface.id,
+          scale,
+          position,
+        };
+      }),
     );
   };
 
@@ -303,6 +386,21 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   ) => {
     if (activeDecalId) {
       handleDecalUpdate(activeDecalId, { position, rotation });
+    }
+  };
+
+  const handleSetActiveDecal = (id: string) => {
+    const layer = decalsRef.current.find((candidate) => candidate.id === id);
+    if (!layer) return;
+    setActiveDecalId(id);
+    setSelectedSurfaceId(layer.surfaceId);
+  };
+
+  const handleSurfaceChange = (surfaceId: PrintSurfaceId) => {
+    setSelectedSurfaceId(surfaceId);
+    const activeLayer = decalsRef.current.find((layer) => layer.id === activeDecalId);
+    if (activeLayer && activeLayer.surfaceId !== surfaceId) {
+      setActiveDecalId(null);
     }
   };
 
@@ -343,15 +441,23 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     );
   }
 
-  if (loadStatus === 'missing' || loadStatus === 'error' || !product) {
+  if (
+    loadStatus === 'missing' ||
+    loadStatus === 'error' ||
+    loadStatus === 'model-unavailable' ||
+    !product ||
+    !modelConfig
+  ) {
     const message =
       loadStatus === 'missing'
         ? language === 'ar'
           ? 'هذه المسودة غير موجودة أو تم حذفها.'
           : 'This design draft does not exist or was deleted.'
-        : language === 'ar'
-          ? 'تعذر فتح مسودة التصميم على هذا الجهاز.'
-          : 'The design draft could not be opened on this device.';
+        : loadStatus === 'model-unavailable'
+          ? t('customizer.modelUnavailable')
+          : language === 'ar'
+            ? 'تعذر فتح مسودة التصميم على هذا الجهاز.'
+            : 'The design draft could not be opened on this device.';
 
     return (
       <div className="flex min-h-[70vh] items-center justify-center px-4 pt-24 text-center">
@@ -369,6 +475,8 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     );
   }
 
+  const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
+
   return (
     <div
       ref={containerRef}
@@ -382,12 +490,15 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
           <h2 className="text-3xl font-bold uppercase tracking-tighter text-black opacity-50 dark:text-white">
             {t(product.name)}
           </h2>
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             <span className="rounded bg-white px-2 py-1 text-xs font-bold dark:bg-black">
               {selectedSize}
             </span>
             <span className="rounded bg-white px-2 py-1 text-xs font-bold dark:bg-black">
-              {selectedColor}
+              {t(selectedSurface.labelKey)}
+            </span>
+            <span className="rounded bg-white px-2 py-1 font-mono text-xs font-bold dark:bg-black">
+              {selectedSurface.physicalWidthCm} × {selectedSurface.physicalHeightCm} cm
             </span>
           </div>
         </div>
@@ -453,8 +564,8 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
 
         <div className={`h-full w-full ${isDraggingDecal ? 'cursor-grabbing' : ''}`}>
           <Scene
-            productId={product.id}
-            productType={product.type}
+            modelConfig={modelConfig}
+            selectedSurfaceId={selectedSurfaceId}
             color={selectedColor}
             theme={theme}
             decals={decals}
@@ -473,9 +584,12 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
           onColorChange={setSelectedColor}
           selectedSize={selectedSize}
           onSizeChange={setSelectedSize}
+          surfaces={modelConfig.surfaces}
+          selectedSurfaceId={selectedSurfaceId}
+          onSurfaceChange={handleSurfaceChange}
           decals={decals}
           activeDecalId={activeDecalId}
-          onSetActiveDecal={setActiveDecalId}
+          onSetActiveDecal={handleSetActiveDecal}
           onUpload={handleFileUpload}
           onRemoveDecal={handleRemoveDecal}
           onUpdateDecal={handleDecalUpdate}
