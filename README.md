@@ -62,6 +62,8 @@ Completed local-customizer work includes:
 - Downloadable multi-surface PNG production proofs
 - URL-free JSON production specifications with centimeter placement and artwork quality metadata
 - IndexedDB draft version 4, which preserves source pixels, aspect ratio, transparency, and padding analysis for exports and recovery
+- Runtime artwork textures capped by rendering profile without modifying the original IndexedDB files
+- CI inspection and enforcement for GLB file size, triangle count, mesh count, material count, and embedded texture dimensions and bytes
 
 Still required before P2 is complete:
 
@@ -69,7 +71,9 @@ Still required before P2 is complete:
 - Genuine optimized oversized T-shirt, hoodie, and vest models
 - Calibrated sleeve and other product-specific surfaces
 - Geometry-aware seam warnings
-- Final GLB and preview-texture optimization
+- Compression and re-audit of the approved final garment assets
+
+The current Classic T-shirt asset passes the enforced limits but does not yet use Meshopt, Draco, or KTX2 compression. Compression is deliberately deferred until the final product assets are approved so work is not repeated on placeholder or incomplete models.
 
 None of this P2 work adds backend, database, account, or remote-storage infrastructure.
 
@@ -129,12 +133,13 @@ environment validation
 → warning-free ESLint
 → brand source-of-truth validation
 → import-boundary validation
+→ measured GLB geometry and texture budgets
 → unit, component, and accessibility tests
 → production build
-→ bundle budgets
+→ JavaScript and CSS bundle budgets
 ```
 
-Current P2 coverage includes **42 unit/component/accessibility tests across 14 files** and **six Chromium customer journeys** covering recovery, artwork quality, layer editing, mobile Arabic/RTL navigation, rendering fallback behavior, and real PNG/JSON downloads.
+Current P2 coverage includes **45 unit/component/accessibility tests across 15 files** and **six Chromium customer journeys** covering recovery, artwork quality, layer editing, mobile Arabic/RTL navigation, rendering fallback behavior, and real PNG/JSON downloads.
 
 Additional commands:
 
@@ -144,6 +149,7 @@ npm run lint
 npm run check:environment
 npm run check:brand
 npm run check:boundaries
+npm run check:assets
 npm run test
 npm run test:unit
 npm run test:coverage
@@ -209,10 +215,25 @@ Profiles can adjust:
 - Texture anisotropy
 - Idle animation
 - WebGL power preference
+- Maximum derived artwork-texture dimensions
 
 Rendering pauses while the document is hidden. Constrained devices use demand rendering rather than a permanent animation loop.
 
 When WebGL is unavailable, its context is lost, or the garment model cannot render, the app switches to a safe local 2D preview without discarding the draft. A supported device can retry the 3D renderer from the same design state.
+
+## Artwork preview textures
+
+The original uploaded file remains untouched in IndexedDB. The 3D renderer creates a separate canvas-derived texture for GPU display and caps its largest dimension according to the selected rendering profile:
+
+| Profile | Maximum preview dimension |
+| --- | ---: |
+| High | 2048 px |
+| Balanced | 1536 px |
+| Low power | 1024 px |
+
+The cap also respects the browser-reported maximum WebGL texture size. Aspect ratio is preserved, smaller artwork is not enlarged, mipmaps remain enabled, and generated GPU textures are disposed when the layer or rendering profile changes.
+
+These limits reduce GPU memory pressure without degrading the original file or the local production metadata.
 
 ## Local production files
 
@@ -246,6 +267,35 @@ Temporary `blob:` preview URLs are never included. Generated files are independe
 
 These files are planning and handoff aids, not authorization to print. The physical print areas must still be confirmed against the exact garment blank and production method.
 
+## 3D asset budgets
+
+`npm run check:assets` validates every GLB under `public/` after Git LFS checkout. It fails when a model is still an LFS pointer, is not a valid glTF 2.0 binary, or exceeds a reviewed limit.
+
+The current enforced per-model limits are:
+
+| Metric | Limit |
+| --- | ---: |
+| GLB file size | 1,400,000 bytes |
+| Triangle count | 25,000 |
+| Mesh count | 4 |
+| Material count | 4 |
+| Embedded texture dimension | 1024 px |
+| Embedded texture size | 1,100,000 bytes |
+
+The measured Classic T-shirt baseline is:
+
+| Metric | Current |
+| --- | ---: |
+| GLB file size | 1,284.25 KiB |
+| Geometry | 1 mesh, 1 primitive, 7,202 triangles |
+| Materials | 1 |
+| Embedded textures | 3 at 1024 × 1024 |
+| Largest embedded texture | 986.63 KiB JPEG |
+| Geometry compression | None |
+| Texture compression | None |
+
+New models must pass the same audit. Final approved assets should then be tested with Meshopt or Draco geometry compression and KTX2/Basis textures where the visual and browser-compatibility tradeoffs are acceptable.
+
 ## Source architecture
 
 ```text
@@ -278,12 +328,12 @@ Current validated measurements:
 | Initial JavaScript, gzip | 108.08 KiB | 140 KiB |
 | Initial CSS, gzip | 11.37 KiB | 13 KiB |
 | Largest lazy JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
-| Largest JavaScript chunk, raw | 651.41 KiB | 800 KiB |
-| Total JavaScript, gzip | 397.46 KiB | 410 KiB |
-| Total JavaScript, raw | 1,339.73 KiB | 1,400 KiB |
+| Largest JavaScript chunk, raw | 651.42 KiB | 800 KiB |
+| Total JavaScript, gzip | 397.88 KiB | 410 KiB |
+| Total JavaScript, raw | 1,340.77 KiB | 1,400 KiB |
 | Total CSS, gzip | 11.37 KiB | 15 KiB |
 
-The customizer route is approximately **78.13 KiB raw / 25.73 KiB gzip**. The lazy PNG/JSON export engine is approximately **8.73 KiB raw / 3.70 KiB gzip**. Three.js remains isolated in its lazy vendor chunk.
+The customizer route is approximately **79.16 KiB raw / 26.15 KiB gzip**. The lazy PNG/JSON export engine is approximately **8.73 KiB raw / 3.70 KiB gzip**. Three.js remains isolated in its lazy vendor chunk.
 
 A budget change must be intentional and reviewed; it should not be the automatic response to a regression.
 
@@ -303,7 +353,7 @@ Do not use the local prototype for real customer orders or sensitive production 
 
 ## Troubleshooting
 
-See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for Git LFS, IndexedDB, artwork upload, WebGL, local production exports, deployment routing, Playwright, runtime, and bundle-budget guidance.
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for Git LFS, IndexedDB, artwork upload, WebGL, local production exports, asset-budget validation, deployment routing, Playwright, runtime, and bundle-budget guidance.
 
 ## Roadmap
 
