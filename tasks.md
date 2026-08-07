@@ -136,6 +136,7 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Add the `/guide` route with measurement instructions, method education, draft-preparation guidance, policies, and FAQs.
 - [x] Explain that exact size charts, production timing, and price quotations remain pending rather than inventing values.
 - [x] Add reference-only DTF, screen-printing, and embroidery explanations without claiming current availability.
+- [x] Add a mobile-friendly Guide section navigator and stable anchored sections.
 - [ ] Confirm final price ranges with the business.
 - [ ] Add confirmed production times.
 - [ ] Add approved product-specific size guides.
@@ -159,10 +160,13 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Keep range controls, centimeters, pixels, DPI, degrees, 2D/3D labels, layer positions, and mixed-direction names stable inside the RTL editor.
 - [x] Keep the retry action outside image semantics in the safe 2D fallback and cover the recovery surface with accessibility tests.
 - [x] Add a GPU-portable Pixel 5 Arabic customizer journey covering upload, quality guidance, 2D recovery, handoff tools, and horizontal-overflow prevention.
+- [x] Complete the long-form Studio Guide Iraqi-Arabic editorial review without upgrading unverified business claims.
+- [x] Complete the contextual RTL review for the Guide's dense cards, FAQs, method references, technical indices, and section navigation.
+- [x] Localize Baghdad area labels while preserving stable stored values for existing drafts.
+- [x] Add an accessible preparation-validation summary, first-invalid-field focus, draft-load retry, and local-autosave retry.
+- [x] Add a Pixel 5 Iraqi-Arabic preparation journey covering validation, localized areas, receipt creation, My Designs state, and overflow prevention.
 - [ ] Add official contact information after verification.
 - [ ] Add approved business policies, care guidance, and returns information.
-- [ ] Complete the remaining human Iraqi-Arabic editorial review in the Studio Guide's long-form educational content and draft-preparation failure/edge states.
-- [ ] Complete the remaining contextual RTL review in the Studio Guide's dense long-form sections and draft-preparation failure/edge states.
 - [ ] Validate the complete journey on representative physical phones and tablets.
 - [ ] Link future reviews to verifiable customer work or keep the review section absent.
 
