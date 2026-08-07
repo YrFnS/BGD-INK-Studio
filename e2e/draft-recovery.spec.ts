@@ -63,7 +63,7 @@ test('recovers artwork, quantity, and draft-detail fields across refreshes', asy
   await expect(configuredPriceRow).toContainText(formatPrice(classicProduct.basePrice));
   await expect(configuredPriceRow).toContainText(`× ${quantity}`);
 
-  const configuredEstimateRow = page.getByText('Local estimate').locator('..');
+  const configuredEstimateRow = page.getByText('Local estimate').locator('../..');
   await expect(configuredEstimateRow).toContainText(
     formatPrice(classicProduct.basePrice * quantity),
   );
