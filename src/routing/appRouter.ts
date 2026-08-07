@@ -4,6 +4,7 @@ import { ViewState } from '@/types';
 export type AppRoute =
   | { view: 'HOME' }
   | { view: 'CATALOG' }
+  | { view: 'GUIDE' }
   | { view: 'DESIGNS' }
   | { view: 'CUSTOMIZER'; draftId: string }
   | { view: 'CHECKOUT'; draftId: string }
@@ -26,6 +27,7 @@ const decodeRoutePart = (value: string): string | null => {
 export const routes = {
   home: (): AppRoute => ({ view: 'HOME' }),
   catalog: (): AppRoute => ({ view: 'CATALOG' }),
+  guide: (): AppRoute => ({ view: 'GUIDE' }),
   designs: (): AppRoute => ({ view: 'DESIGNS' }),
   customizer: (draftId: string): AppRoute => ({ view: 'CUSTOMIZER', draftId }),
   checkout: (draftId: string): AppRoute => ({ view: 'CHECKOUT', draftId }),
@@ -38,6 +40,8 @@ export const routeToPath = (route: AppRoute): string => {
       return '/';
     case 'CATALOG':
       return '/catalog';
+    case 'GUIDE':
+      return '/guide';
     case 'DESIGNS':
       return '/designs';
     case 'CUSTOMIZER':
@@ -54,6 +58,7 @@ export const parseAppRoute = (pathname: string): AppRoute => {
 
   if (normalizedPath === '/') return routes.home();
   if (normalizedPath === '/catalog') return routes.catalog();
+  if (normalizedPath === '/guide') return routes.guide();
   if (normalizedPath === '/designs') return routes.designs();
 
   const studioMatch = normalizedPath.match(/^\/studio\/([^/]+)$/);
