@@ -56,7 +56,7 @@ describe('local draft receipt', () => {
     const onStartNew = vi.fn();
     renderReceipt(onReset, onOpenDesigns, onStartNew);
 
-    expect(screen.getByRole('heading', { name: 'Draft Saved' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Design draft saved' })).toBeInTheDocument();
     expect(screen.getByText('Classic T-Shirt')).toBeInTheDocument();
     expect(screen.getByText('Local quantity').parentElement).toHaveTextContent('4');
     expect(screen.getByText('Local estimate').parentElement).toHaveTextContent('100,000 IQD');
