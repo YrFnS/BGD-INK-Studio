@@ -3,12 +3,20 @@ import { axe } from 'jest-axe';
 import { describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '@/contexts/AppContext';
 import { InteractionModeToolbar } from './InteractionModeToolbar';
+import type { CustomizerInteractionMode } from './interactionGestures';
+import type { PreviewMode } from './renderingCapabilities';
+
+interface RenderToolbarOptions {
+  hasActiveLayer?: boolean;
+  previewMode?: PreviewMode;
+  mode?: CustomizerInteractionMode;
+}
 
 const renderToolbar = ({
   hasActiveLayer = false,
-  previewMode = '3d' as const,
-  mode = 'view' as const,
-} = {}) => {
+  previewMode = '3d',
+  mode = 'view',
+}: RenderToolbarOptions = {}) => {
   const onModeChange = vi.fn();
   const onTogglePreview = vi.fn();
   const result = render(
