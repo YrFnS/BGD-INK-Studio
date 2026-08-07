@@ -7,6 +7,8 @@ const files = {
   index: await readFile(path.join(root, 'index.html'), 'utf8'),
   styles: await readFile(path.join(root, 'src/styles.css'), 'utf8'),
   header: await readFile(path.join(root, 'src/components/layout/Header.tsx'), 'utf8'),
+  main: await readFile(path.join(root, 'src/main.tsx'), 'utf8'),
+  anchorNavigation: await readFile(path.join(root, 'src/utils/anchorNavigation.ts'), 'utf8'),
   responsiveJourney: await readFile(path.join(root, 'e2e/responsive-shell.spec.ts'), 'utf8'),
 };
 
@@ -62,6 +64,21 @@ requirePattern(
   'the component fallback must retain dynamic viewport sizing before custom safe-area overrides',
 );
 requirePattern(
+  files.main,
+  /installAnchorNavigation\(\)/,
+  'the application entry point must install reliable same-page section navigation',
+);
+requirePattern(
+  files.anchorNavigation,
+  /scrollIntoView\([\s\S]*prefers-reduced-motion/,
+  'same-page navigation must scroll explicitly and respect reduced motion',
+);
+requirePattern(
+  files.anchorNavigation,
+  /history\.replaceState/,
+  'same-page navigation must keep the URL hash synchronized',
+);
+requirePattern(
   files.responsiveJourney,
   /iPhone 13/,
   'the responsive journey must cover an iPhone-sized viewport',
@@ -84,5 +101,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  'Responsive-shell validation passed: dynamic viewport, safe-area, short-landscape, keyboard-resize, and phone/tablet browser boundaries are present.',
+  'Responsive-shell validation passed: dynamic viewport, safe-area, short-landscape, keyboard-resize, reliable section navigation, and phone/tablet browser boundaries are present.',
 );
