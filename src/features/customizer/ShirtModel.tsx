@@ -17,6 +17,8 @@ interface ShirtModelProps {
   decals: DecalLayer[];
   activeDecalId: string | null;
   onDecalChange: (pos: [number, number, number], rot: [number, number, number]) => void;
+  onDecalInteractionStart: () => void;
+  onDecalInteractionEnd: () => void;
   setDraggingDecal: (dragging: boolean) => void;
 }
 
@@ -33,10 +35,7 @@ export const ProceduralFallback = ({ color }: { color: string }) => (
   </Center>
 );
 
-const cloneColoredMaterial = (
-  source: THREE.Material,
-  color: string,
-): THREE.Material => {
+const cloneColoredMaterial = (source: THREE.Material, color: string): THREE.Material => {
   const material = source.clone();
   if ('color' in material && material.color instanceof THREE.Color) {
     material.color.set(color);
@@ -45,7 +44,15 @@ const cloneColoredMaterial = (
   return material;
 };
 
-const DecalItem = ({ layer, isActive }: { layer: DecalLayer; isActive: boolean }) => {
+const DecalItem = ({
+  layer,
+  isActive,
+  order,
+}: {
+  layer: DecalLayer;
+  isActive: boolean;
+  order: number;
+}) => {
   const texture = useTexture(layer.url);
 
   useEffect(() => {
@@ -73,12 +80,13 @@ const DecalItem = ({ layer, isActive }: { layer: DecalLayer; isActive: boolean }
       rotation={finalRotation}
       scale={[layer.scale, layer.scale, 0.02]}
       debug={false}
+      renderOrder={30 + order}
     >
       <meshBasicMaterial
         map={texture}
         transparent
         polygonOffset
-        polygonOffsetFactor={isActive ? -10 : -4}
+        polygonOffsetFactor={isActive ? -100 : -4 - order * 2}
         depthTest
         depthWrite={false}
         toneMapped={false}
@@ -126,6 +134,8 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
   decals,
   activeDecalId,
   onDecalChange,
+  onDecalInteractionStart,
+  onDecalInteractionEnd,
   setDraggingDecal,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
@@ -147,7 +157,8 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
         : cloneColoredMaterial(targetMesh.material, color),
     [color, targetMesh.material],
   );
-  const activeLayer = decals.find((layer) => layer.id === activeDecalId) ?? null;
+  const activeLayer =
+    decals.find((layer) => layer.id === activeDecalId && layer.visible) ?? null;
   const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
 
   useEffect(
@@ -191,12 +202,14 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
   const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (!activeLayer) return;
     event.stopPropagation();
+    onDecalInteractionStart();
     setIsDragging(true);
     setDraggingDecal(true);
     updateDecal(event);
   };
 
   const stopDragging = () => {
+    if (isDragging) onDecalInteractionEnd();
     setIsDragging(false);
     setDraggingDecal(false);
   };
@@ -228,9 +241,16 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
             onPointerMove={handlePointerMove}
           >
             <PrintAreaGuide surface={selectedSurface} />
-            {decals.map((layer) => (
-              <DecalItem key={layer.id} layer={layer} isActive={layer.id === activeDecalId} />
-            ))}
+            {decals.map((layer, order) =>
+              layer.visible ? (
+                <DecalItem
+                  key={layer.id}
+                  layer={layer}
+                  isActive={layer.id === activeDecalId}
+                  order={order}
+                />
+              ) : null,
+            )}
           </mesh>
         </group>
       </group>
