@@ -48,7 +48,7 @@ test.describe('iPhone 13 responsive shell', () => {
     await expectNavigationFitsViewport(page);
     await expectNoHorizontalOverflow(page);
 
-    await page.setViewportSize({ width: 844, height: 390 });
+    await page.setViewportSize({ width: 740, height: 390 });
     await expectNavigationFitsViewport(page);
     await expectNoHorizontalOverflow(page);
 
