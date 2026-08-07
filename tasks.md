@@ -148,11 +148,12 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Add an Iraqi-Arabic first pass for the guide, navigation labels, and mobile accessibility names.
 - [x] Add unit accessibility coverage and a real English/Arabic Chromium guide journey.
 - [x] Add recoverable local quantity preparation alongside the existing size/color variant selection, including a local estimate and explicit no-stock/no-quote wording.
+- [x] Serialize contact and quantity autosaves so rapid local preparation changes cannot overwrite one another.
+- [x] Finish touch-first draft-details and confirmation polish with a local receipt, draft-ID copy, prepared variant, quantity, estimate, and direct My Designs/new-draft actions.
 - [ ] Add official contact information after verification.
 - [ ] Add approved business policies, care guidance, and returns information.
 - [ ] Complete the Iraqi Arabic editorial and terminology review.
 - [ ] Review every RTL layout in the homepage, catalog, guide, editor, draft details, and confirmation flow.
-- [ ] Finish touch-first draft-details and confirmation polish.
 - [ ] Validate the complete journey on representative physical phones and tablets.
 - [ ] Link future reviews to verifiable customer work or keep the review section absent.
 
