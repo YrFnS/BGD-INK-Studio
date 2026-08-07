@@ -5,7 +5,7 @@ const tinyPng = Buffer.from(
   'base64',
 );
 
-test('recovers artwork and draft-detail fields across refreshes', async ({ page }) => {
+test('recovers artwork, quantity, and draft-detail fields across refreshes', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/catalog');
 
@@ -35,6 +35,7 @@ test('recovers artwork and draft-detail fields across refreshes', async ({ page 
   await page.getByRole('button', { name: 'Continue to Draft Details' }).click();
   await expect(page).toHaveURL(/\/checkout\/draft-/);
 
+  await page.getByLabel('Local quantity').fill('4');
   await page.getByLabel('Full Name').fill('Yasser Test');
   await page.getByLabel('Phone Number (07...)').fill('07701234567');
   await page.getByLabel('Area / District').selectOption('Al-Mansour');
@@ -43,12 +44,14 @@ test('recovers artwork and draft-detail fields across refreshes', async ({ page 
   await page.waitForTimeout(700);
   await page.reload();
 
+  await expect(page.getByLabel('Local quantity')).toHaveValue('4');
   await expect(page.getByLabel('Full Name')).toHaveValue('Yasser Test');
   await expect(page.getByLabel('Phone Number (07...)')).toHaveValue('07701234567');
   await expect(page.getByLabel('Area / District')).toHaveValue('Al-Mansour');
   await expect(page.getByLabel('Street / House / Landmark')).toHaveValue(
     'Street 10, near the main square',
   );
+  await expect(page.getByText(/25,000 IQD × 4/)).toBeVisible();
 
   await page.getByRole('button', { name: 'SAVE LOCAL DRAFT' }).click();
   await expect(page).toHaveURL(/\/draft\/BGD-/);
