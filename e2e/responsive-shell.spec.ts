@@ -86,13 +86,13 @@ test.describe('iPad Mini responsive shell', () => {
     await page.goto('/guide');
 
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(page.getByRole('heading', { name: 'اعرف شنو المؤكد قبل ما تبدأ التصميم.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'اعرف شنو المؤكد قبل لا تبدأ التصميم.' })).toBeVisible();
     await expectNoHorizontalOverflow(page);
 
     await page.setViewportSize({ width: 1024, height: 768 });
     await expect(page).toHaveURL('/guide');
     await expect(page.getByRole('navigation', { name: 'التنقل الرئيسي' })).toBeVisible();
-    await expect(page.getByRole('navigation', { name: 'أقسام دليل الستوديو' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'أقسام الدليل' })).toBeVisible();
     await expectNoHorizontalOverflow(page);
 
     await page.getByRole('link', { name: 'الأسئلة' }).click();
