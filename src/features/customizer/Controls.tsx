@@ -313,6 +313,7 @@ export const Controls: React.FC<ControlsProps> = ({
               type="button"
               onClick={triggerFileUpload}
               disabled={isUploading}
+              aria-label={copy.firstLayer}
               className="group flex h-24 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-accent disabled:cursor-wait dark:border-zinc-700 dark:bg-zinc-900/50 dark:hover:border-accent"
             >
               <span className="text-sm font-medium text-gray-500 group-hover:text-accent">
