@@ -61,6 +61,7 @@ export interface CustomizationState {
   productId: string | null;
   size: Size;
   color: string;
+  quantity: number;
   decals: DecalLayer[];
   notes: string;
 }
