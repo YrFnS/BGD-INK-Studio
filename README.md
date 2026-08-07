@@ -41,7 +41,35 @@ P0 and P1 are complete on `agent/bgd-ink-p0-foundation`:
 - Pinned Node/npm, locked `npm ci`, CI caching, and route-aware bundle budgets
 - Troubleshooting and prototype-safety documentation
 
-P2 is the next active phase. It will improve the local customizer with accurate product models, physical print areas, richer layer operations, artwork quality checks, adaptive rendering, and downloadable local proofs. It will not add backend, database, account, or remote-storage infrastructure.
+## P2 status
+
+P2 is in progress on `agent/bgd-ink-p2-models-print-areas`.
+
+Completed local-customizer work includes:
+
+- Honest product-model capability checks; products without genuine matching geometry are not opened with a fake T-shirt model
+- Classic T-shirt front and back print surfaces with centimeter dimensions, safe boundaries, and surface-specific cameras
+- Aspect-ratio-aware artwork width and height
+- Source pixel, transparency, padding, and effective-DPI analysis performed locally in the browser
+- Low-resolution, extreme-aspect-ratio, transparent-padding, and near-edge warnings
+- Undo and redo with grouped pointer and slider gestures
+- Layer rename, duplicate, visibility, ordering, selection, and non-destructive deletion
+- Explicit **View Garment**, **Move Design**, and **Resize/Rotate** interaction modes
+- One-pointer movement and transform gestures plus two-pointer pinch-and-twist transforms
+- Adaptive high, balanced, and low-power rendering profiles
+- WebGL support detection, context-loss handling, retryable recovery, and a safe 2D preview
+- Rendering pause while the page is hidden and demand rendering on constrained devices
+
+Still required before P2 is complete:
+
+- Confirming physical measurements against the real Classic T-shirt and printing process
+- Genuine optimized oversized T-shirt, hoodie, and vest models
+- Calibrated sleeve and other product-specific surfaces
+- Geometry-aware seam warnings
+- Downloadable visual proofs and a local machine-readable production specification
+- Final GLB and preview-texture optimization
+
+None of this P2 work adds backend, database, account, or remote-storage infrastructure.
 
 ## Brand
 
@@ -141,13 +169,44 @@ IndexedDB stores:
 
 - Draft name, product, color, size, and notes
 - Original PNG, JPEG, or WebP artwork blobs
-- Layer position, rotation, scale, ordering, and active selection
+- Layer names, visibility, ordering, active selection, and print surfaces
+- Layer position, rotation, aspect ratio, and physical scale
+- Source dimensions, transparency, padding, and other local artwork-analysis metadata
 - Checkout contact and address fields
 - Local submission linkage
 
 The My Designs workspace can reopen, rename, duplicate, and permanently delete local designs. Duplicate designs receive independent artwork blobs.
 
+The original artwork blob remains separate from generated object URLs and Three.js preview textures. Preview URLs are recreated when a design is restored and revoked when the relevant screen closes.
+
 IndexedDB is browser-local persistence, not production storage. Clearing browser data can permanently remove designs, and there is no server backup or cross-device recovery.
+
+## Customizer interaction modes
+
+The 3D editor deliberately separates gestures:
+
+- **View Garment:** orbit and zoom the product camera
+- **Move Design:** drag the selected visible layer within its safe print surface
+- **Resize/Rotate:** drag horizontally to rotate and vertically to resize, or use two pointers for pinch-and-twist transforms
+
+Move and transform controls remain disabled until a visible layer is selected. Gestures are grouped into single undoable history actions.
+
+## Rendering resilience
+
+The customizer chooses a rendering profile from device capabilities such as pointer type, viewport, hardware concurrency, optional device memory, reduced-motion preference, and data-saving preference.
+
+Profiles can adjust:
+
+- Device pixel ratio
+- Antialiasing
+- Shadows and shadow-map size
+- Texture anisotropy
+- Idle animation
+- WebGL power preference
+
+Rendering pauses while the document is hidden. Constrained devices use demand rendering rather than a permanent animation loop.
+
+When WebGL is unavailable, its context is lost, or the garment model cannot render, the app switches to a safe local 2D preview without discarding the draft. A supported device can retry the 3D renderer from the same design state.
 
 ## Source architecture
 
