@@ -23,7 +23,9 @@ interface MotionVars {
   scale?: number;
   scaleX?: number;
   rotate?: number;
+  skewY?: number;
   color?: string;
+  clearProps?: string;
   overwrite?: string;
   onComplete?: () => void;
 }
@@ -42,6 +44,12 @@ interface TimelineOptions {
 interface TimelineLike {
   from(target: AnimationTarget, vars: MotionVars, position?: number | string): TimelineLike;
   to(target: AnimationTarget, vars: MotionVars, position?: number | string): TimelineLike;
+  fromTo(
+    target: AnimationTarget,
+    fromVars: MotionVars,
+    toVars: MotionVars,
+    position?: number | string,
+  ): TimelineLike;
 }
 
 const DEFAULT_DURATION = 0.5;
@@ -121,34 +129,25 @@ const getComputed = (element: Element): CSSStyleDeclaration | null => {
   return window.getComputedStyle(element);
 };
 
-const hasTransformVars = (vars: MotionVars): boolean =>
-  vars.x !== undefined ||
-  vars.y !== undefined ||
-  vars.xPercent !== undefined ||
-  vars.yPercent !== undefined ||
-  vars.scale !== undefined ||
-  vars.scaleX !== undefined ||
-  vars.rotate !== undefined;
+const hasPixelTranslation = (vars: MotionVars): boolean =>
+  vars.x !== undefined || vars.y !== undefined;
 
 const hasNonPixelTransformVars = (vars: MotionVars): boolean =>
   vars.xPercent !== undefined ||
   vars.yPercent !== undefined ||
   vars.scale !== undefined ||
   vars.scaleX !== undefined ||
-  vars.rotate !== undefined;
+  vars.rotate !== undefined ||
+  vars.skewY !== undefined;
 
-const buildTransform = (vars: MotionVars, includePixelTranslation = true): string => {
+const buildTransform = (vars: MotionVars): string => {
   const parts: string[] = [];
 
   if (vars.xPercent !== undefined || vars.yPercent !== undefined) {
     parts.push(`translate(${vars.xPercent ?? 0}%, ${vars.yPercent ?? 0}%)`);
   }
-
-  if (includePixelTranslation && (vars.x !== undefined || vars.y !== undefined)) {
-    parts.push(`translate3d(${vars.x ?? 0}px, ${vars.y ?? 0}px, 0)`);
-  }
-
   if (vars.rotate !== undefined) parts.push(`rotate(${vars.rotate}deg)`);
+  if (vars.skewY !== undefined) parts.push(`skewY(${vars.skewY}deg)`);
   if (vars.scale !== undefined) parts.push(`scale(${vars.scale})`);
   if (vars.scaleX !== undefined) parts.push(`scaleX(${vars.scaleX})`);
 
@@ -169,18 +168,39 @@ const writeTranslate = (element: HTMLElement, x: number, y: number): void => {
   element.style.setProperty('translate', `${x}px ${y}px`);
 };
 
+const clearRequestedProperties = (element: HTMLElement, clearProps?: string): void => {
+  if (!clearProps) return;
+  const requested = new Set(clearProps.split(',').map((property) => property.trim()));
+
+  if (requested.has('all')) {
+    element.removeAttribute('style');
+    delete element.dataset.motionTranslate;
+    return;
+  }
+
+  if (requested.has('transform')) {
+    element.style.removeProperty('transform');
+    element.style.removeProperty('translate');
+    delete element.dataset.motionTranslate;
+  }
+  if (requested.has('opacity')) element.style.removeProperty('opacity');
+  if (requested.has('color')) element.style.removeProperty('color');
+};
+
 const applyVarsImmediately = (element: HTMLElement, vars: MotionVars): void => {
   rememberInlineStyle(element);
   const current = readTranslate(element);
 
-  if (vars.x !== undefined || vars.y !== undefined) {
+  if (hasPixelTranslation(vars)) {
     writeTranslate(element, vars.x ?? current.x, vars.y ?? current.y);
   }
   if (vars.opacity !== undefined) element.style.opacity = String(vars.opacity);
   if (vars.color !== undefined) element.style.color = vars.color;
   if (hasNonPixelTransformVars(vars)) {
-    element.style.transform = buildTransform(vars, false) || 'none';
+    element.style.transform = buildTransform(vars) || 'none';
   }
+
+  clearRequestedProperties(element, vars.clearProps);
 };
 
 const createKeyframes = (
@@ -189,11 +209,13 @@ const createKeyframes = (
   direction: 'from' | 'to',
 ): { frames: Keyframe[]; applyFinal: () => void } => {
   const computed = getComputed(element);
-  const currentOpacity = computed?.opacity ?? '1';
-  const currentColor = computed?.color ?? '';
+  const currentOpacity = (computed?.opacity ?? element.style.opacity) || '1';
+  const currentColor = computed?.color ?? element.style.color;
   const currentTransform =
     computed?.transform && computed.transform !== 'none' ? computed.transform : 'none';
-  const transform = hasTransformVars(vars) ? buildTransform(vars, false) || 'none' : currentTransform;
+  const currentTranslation = readTranslate(element);
+  const currentTranslate = `${currentTranslation.x}px ${currentTranslation.y}px`;
+  const targetTransform = buildTransform(vars) || 'none';
 
   const start: Keyframe = {};
   const end: Keyframe = {};
@@ -201,23 +223,34 @@ const createKeyframes = (
   if (direction === 'from') {
     if (vars.opacity !== undefined) start.opacity = vars.opacity;
     if (vars.color !== undefined) start.color = vars.color;
-    if (hasTransformVars(vars)) {
-      const offsetTransform = buildTransform(vars);
-      start.transform =
-        currentTransform === 'none' ? offsetTransform : `${offsetTransform} ${currentTransform}`;
+    if (hasPixelTranslation(vars)) {
+      start.translate = `${vars.x ?? currentTranslation.x}px ${vars.y ?? currentTranslation.y}px`;
+      end.translate = currentTranslate;
+    }
+    if (hasNonPixelTransformVars(vars)) {
+      start.transform = targetTransform;
+      end.transform = currentTransform;
     }
 
-    end.opacity = currentOpacity;
-    if (currentColor) end.color = currentColor;
-    end.transform = currentTransform;
+    if (vars.opacity !== undefined) end.opacity = currentOpacity;
+    if (vars.color !== undefined) end.color = currentColor;
   } else {
-    start.opacity = currentOpacity;
-    if (currentColor) start.color = currentColor;
-    start.transform = currentTransform;
-
-    if (vars.opacity !== undefined) end.opacity = vars.opacity;
-    if (vars.color !== undefined) end.color = vars.color;
-    if (hasTransformVars(vars)) end.transform = transform;
+    if (vars.opacity !== undefined) {
+      start.opacity = currentOpacity;
+      end.opacity = vars.opacity;
+    }
+    if (vars.color !== undefined) {
+      start.color = currentColor;
+      end.color = vars.color;
+    }
+    if (hasPixelTranslation(vars)) {
+      start.translate = currentTranslate;
+      end.translate = `${vars.x ?? currentTranslation.x}px ${vars.y ?? currentTranslation.y}px`;
+    }
+    if (hasNonPixelTransformVars(vars)) {
+      start.transform = currentTransform;
+      end.transform = targetTransform;
+    }
   }
 
   const applyFinal = () => {
@@ -236,50 +269,6 @@ const animateElement = (
 ): void => {
   const durationMs = Math.max(0, vars.duration ?? DEFAULT_DURATION) * 1000;
   const delayMs = Math.max(0, (vars.delay ?? 0) + extraDelaySeconds) * 1000;
-  const hasPixelTranslation = vars.x !== undefined || vars.y !== undefined;
-
-  if (direction === 'to' && hasPixelTranslation && !hasNonPixelTransformVars(vars)) {
-    const current = readTranslate(element);
-    const next = { x: vars.x ?? current.x, y: vars.y ?? current.y };
-    const computed = getComputed(element);
-    const currentOpacity = (computed?.opacity ?? element.style.opacity) || '1';
-    const currentColor = computed?.color ?? element.style.color;
-    const run = () => {
-      rememberInlineStyle(element);
-      if (typeof element.animate === 'function') {
-        const start: Keyframe = { translate: `${current.x}px ${current.y}px` };
-        const end: Keyframe = { translate: `${next.x}px ${next.y}px` };
-        if (vars.opacity !== undefined) {
-          start.opacity = currentOpacity;
-          end.opacity = vars.opacity;
-        }
-        if (vars.color !== undefined) {
-          start.color = currentColor;
-          end.color = vars.color;
-        }
-
-        const animation = element.animate([start, end], {
-          duration: durationMs,
-          easing: easeToCss(vars.ease),
-          fill: 'forwards',
-        });
-        registerAnimation(animation);
-        void animation.finished
-          .then(() => {
-            applyVarsImmediately(element, vars);
-            animation.cancel();
-            vars.onComplete?.();
-          })
-          .catch(() => undefined);
-      } else {
-        applyVarsImmediately(element, vars);
-        vars.onComplete?.();
-      }
-    };
-    registerTimer(run, delayMs);
-    return;
-  }
-
   const { frames, applyFinal } = createKeyframes(element, vars, direction);
   const run = () => {
     if (typeof element.animate === 'function') {
@@ -321,6 +310,23 @@ const animateTargets = (
   return elements.length;
 };
 
+const animateFromToTargets = (
+  target: AnimationTarget,
+  fromVars: MotionVars,
+  toVars: MotionVars,
+  timelineDelay = 0,
+): number => {
+  const elements = resolveHtmlTargets(target);
+  const stagger = Math.max(0, toVars.stagger ?? 0);
+
+  elements.forEach((element, index) => {
+    applyVarsImmediately(element, fromVars);
+    animateElement(element, toVars, 'to', timelineDelay + stagger * index);
+  });
+
+  return elements.length;
+};
+
 const parseTimelinePosition = (position: number | string | undefined, cursor: number): number => {
   if (typeof position === 'number') return Math.max(0, position);
   if (!position) return cursor;
@@ -340,6 +346,13 @@ class LiteTimeline implements TimelineLike {
     this.defaults = options?.defaults ?? {};
   }
 
+  private measureEnd(start: number, vars: MotionVars, count: number): void {
+    const stagger = Math.max(0, vars.stagger ?? 0);
+    const duration = Math.max(0, vars.duration ?? DEFAULT_DURATION);
+    const delay = Math.max(0, vars.delay ?? 0);
+    this.cursor = Math.max(this.cursor, start + delay + duration + stagger * (Math.max(1, count) - 1));
+  }
+
   private add(
     direction: 'from' | 'to',
     target: AnimationTarget,
@@ -348,13 +361,8 @@ class LiteTimeline implements TimelineLike {
   ): this {
     const merged = { ...this.defaults, ...vars };
     const start = parseTimelinePosition(position, this.cursor);
-    const count = Math.max(1, resolveTargets(target).length);
-    const stagger = Math.max(0, merged.stagger ?? 0);
-    const duration = Math.max(0, merged.duration ?? DEFAULT_DURATION);
-    const ownDelay = Math.max(0, merged.delay ?? 0);
-
-    animateTargets(target, { ...merged, delay: 0 }, direction, start + ownDelay);
-    this.cursor = Math.max(this.cursor, start + ownDelay + duration + stagger * (count - 1));
+    const count = animateTargets(target, { ...merged, delay: 0 }, direction, start + (merged.delay ?? 0));
+    this.measureEnd(start, merged, count);
     return this;
   }
 
@@ -364,6 +372,24 @@ class LiteTimeline implements TimelineLike {
 
   to(target: AnimationTarget, vars: MotionVars, position?: number | string): this {
     return this.add('to', target, vars, position);
+  }
+
+  fromTo(
+    target: AnimationTarget,
+    fromVars: MotionVars,
+    toVars: MotionVars,
+    position?: number | string,
+  ): this {
+    const merged = { ...this.defaults, ...toVars };
+    const start = parseTimelinePosition(position, this.cursor);
+    const count = animateFromToTargets(
+      target,
+      fromVars,
+      { ...merged, delay: 0 },
+      start + (merged.delay ?? 0),
+    );
+    this.measureEnd(start, merged, count);
+    return this;
   }
 }
 
@@ -409,14 +435,7 @@ const to = (target: AnimationTarget, vars: MotionVars): void => {
 };
 
 const fromTo = (target: AnimationTarget, fromVars: MotionVars, toVars: MotionVars): void => {
-  const elements = resolveHtmlTargets(target);
-  const stagger = Math.max(0, toVars.stagger ?? 0);
-  const delay = Math.max(0, toVars.delay ?? 0);
-
-  elements.forEach((element, index) => {
-    applyVarsImmediately(element, fromVars);
-    animateElement(element, { ...toVars, delay: 0 }, 'to', delay + stagger * index);
-  });
+  animateFromToTargets(target, fromVars, toVars, Math.max(0, toVars.delay ?? 0));
 };
 
 const set = (target: AnimationTarget, vars: MotionVars): void => {
