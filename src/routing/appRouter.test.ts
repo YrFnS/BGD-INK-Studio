@@ -36,14 +36,18 @@ describe('application routes', () => {
 });
 
 describe('useAppRouter', () => {
-  it('pushes and replaces History API routes', () => {
+  it('pushes and replaces History API routes after pending draft data is flushed', async () => {
     const { result } = renderHook(() => useAppRouter());
 
-    act(() => result.current.navigate(routes.guide()));
+    await act(async () => {
+      await result.current.navigate(routes.guide());
+    });
     expect(window.location.pathname).toBe('/guide');
     expect(result.current.route).toEqual(routes.guide());
 
-    act(() => result.current.navigate(routes.catalog(), { replace: true, scroll: false }));
+    await act(async () => {
+      await result.current.navigate(routes.catalog(), { replace: true, scroll: false });
+    });
     expect(window.location.pathname).toBe('/catalog');
     expect(result.current.route).toEqual(routes.catalog());
   });
@@ -52,9 +56,12 @@ describe('useAppRouter', () => {
     const { result } = renderHook(() => useAppRouter());
 
     window.history.pushState(null, '', '/checkout/draft-abc');
-    act(() => window.dispatchEvent(new PopStateEvent('popstate')));
+    await act(async () => {
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      await Promise.resolve();
+    });
 
-    expect(result.current.route).toEqual(routes.checkout('draft-abc'));
+    await waitFor(() => expect(result.current.route).toEqual(routes.checkout('draft-abc')));
     await waitFor(() => expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'auto' }));
   });
 });

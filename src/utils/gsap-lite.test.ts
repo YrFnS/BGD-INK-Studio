@@ -38,20 +38,18 @@ describe('lightweight motion compatibility layer', () => {
       value: undefined,
     });
 
-    gsap
-      .timeline({ defaults: { ease: 'power4.out' } })
-      .fromTo(
-        element,
-        { y: 54, opacity: 0, scale: 0.975, skewY: 2 },
-        {
-          y: 0,
-          opacity: 1,
-          scale: 1,
-          skewY: 0,
-          duration: 0,
-          clearProps: 'transform',
-        },
-      );
+    gsap.timeline({ defaults: { ease: 'power4.out' } }).fromTo(
+      element,
+      { y: 54, opacity: 0, scale: 0.975, skewY: 2 },
+      {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        skewY: 0,
+        duration: 0,
+        clearProps: 'transform',
+      },
+    );
 
     expect(element.style.getPropertyValue('translate')).toBe('0px 54px');
     expect(element.style.opacity).toBe('0');

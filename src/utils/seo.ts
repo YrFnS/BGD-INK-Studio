@@ -45,35 +45,32 @@ const readMetaContent = (name: string): string | null => {
   return document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)?.content ?? null;
 };
 
-export const getPublicSiteUrl = (): string => {
+export const getPublicSiteUrl = (): string | null => {
   const configured = normalizeSiteUrl(import.meta.env.VITE_PUBLIC_SITE_URL);
   if (configured) return configured;
-
-  const buildInjected = normalizeSiteUrl(readMetaContent('bgd:site-url'));
-  if (buildInjected) return buildInjected;
-
-  if (typeof window !== 'undefined') {
-    const currentOrigin = normalizeSiteUrl(window.location.origin);
-    if (currentOrigin) return currentOrigin;
-  }
-
-  return 'https://bgd-ink.example';
+  return normalizeSiteUrl(readMetaContent('bgd:site-url'));
 };
 
-export const isIndexableBuild = (): boolean => {
-  if (import.meta.env.VITE_INDEXABLE_BUILD === 'true') return true;
-  return readMetaContent('bgd:indexing') === 'indexable';
-};
+export const isIndexableBuild = (): boolean =>
+  readMetaContent('bgd:indexing') === 'indexable' && getPublicSiteUrl() !== null;
 
 export const isPublicIndexablePath = (pathname: string): pathname is PublicIndexablePath =>
   PUBLIC_INDEXABLE_PATHS.includes(normalizePath(pathname) as PublicIndexablePath);
 
-export const createAbsoluteSiteUrl = (pathname: string): string =>
-  new URL(pathname, `${getPublicSiteUrl()}/`).toString();
+export const createAbsoluteSiteUrl = (pathname: string): string => {
+  const configuredSiteUrl = getPublicSiteUrl();
+  const fallbackOrigin =
+    typeof window !== 'undefined' && normalizeSiteUrl(window.location.origin)
+      ? window.location.origin
+      : 'http://localhost';
+  return new URL(pathname, `${configuredSiteUrl ?? fallbackOrigin}/`).toString();
+};
 
 export const getCanonicalUrl = (pathname: string): string | null => {
   const normalized = normalizePath(pathname);
-  return isPublicIndexablePath(normalized) ? createAbsoluteSiteUrl(normalized) : null;
+  return isIndexableBuild() && isPublicIndexablePath(normalized)
+    ? createAbsoluteSiteUrl(normalized)
+    : null;
 };
 
 const getLanguageTag = (language: Language): string => (language === 'ar' ? 'ar-IQ' : 'en');
@@ -95,6 +92,7 @@ export const buildRouteStructuredData = ({
   if (!isPublicIndexablePath(normalizedPath)) return null;
 
   const siteUrl = getPublicSiteUrl();
+  if (!siteUrl || !isIndexableBuild()) return null;
   const canonicalUrl = createAbsoluteSiteUrl(normalizedPath);
   const languageTag = getLanguageTag(language);
   const organizationId = `${siteUrl}/#organization`;

@@ -112,7 +112,10 @@ export const STOREFRONT_CONTENT = {
   },
   evidence: {
     eyebrow: { en: 'Evidence before marketing', ar: 'الدليل قبل التسويق' },
-    title: { en: 'WE SHOW WHAT IS READY — AND WHAT IS NOT.', ar: 'نوضح شنو جاهز وشنو بعده يحتاج شغل.' },
+    title: {
+      en: 'WE SHOW WHAT IS READY — AND WHAT IS NOT.',
+      ar: 'نوضح شنو جاهز وشنو بعده يحتاج شغل.',
+    },
     description: {
       en: 'The storefront does not invent customer reviews, material specifications, delivery promises, or production methods that have not been confirmed.',
       ar: 'الواجهة ما تخترع تقييمات زبائن أو مواصفات خامة أو وعود توصيل أو طرق طباعة ما تم تأكيدها.',
@@ -151,7 +154,10 @@ export const STOREFRONT_CONTENT = {
     ] satisfies LocalizedText[],
   },
   finalCta: {
-    eyebrow: { en: 'Start with the model we can stand behind', ar: 'ابدأ بالموديل اللي نكدر نعتمد عليه' },
+    eyebrow: {
+      en: 'Start with the model we can stand behind',
+      ar: 'ابدأ بالموديل اللي نكدر نعتمد عليه',
+    },
     title: { en: 'BUILD YOUR FIRST LOCAL DRAFT.', ar: 'جهّز أول مسودة على جهازك.' },
     description: {
       en: 'The Classic T-shirt is currently the approved model for the complete editor and production-file workflow.',

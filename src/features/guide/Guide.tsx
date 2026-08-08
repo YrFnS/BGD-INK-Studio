@@ -59,7 +59,9 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
   const heroHeadingClass = isArabic
     ? 'mt-6 max-w-6xl text-5xl font-black leading-[1.22] tracking-[-0.035em] sm:text-7xl lg:text-[6.7rem]'
     : 'mt-6 max-w-6xl font-display text-5xl font-black uppercase leading-[.88] tracking-[-0.065em] sm:text-7xl lg:text-[6.7rem]';
-  const actionClass = isArabic ? 'text-sm font-black' : 'text-sm font-black uppercase tracking-[0.13em]';
+  const actionClass = isArabic
+    ? 'text-sm font-black'
+    : 'text-sm font-black uppercase tracking-[0.13em]';
   const compactLabelClass = isArabic
     ? 'text-[10px] font-black leading-5'
     : 'text-[9px] font-black uppercase tracking-[0.17em]';
@@ -73,7 +75,10 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
         <div className="mx-auto max-w-[1450px]">
           <p className={eyebrowClass}>{localized(copy.hero.eyebrow)}</p>
           <h1 className={heroHeadingClass}>{localized(copy.hero.title)}</h1>
-          <p className="mt-8 max-w-3xl text-base leading-8 text-black/58 dark:text-white/50 sm:text-lg" dir="auto">
+          <p
+            className="mt-8 max-w-3xl text-base leading-8 text-black/58 dark:text-white/50 sm:text-lg"
+            dir="auto"
+          >
             {localized(copy.hero.description)}
           </p>
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
@@ -111,7 +116,10 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
               href={item.href}
               className="flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-black/10 bg-paper px-4 text-xs font-black transition-colors hover:border-accent hover:text-accent dark:border-white/10 dark:bg-black/30"
             >
-              <bdi className="technical-ltr font-mono text-[9px] text-black/35 dark:text-white/32" dir="ltr">
+              <bdi
+                className="technical-ltr font-mono text-[9px] text-black/35 dark:text-white/32"
+                dir="ltr"
+              >
                 {(index + 1).toString().padStart(2, '0')}
               </bdi>
               {localized(item.label)}
@@ -127,7 +135,9 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
       >
         <div className="mx-auto max-w-[1450px]">
           <p className={eyebrowClass}>{localized(copy.expectations.eyebrow)}</p>
-          <h2 className={`${sectionHeadingClass} max-w-5xl`}>{localized(copy.expectations.title)}</h2>
+          <h2 className={`${sectionHeadingClass} max-w-5xl`}>
+            {localized(copy.expectations.title)}
+          </h2>
           <div className="mt-12 grid gap-4 md:grid-cols-2">
             {copy.expectations.items.map((item) => (
               <article
@@ -137,12 +147,17 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
                 <StatusMark verified={item.verified} />
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
-                    <h3 className={`text-lg font-black ${isArabic ? 'leading-8' : 'uppercase tracking-[-0.025em]'}`} dir="auto">
+                    <h3
+                      className={`text-lg font-black ${isArabic ? 'leading-8' : 'uppercase tracking-[-0.025em]'}`}
+                      dir="auto"
+                    >
                       {localized(item.title)}
                     </h3>
                     <span
                       className={`rounded-full px-2.5 py-1 ${
-                        isArabic ? 'text-[9px] font-black' : 'text-[8px] font-black uppercase tracking-[0.13em]'
+                        isArabic
+                          ? 'text-[9px] font-black'
+                          : 'text-[8px] font-black uppercase tracking-[0.13em]'
                       } ${
                         item.verified
                           ? 'bg-emerald-400/10 text-emerald-300'
@@ -162,19 +177,31 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
         </div>
       </section>
 
-      <section id="sizing" data-guide-section="sizing" className="scroll-mt-28 px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+      <section
+        id="sizing"
+        data-guide-section="sizing"
+        className="scroll-mt-28 px-4 py-20 sm:px-6 sm:py-28 lg:px-8"
+      >
         <div className="mx-auto grid max-w-[1450px] gap-10 lg:grid-cols-[.8fr_1.2fr] lg:gap-20">
           <div className="min-w-0">
             <p className={eyebrowClass}>{localized(copy.sizing.eyebrow)}</p>
             <h2 className={sectionHeadingClass}>{localized(copy.sizing.title)}</h2>
-            <p className="mt-6 break-words text-base leading-8 text-black/58 dark:text-white/50" dir="auto">
+            <p
+              className="mt-6 break-words text-base leading-8 text-black/58 dark:text-white/50"
+              dir="auto"
+            >
               {localized(copy.sizing.description)}
             </p>
             <div className="mt-8 rounded-[1.6rem] border border-amber-500/30 bg-amber-500/[0.08] p-5">
-              <p className={`text-sm font-black text-amber-900 dark:text-amber-100 ${isArabic ? 'leading-7' : 'uppercase tracking-[-0.02em]'}`}>
+              <p
+                className={`text-sm font-black text-amber-900 dark:text-amber-100 ${isArabic ? 'leading-7' : 'uppercase tracking-[-0.02em]'}`}
+              >
                 {localized(copy.sizing.pendingTitle)}
               </p>
-              <p className="mt-3 break-words text-sm leading-7 text-black/55 dark:text-white/48" dir="auto">
+              <p
+                className="mt-3 break-words text-sm leading-7 text-black/55 dark:text-white/48"
+                dir="auto"
+              >
                 {localized(copy.sizing.pendingDescription)}
               </p>
             </div>
@@ -186,10 +213,16 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
                   {step.index}
                 </bdi>
                 <div className="min-w-0">
-                  <h3 className={`text-xl font-black ${isArabic ? 'leading-8' : 'uppercase tracking-[-0.03em]'}`} dir="auto">
+                  <h3
+                    className={`text-xl font-black ${isArabic ? 'leading-8' : 'uppercase tracking-[-0.03em]'}`}
+                    dir="auto"
+                  >
                     {localized(step.title)}
                   </h3>
-                  <p className="mt-3 max-w-2xl break-words text-sm leading-7 text-black/55 dark:text-white/48" dir="auto">
+                  <p
+                    className="mt-3 max-w-2xl break-words text-sm leading-7 text-black/55 dark:text-white/48"
+                    dir="auto"
+                  >
                     {localized(step.description)}
                   </p>
                 </div>
@@ -207,7 +240,10 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
         <div className="mx-auto max-w-[1450px]">
           <p className={eyebrowClass}>{localized(copy.methods.eyebrow)}</p>
           <h2 className={sectionHeadingClass}>{localized(copy.methods.title)}</h2>
-          <p className="mt-6 max-w-3xl break-words text-base leading-8 text-black/58 dark:text-white/50" dir="auto">
+          <p
+            className="mt-6 max-w-3xl break-words text-base leading-8 text-black/58 dark:text-white/50"
+            dir="auto"
+          >
             {localized(copy.methods.description)}
           </p>
           <div className="mt-12 grid gap-5 lg:grid-cols-3">
@@ -217,28 +253,48 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
                 className="min-w-0 rounded-[2rem] border border-black/10 bg-paper p-6 shadow-sm dark:border-white/10 dark:bg-[#070707] sm:p-8"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <bdi className="technical-ltr font-mono text-xs font-black text-black/30 dark:text-white/28" dir="ltr">
+                  <bdi
+                    className="technical-ltr font-mono text-xs font-black text-black/30 dark:text-white/28"
+                    dir="ltr"
+                  >
                     {(index + 1).toString().padStart(2, '0')}
                   </bdi>
-                  <span className={`rounded-full border border-accent/25 bg-accent/[0.08] px-3 py-1.5 text-accent ${isArabic ? 'text-[9px] font-black' : 'text-[8px] font-black uppercase tracking-[0.13em]'}`}>
+                  <span
+                    className={`rounded-full border border-accent/25 bg-accent/[0.08] px-3 py-1.5 text-accent ${isArabic ? 'text-[9px] font-black' : 'text-[8px] font-black uppercase tracking-[0.13em]'}`}
+                  >
                     {localized(copy.methods.referenceLabel)}
                   </span>
                 </div>
-                <h3 className={`mt-7 text-2xl font-black ${isArabic ? 'leading-9' : 'uppercase tracking-[-0.04em]'}`}>
+                <h3
+                  className={`mt-7 text-2xl font-black ${isArabic ? 'leading-9' : 'uppercase tracking-[-0.04em]'}`}
+                >
                   <bdi dir="auto">{localized(method.name)}</bdi>
                 </h3>
-                <p className="mt-4 break-words text-sm leading-7 text-black/55 dark:text-white/48" dir="auto">
+                <p
+                  className="mt-4 break-words text-sm leading-7 text-black/55 dark:text-white/48"
+                  dir="auto"
+                >
                   {localized(method.summary)}
                 </p>
                 <div className="mt-7 border-t border-black/10 pt-5 dark:border-white/10">
-                  <p className={`${compactLabelClass} text-black/35 dark:text-white/32`}>{bestForLabel}</p>
-                  <p className="mt-2 break-words text-sm leading-6 text-black/58 dark:text-white/50" dir="auto">
+                  <p className={`${compactLabelClass} text-black/35 dark:text-white/32`}>
+                    {bestForLabel}
+                  </p>
+                  <p
+                    className="mt-2 break-words text-sm leading-6 text-black/58 dark:text-white/50"
+                    dir="auto"
+                  >
                     {localized(method.bestFor)}
                   </p>
                 </div>
                 <div className="mt-5 border-t border-black/10 pt-5 dark:border-white/10">
-                  <p className={`${compactLabelClass} text-black/35 dark:text-white/32`}>{tradeoffLabel}</p>
-                  <p className="mt-2 break-words text-sm leading-6 text-black/58 dark:text-white/50" dir="auto">
+                  <p className={`${compactLabelClass} text-black/35 dark:text-white/32`}>
+                    {tradeoffLabel}
+                  </p>
+                  <p
+                    className="mt-2 break-words text-sm leading-6 text-black/58 dark:text-white/50"
+                    dir="auto"
+                  >
                     {localized(method.tradeoff)}
                   </p>
                 </div>
@@ -248,7 +304,11 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
         </div>
       </section>
 
-      <section id="preparation" data-guide-section="preparation" className="scroll-mt-28 px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+      <section
+        id="preparation"
+        data-guide-section="preparation"
+        className="scroll-mt-28 px-4 py-20 sm:px-6 sm:py-28 lg:px-8"
+      >
         <div className="mx-auto grid max-w-[1450px] gap-10 lg:grid-cols-[.72fr_1.28fr] lg:gap-20">
           <div className="min-w-0">
             <p className={eyebrowClass}>{localized(copy.preparation.eyebrow)}</p>
@@ -260,10 +320,16 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
                 key={item.en}
                 className="flex min-w-0 items-start gap-4 rounded-2xl border border-black/10 bg-white/50 px-5 py-4 dark:border-white/10 dark:bg-white/[0.035]"
               >
-                <bdi className="technical-ltr grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink font-mono text-[10px] font-black text-white dark:bg-paper dark:text-ink" dir="ltr">
+                <bdi
+                  className="technical-ltr grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink font-mono text-[10px] font-black text-white dark:bg-paper dark:text-ink"
+                  dir="ltr"
+                >
                   {(index + 1).toString().padStart(2, '0')}
                 </bdi>
-                <p className="min-w-0 break-words pt-1 text-sm leading-7 text-black/58 dark:text-white/50" dir="auto">
+                <p
+                  className="min-w-0 break-words pt-1 text-sm leading-7 text-black/58 dark:text-white/50"
+                  dir="auto"
+                >
                   {localized(item)}
                 </p>
               </li>
@@ -286,7 +352,10 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
                 <bdi className="technical-ltr font-mono text-xs font-black text-white/25" dir="ltr">
                   {(index + 1).toString().padStart(2, '0')}
                 </bdi>
-                <h3 className={`mt-6 text-xl font-black ${isArabic ? 'leading-8' : 'uppercase tracking-[-0.03em]'}`} dir="auto">
+                <h3
+                  className={`mt-6 text-xl font-black ${isArabic ? 'leading-8' : 'uppercase tracking-[-0.03em]'}`}
+                  dir="auto"
+                >
                   {localized(policy.title)}
                 </h3>
                 <p className="mt-4 break-words text-sm leading-7 text-white/50" dir="auto">
@@ -298,7 +367,11 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
         </div>
       </section>
 
-      <section id="faq" data-guide-section="faq" className="scroll-mt-28 px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+      <section
+        id="faq"
+        data-guide-section="faq"
+        className="scroll-mt-28 px-4 py-20 sm:px-6 sm:py-28 lg:px-8"
+      >
         <div className="mx-auto grid max-w-[1450px] gap-10 lg:grid-cols-[.72fr_1.28fr] lg:gap-20">
           <div className="min-w-0">
             <p className={eyebrowClass}>{localized(copy.faq.eyebrow)}</p>
@@ -308,10 +381,16 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
             {copy.faq.items.map((item, index) => (
               <details key={item.id} className="group min-w-0 py-1">
                 <summary className="flex min-w-0 cursor-pointer list-none items-center gap-4 py-6 sm:gap-5 [&::-webkit-details-marker]:hidden">
-                  <bdi className="technical-ltr shrink-0 font-mono text-[10px] font-black text-black/30 dark:text-white/28" dir="ltr">
+                  <bdi
+                    className="technical-ltr shrink-0 font-mono text-[10px] font-black text-black/30 dark:text-white/28"
+                    dir="ltr"
+                  >
                     {(index + 1).toString().padStart(2, '0')}
                   </bdi>
-                  <span className="min-w-0 flex-1 break-words text-base font-black leading-7 sm:text-lg" dir="auto">
+                  <span
+                    className="min-w-0 flex-1 break-words text-base font-black leading-7 sm:text-lg"
+                    dir="auto"
+                  >
                     {localized(item.question)}
                   </span>
                   <span
@@ -321,7 +400,10 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
                     +
                   </span>
                 </summary>
-                <p className="break-words pb-7 ps-10 pe-8 text-sm leading-7 text-black/56 dark:text-white/48 sm:ps-12 sm:text-base sm:leading-8" dir="auto">
+                <p
+                  className="break-words pb-7 ps-10 pe-8 text-sm leading-7 text-black/56 dark:text-white/48 sm:ps-12 sm:text-base sm:leading-8"
+                  dir="auto"
+                >
                   {localized(item.answer)}
                 </p>
               </details>
@@ -335,9 +417,12 @@ export const Guide: React.FC<GuideProps> = ({ onOpenCatalog, onOpenDesigns }) =>
         <div className="relative mx-auto grid max-w-[1450px] gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
           <div className="min-w-0">
             <p className={lightEyebrowClass}>{localized(copy.finalCta.eyebrow)}</p>
-            <h2 className={isArabic
-              ? 'mt-5 max-w-5xl text-5xl font-black leading-[1.22] tracking-[-0.035em] sm:text-7xl lg:text-8xl'
-              : 'mt-5 max-w-5xl font-display text-5xl font-black uppercase leading-[.88] tracking-[-0.065em] sm:text-7xl lg:text-8xl'}
+            <h2
+              className={
+                isArabic
+                  ? 'mt-5 max-w-5xl text-5xl font-black leading-[1.22] tracking-[-0.035em] sm:text-7xl lg:text-8xl'
+                  : 'mt-5 max-w-5xl font-display text-5xl font-black uppercase leading-[.88] tracking-[-0.065em] sm:text-7xl lg:text-8xl'
+              }
             >
               {localized(copy.finalCta.title)}
             </h2>

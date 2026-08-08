@@ -56,7 +56,11 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
               type="button"
               className="group flex shrink-0 items-center gap-3 rounded-full py-1 pe-2 text-black transition-opacity hover:opacity-80 dark:text-white"
               onClick={() => handleNavigate('HOME')}
-              aria-label={language === 'ar' ? `الصفحة الرئيسية لـ ${BRAND.displayName}` : `${BRAND.displayName} home`}
+              aria-label={
+                language === 'ar'
+                  ? `الصفحة الرئيسية لـ ${BRAND.displayName}`
+                  : `${BRAND.displayName} home`
+              }
             >
               <span className="grid h-9 w-9 place-items-center rounded-full bg-[#111111] font-display text-[10px] font-black tracking-[-0.05em] text-white shadow-sm transition-transform group-hover:-rotate-6 dark:bg-[#f4f1ea] dark:text-black">
                 B/I
@@ -124,12 +128,34 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 }
               >
                 {theme === 'dark' ? (
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.4 6.4L17 17m-10-10L5.6 5.6m12.8 0L17 7M7 17l-1.4 1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.8}
+                      d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.4 6.4L17 17m-10-10L5.6 5.6m12.8 0L17 7M7 17l-1.4 1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"
+                    />
                   </svg>
                 ) : (
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M20.4 15.4A9 9 0 0 1 8.6 3.6a9 9 0 1 0 11.8 11.8Z" />
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.8}
+                      d="M20.4 15.4A9 9 0 0 1 8.6 3.6a9 9 0 1 0 11.8 11.8Z"
+                    />
                   </svg>
                 )}
               </button>
@@ -160,12 +186,34 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
               aria-controls="mobile-navigation"
             >
               {isMobileMenuOpen ? (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 18 18 6M6 6l12 12" />
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.8}
+                    d="M6 18 18 6M6 6l12 12"
+                  />
                 </svg>
               ) : (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 8h14M5 12h14M5 16h14" />
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.8}
+                    d="M5 8h14M5 12h14M5 16h14"
+                  />
                 </svg>
               )}
             </button>
@@ -193,7 +241,9 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
               tabIndex={isMobileMenuOpen ? 0 : -1}
               className="group flex items-center justify-between py-5 text-start"
             >
-              <span className="font-mono text-xs font-black text-black/30 dark:text-white/28">{item.index}</span>
+              <span className="font-mono text-xs font-black text-black/30 dark:text-white/28">
+                {item.index}
+              </span>
               <span
                 className={`text-3xl font-black tracking-[-0.045em] transition-colors ${
                   currentView === item.view

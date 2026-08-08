@@ -1,6 +1,6 @@
 import { DecalLayer, OrderDetails, PrintSurfaceId, Size } from '@/types';
 
-export const DESIGN_DRAFT_VERSION = 5 as const;
+export const DESIGN_DRAFT_VERSION = 6 as const;
 
 export interface StoredArtworkAsset {
   id: string;
@@ -34,6 +34,7 @@ export interface StoredDecalLayer {
 
 export interface DesignDraftRecord {
   version: typeof DESIGN_DRAFT_VERSION;
+  revision: number;
   id: string;
   name: string;
   productId: string;
@@ -82,6 +83,7 @@ export interface DesignDraftSnapshot {
   notes: string;
   activeDecalId: string | null;
   decals: DecalLayer[];
+  retainedAssetIds?: string[];
 }
 
 export type DraftLoadStatus = 'loading' | 'ready' | 'missing' | 'error';

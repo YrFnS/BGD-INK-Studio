@@ -52,9 +52,7 @@ export const readRenderingCapabilities = (): RenderingCapabilities => {
     devicePixelRatio: Math.max(1, window.devicePixelRatio || 1),
     hardwareConcurrency: Math.max(1, navigator.hardwareConcurrency || 4),
     deviceMemoryGb:
-      typeof renderingNavigator.deviceMemory === 'number'
-        ? renderingNavigator.deviceMemory
-        : null,
+      typeof renderingNavigator.deviceMemory === 'number' ? renderingNavigator.deviceMemory : null,
     coarsePointer: window.matchMedia('(pointer: coarse)').matches,
     reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     saveData: renderingNavigator.connection?.saveData === true,
@@ -63,9 +61,7 @@ export const readRenderingCapabilities = (): RenderingCapabilities => {
   };
 };
 
-export const selectRenderingProfile = (
-  capabilities: RenderingCapabilities,
-): RenderingProfile => {
+export const selectRenderingProfile = (capabilities: RenderingCapabilities): RenderingProfile => {
   const smallestViewport = Math.min(capabilities.viewportWidth, capabilities.viewportHeight);
   const constrainedDevice =
     capabilities.saveData ||

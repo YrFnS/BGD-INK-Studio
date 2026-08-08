@@ -12,10 +12,7 @@ export const useRenderingEnvironment = () => {
   );
   const [webglSupport, setWebglSupport] = useState<WebGLSupport>(() => detectWebGLSupport());
 
-  const renderingProfile = useMemo(
-    () => selectRenderingProfile(readRenderingCapabilities()),
-    [],
-  );
+  const renderingProfile = useMemo(() => selectRenderingProfile(readRenderingCapabilities()), []);
 
   useEffect(() => {
     const handleVisibilityChange = () => setIsPageVisible(document.visibilityState !== 'hidden');

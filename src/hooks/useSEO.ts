@@ -108,13 +108,15 @@ export const useSEO = (titleKey: string, descriptionKey: string) => {
       removeMeta('property', 'og:url');
     }
 
-    const structuredData = buildRouteStructuredData({
-      path: pathname,
-      language,
-      title,
-      description,
-      translate: t,
-    });
+    const structuredData = isIndexable
+      ? buildRouteStructuredData({
+          path: pathname,
+          language,
+          title,
+          description,
+          translate: t,
+        })
+      : null;
     const existingStructuredDataElement = document.getElementById(STRUCTURED_DATA_ID);
 
     if (structuredData) {

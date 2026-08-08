@@ -31,9 +31,7 @@ test('presents the long-form Studio Guide safely in English and Iraqi Arabic', a
   await expect(page.getByRole('navigation', { name: 'أقسام الدليل' })).toBeVisible();
   await expect(page.getByText('مرجع عام')).toHaveCount(3);
   await expect(page.getByText('هل حفظ المسودة يرسل طلب حقيقي؟')).toBeVisible();
-  await expect(
-    page.getByText(/ينحفظ إيصال محلي، وينعلّم التصميم كمجهّز محلياً/),
-  ).toBeVisible();
+  await expect(page.getByText(/ينحفظ إيصال محلي، وينعلّم التصميم كمجهّز محلياً/)).toBeVisible();
 
   const hasHorizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,

@@ -29,8 +29,5 @@ export const saveCheckoutDetails = (
 ): Promise<DesignDraftRecord> =>
   enqueueDraftUpdate(draftId, () => persistCheckoutDetails(draftId, checkoutDetails));
 
-export const saveDraftQuantity = (
-  draftId: string,
-  quantity: number,
-): Promise<DesignDraftRecord> =>
+export const saveDraftQuantity = (draftId: string, quantity: number): Promise<DesignDraftRecord> =>
   enqueueDraftUpdate(draftId, () => persistDraftQuantity(draftId, quantity));

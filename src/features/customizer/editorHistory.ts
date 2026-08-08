@@ -27,10 +27,8 @@ export const cloneEditorSnapshot = (snapshot: EditorSnapshot): EditorSnapshot =>
   decals: snapshot.decals.map(cloneLayer),
 });
 
-export const areEditorSnapshotsEqual = (
-  left: EditorSnapshot,
-  right: EditorSnapshot,
-): boolean => JSON.stringify(left) === JSON.stringify(right);
+export const areEditorSnapshotsEqual = (left: EditorSnapshot, right: EditorSnapshot): boolean =>
+  JSON.stringify(left) === JSON.stringify(right);
 
 export const createEditorHistory = (initial: EditorSnapshot): EditorHistory => ({
   past: [],

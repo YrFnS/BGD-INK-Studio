@@ -40,19 +40,19 @@ The GSAP package remains declared temporarily for lockfile compatibility, but Vi
 
 Before this finalization pass:
 
-| Metric | Previous |
-| --- | ---: |
-| Initial JavaScript, gzip | 97.56 KiB |
-| Total JavaScript, gzip | 403.79 KiB |
-| Total JavaScript, raw | 1,376.40 KiB |
+| Metric                   |     Previous |
+| ------------------------ | -----------: |
+| Initial JavaScript, gzip |    97.56 KiB |
+| Total JavaScript, gzip   |   403.79 KiB |
+| Total JavaScript, raw    | 1,376.40 KiB |
 
 Final measured baseline:
 
-| Metric | Current | Change |
-| --- | ---: | ---: |
-| Initial JavaScript, gzip | 71.07 KiB | −26.49 KiB |
-| Total JavaScript, gzip | 377.29 KiB | −26.50 KiB |
-| Total JavaScript, raw | 1,312.92 KiB | −63.48 KiB |
+| Metric                   |      Current |     Change |
+| ------------------------ | -----------: | ---------: |
+| Initial JavaScript, gzip |    71.07 KiB | −26.49 KiB |
+| Total JavaScript, gzip   |   377.29 KiB | −26.50 KiB |
+| Total JavaScript, raw    | 1,312.92 KiB | −63.48 KiB |
 
 The initial JavaScript reduction is approximately 27 percent. Three.js remains in a separate lazy chunk and is not loaded by the homepage.
 
@@ -60,15 +60,15 @@ The initial JavaScript reduction is approximately 27 percent. Three.js remains i
 
 The measured savings are protected by narrower limits:
 
-| Metric | Current | Limit |
-| --- | ---: | ---: |
-| Initial JavaScript, gzip | 71.07 KiB | 90 KiB |
-| Initial CSS, gzip | 15.91 KiB | 16 KiB |
-| Largest async JavaScript chunk, gzip | 168.08 KiB | 200 KiB |
-| Largest JavaScript chunk, raw | 651.42 KiB | 725 KiB |
-| Total JavaScript, gzip | 377.29 KiB | 390 KiB |
-| Total JavaScript, raw | 1,312.92 KiB | 1,350 KiB |
-| Total CSS, gzip | 15.91 KiB | 16.5 KiB |
+| Metric                               |      Current |     Limit |
+| ------------------------------------ | -----------: | --------: |
+| Initial JavaScript, gzip             |    71.07 KiB |    90 KiB |
+| Initial CSS, gzip                    |    15.91 KiB |    16 KiB |
+| Largest async JavaScript chunk, gzip |   168.08 KiB |   200 KiB |
+| Largest JavaScript chunk, raw        |   651.42 KiB |   725 KiB |
+| Total JavaScript, gzip               |   377.29 KiB |   390 KiB |
+| Total JavaScript, raw                | 1,312.92 KiB | 1,350 KiB |
+| Total CSS, gzip                      |    15.91 KiB |  16.5 KiB |
 
 The decorative continuous scanner overlay was removed rather than weakening the CSS budget. The garment workbench retains restrained motion.
 

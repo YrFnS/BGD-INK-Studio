@@ -46,7 +46,9 @@ const expectNavigationFitsViewport = async (page: Page) => {
 test.describe('iPhone 13 responsive shell', () => {
   test.use(getDeviceOptions('iPhone 13'));
 
-  test('keeps the safe-area shell usable through portrait and short landscape', async ({ page }) => {
+  test('keeps the safe-area shell usable through portrait and short landscape', async ({
+    page,
+  }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
 
@@ -78,7 +80,9 @@ test.describe('iPhone 13 responsive shell', () => {
 test.describe('iPad Mini responsive shell', () => {
   test.use(getDeviceOptions('iPad Mini'));
 
-  test('preserves the Guide route and RTL layout through tablet orientation changes', async ({ page }) => {
+  test('preserves the Guide route and RTL layout through tablet orientation changes', async ({
+    page,
+  }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem('bgd-ink-language', 'ar');
     });
@@ -86,7 +90,9 @@ test.describe('iPad Mini responsive shell', () => {
     await page.goto('/guide');
 
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(page.getByRole('heading', { name: 'اعرف شنو المؤكد قبل لا تبدأ التصميم.' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'اعرف شنو المؤكد قبل لا تبدأ التصميم.' }),
+    ).toBeVisible();
     await expectNoHorizontalOverflow(page);
 
     await page.setViewportSize({ width: 1024, height: 768 });

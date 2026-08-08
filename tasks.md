@@ -209,6 +209,22 @@ main
 - [ ] Define campaign, coupon, bulk-order, and repeat-order rules before building customer-facing offers.
 - [x] Enforce production performance budgets.
 
+## P5 — Pre-launch hardening — COMPLETE
+
+- [x] Flush pending customizer and checkout data before internal navigation.
+- [x] Flush on browser history transitions and best-effort page lifecycle events.
+- [x] Keep language changes from reloading the active editor.
+- [x] Remove the duplicate local receipt store and purge obsolete customer-contact records.
+- [x] Make IndexedDB draft updates atomic and revisioned.
+- [x] Retain artwork needed by bounded undo/redo while deleting unreferenced assets.
+- [x] Require both an explicit verified public URL and explicit indexing approval.
+- [x] Keep preview builds free of canonical URLs and public-site metadata.
+- [x] Localize WhatsApp handoff labels and resolve product translation keys.
+- [x] Correct and validate every owned PWA product asset.
+- [x] Remove third-party font requests and add a production Content Security Policy.
+- [x] Localize global loading and application-recovery states.
+- [x] Remove the unused GSAP runtime dependency and restore practical CSS budget headroom.
+
 ## Paused infrastructure — outside the active roadmap
 
 The following remain untouched until backend, database, and storage work is explicitly reopened:

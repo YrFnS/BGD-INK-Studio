@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { registerServiceWorker } from './pwa/registerServiceWorker';
+import { installDraftPersistenceLifecycle } from './persistenceCoordinator';
 import { installAnchorNavigation } from './utils/anchorNavigation';
 import { App } from './App';
 import './styles.css';
@@ -12,6 +13,7 @@ if (!rootElement) {
 }
 
 installAnchorNavigation();
+installDraftPersistenceLifecycle();
 registerServiceWorker();
 
 createRoot(rootElement).render(

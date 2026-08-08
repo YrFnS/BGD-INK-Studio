@@ -94,12 +94,7 @@ const readImageDimensions = (buffer) => {
         height: 1 + (buffer[22] >> 6) + (buffer[23] << 2) + ((buffer[24] & 0x0f) << 10),
       };
     }
-    if (
-      chunkType === 'VP8 ' &&
-      buffer[23] === 0x9d &&
-      buffer[24] === 0x01 &&
-      buffer[25] === 0x2a
-    ) {
+    if (chunkType === 'VP8 ' && buffer[23] === 0x9d && buffer[24] === 0x01 && buffer[25] === 0x2a) {
       return {
         format: 'webp',
         width: buffer.readUInt16LE(26) & 0x3fff,
@@ -232,10 +227,14 @@ for (const filePath of files.sort()) {
 
   console.log(`\n${name}`);
   console.log(`  file             ${formatKiB(asset.bytes)} / ${formatKiB(budgets.maximumBytes)}`);
-  console.log(`  geometry         ${asset.meshes} mesh(es), ${asset.primitives} primitive(s), ${asset.triangles.toLocaleString()} triangles`);
+  console.log(
+    `  geometry         ${asset.meshes} mesh(es), ${asset.primitives} primitive(s), ${asset.triangles.toLocaleString()} triangles`,
+  );
   console.log(`  materials        ${asset.materials}`);
   console.log(`  embedded images  ${asset.images.length}`);
-  console.log(`  compression      geometry ${geometryCompression ? 'yes' : 'no'}, textures ${textureCompression ? 'yes' : 'no'}`);
+  console.log(
+    `  compression      geometry ${geometryCompression ? 'yes' : 'no'}, textures ${textureCompression ? 'yes' : 'no'}`,
+  );
 
   if (asset.bytes > budgets.maximumBytes) {
     failures.push(`${name} exceeds the GLB byte budget.`);
@@ -253,7 +252,9 @@ for (const filePath of files.sort()) {
   for (const image of asset.images) {
     const dimensions =
       image.width && image.height ? `${image.width}×${image.height}` : 'unknown dimensions';
-    console.log(`    image ${image.index + 1}       ${dimensions}, ${formatKiB(image.bytes)}, ${image.format}`);
+    console.log(
+      `    image ${image.index + 1}       ${dimensions}, ${formatKiB(image.bytes)}, ${image.format}`,
+    );
     if (
       image.width &&
       image.height &&

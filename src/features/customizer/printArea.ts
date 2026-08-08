@@ -10,15 +10,11 @@ const getHorizontalModelUnitsPerCm = (surface: PrintSurfaceDefinition): number =
 const getVerticalModelUnitsPerCm = (surface: PrintSurfaceDefinition): number =>
   (surface.modelBounds.maxY - surface.modelBounds.minY) / surface.physicalHeightCm;
 
-export const artworkWidthCmToScale = (
-  widthCm: number,
-  surface: PrintSurfaceDefinition,
-): number => widthCm * getHorizontalModelUnitsPerCm(surface);
+export const artworkWidthCmToScale = (widthCm: number, surface: PrintSurfaceDefinition): number =>
+  widthCm * getHorizontalModelUnitsPerCm(surface);
 
-export const scaleToArtworkWidthCm = (
-  scale: number,
-  surface: PrintSurfaceDefinition,
-): number => scale / getHorizontalModelUnitsPerCm(surface);
+export const scaleToArtworkWidthCm = (scale: number, surface: PrintSurfaceDefinition): number =>
+  scale / getHorizontalModelUnitsPerCm(surface);
 
 export const getArtworkPhysicalDimensions = (
   scale: number,
@@ -63,19 +59,15 @@ export const getArtworkPlacementCm = (
   const verticalUnitsPerCm = getVerticalModelUnitsPerCm(surface);
   const dimensions = getArtworkModelDimensions(scale, surface, aspectRatio);
   const rawLeftCm =
-    (position[0] - dimensions.width / 2 - surface.modelBounds.minX) /
-    horizontalUnitsPerCm;
+    (position[0] - dimensions.width / 2 - surface.modelBounds.minX) / horizontalUnitsPerCm;
   const rawRightCm =
-    (surface.modelBounds.maxX - (position[0] + dimensions.width / 2)) /
-    horizontalUnitsPerCm;
+    (surface.modelBounds.maxX - (position[0] + dimensions.width / 2)) / horizontalUnitsPerCm;
   const leftCm = surface.side === 'front' ? rawLeftCm : rawRightCm;
   const rightCm = surface.side === 'front' ? rawRightCm : rawLeftCm;
   const topCm =
-    (surface.modelBounds.maxY - (position[1] + dimensions.height / 2)) /
-    verticalUnitsPerCm;
+    (surface.modelBounds.maxY - (position[1] + dimensions.height / 2)) / verticalUnitsPerCm;
   const bottomCm =
-    (position[1] - dimensions.height / 2 - surface.modelBounds.minY) /
-    verticalUnitsPerCm;
+    (position[1] - dimensions.height / 2 - surface.modelBounds.minY) / verticalUnitsPerCm;
   const physical = getArtworkPhysicalDimensions(scale, surface, aspectRatio);
 
   return {

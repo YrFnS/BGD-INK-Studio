@@ -1,19 +1,7 @@
 import { BRAND } from '@/config/brand';
-import type {
-  PrintSurfaceDefinition,
-  ReadyProductModelConfig,
-} from '@/data/assets3d';
-import type {
-  DecalLayer,
-  Language,
-  PrintSurfaceId,
-  Product,
-  Size,
-} from '@/types';
-import {
-  createArtworkQualityReport,
-  normalizeArtworkAspectRatio,
-} from './artworkAnalysis';
+import type { PrintSurfaceDefinition, ReadyProductModelConfig } from '@/data/assets3d';
+import type { DecalLayer, Language, PrintSurfaceId, Product, Size } from '@/types';
+import { createArtworkQualityReport, normalizeArtworkAspectRatio } from './artworkAnalysis';
 import {
   getArtworkEdgeClearanceCm,
   getArtworkPhysicalDimensions,
@@ -174,12 +162,9 @@ const createLayerSpecification = (
       pixelWidth: layer.pixelWidth ?? null,
       pixelHeight: layer.pixelHeight ?? null,
       aspectRatio: round(aspectRatio),
-      hasTransparency:
-        typeof layer.hasTransparency === 'boolean' ? layer.hasTransparency : null,
+      hasTransparency: typeof layer.hasTransparency === 'boolean' ? layer.hasTransparency : null,
       transparentPixelRatio:
-        typeof layer.transparentPixelRatio === 'number'
-          ? round(layer.transparentPixelRatio)
-          : null,
+        typeof layer.transparentPixelRatio === 'number' ? round(layer.transparentPixelRatio) : null,
       transparentPaddingRatio:
         typeof layer.transparentPaddingRatio === 'number'
           ? round(layer.transparentPaddingRatio)
@@ -242,8 +227,7 @@ export const buildProductionSpecification = (
     calibration: {
       status: 'unverified',
       requiresPhysicalConfirmation: true,
-      note:
-        'The configured physical print areas are local planning values and must be confirmed against the exact garment blank and printing process before production.',
+      note: 'The configured physical print areas are local planning values and must be confirmed against the exact garment blank and printing process before production.',
     },
     surfaces: input.modelConfig.surfaces.map((surface) => ({
       id: surface.id,
@@ -281,9 +265,7 @@ export const getProductionExportFileNames = (
   };
 };
 
-export const createProductionSpecificationBlob = (
-  specification: ProductionSpecification,
-): Blob =>
+export const createProductionSpecificationBlob = (specification: ProductionSpecification): Blob =>
   new Blob([`${JSON.stringify(specification, null, 2)}\n`], {
     type: 'application/json;charset=utf-8',
   });
@@ -489,16 +471,7 @@ const drawSurfacePanel = (
   visibleLayers.forEach(({ layer, order }) => {
     const image = images.get(layer.id);
     if (image) {
-      drawProofLayer(
-        context,
-        image,
-        layer,
-        surface,
-        printAreaX,
-        printAreaY,
-        pixelsPerCm,
-        order,
-      );
+      drawProofLayer(context, image, layer, surface, printAreaX, printAreaY, pixelsPerCm, order);
     }
   });
 
@@ -521,7 +494,9 @@ const drawSurfacePanel = (
   );
   context.fillStyle = '#6b7280';
   context.font = '500 15px Arial, sans-serif';
-  const layerNames = visibleLayers.map(({ layer }, index) => `${index + 1}. ${layer.name}`).join('  ·  ');
+  const layerNames = visibleLayers
+    .map(({ layer }, index) => `${index + 1}. ${layer.name}`)
+    .join('  ·  ');
   context.fillText(layerNames || '—', textX, panelY + PROOF_PANEL_HEIGHT - 76, panelWidth - 76);
   context.restore();
 };
@@ -534,17 +509,14 @@ const canvasToPngBlob = (canvas: HTMLCanvasElement): Promise<Blob> =>
     }, 'image/png');
   });
 
-export const createProductionProofBlob = async (
-  input: ProductionExportInput,
-): Promise<Blob> => {
+export const createProductionProofBlob = async (input: ProductionExportInput): Promise<Blob> => {
   const visibleLayers = input.decals.filter((layer) => layer.visible);
   const imageEntries = await Promise.all(
     visibleLayers.map(async (layer) => [layer.id, await loadArtworkImage(layer.url)] as const),
   );
   const images = new Map(imageEntries);
   const panelGapWidth = PROOF_PANEL_GAP * (PROOF_COLUMNS - 1);
-  const panelWidth =
-    (PROOF_WIDTH - PROOF_MARGIN * 2 - panelGapWidth) / PROOF_COLUMNS;
+  const panelWidth = (PROOF_WIDTH - PROOF_MARGIN * 2 - panelGapWidth) / PROOF_COLUMNS;
   const rows = Math.max(1, Math.ceil(input.modelConfig.surfaces.length / PROOF_COLUMNS));
   const canvas = document.createElement('canvas');
   canvas.width = PROOF_WIDTH;
@@ -588,12 +560,7 @@ export const createProductionProofBlob = async (
   context.textAlign = input.language === 'ar' ? 'right' : 'left';
   context.fillStyle = '#92400e';
   context.font = '700 17px Arial, sans-serif';
-  context.fillText(
-    copy.calibration,
-    headerX,
-    canvas.height - 72,
-    canvas.width - PROOF_MARGIN * 2,
-  );
+  context.fillText(copy.calibration, headerX, canvas.height - 72, canvas.width - PROOF_MARGIN * 2);
   context.fillStyle = '#6b7280';
   context.font = '500 15px Arial, sans-serif';
   const generatedAt = input.generatedAt ?? new Date();

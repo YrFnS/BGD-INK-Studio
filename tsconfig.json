@@ -17,7 +17,8 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "gsap": ["src/utils/gsap-lite.ts"]
     },
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,

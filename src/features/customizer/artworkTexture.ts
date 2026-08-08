@@ -9,10 +9,7 @@ import * as THREE from 'three';
 
 const IMAGE_LOAD_TIMEOUT_MS = 10_000;
 
-const configureTexture = (
-  texture: THREE.Texture,
-  anisotropy: 2 | 4 | 8,
-): THREE.Texture => {
+const configureTexture = (texture: THREE.Texture, anisotropy: 2 | 4 | 8): THREE.Texture => {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = anisotropy;
   texture.generateMipmaps = true;

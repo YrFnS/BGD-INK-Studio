@@ -42,7 +42,9 @@ describe('PWA prompt', () => {
 
     await waitFor(() => expect(prompt).toHaveBeenCalledOnce());
     await waitFor(() =>
-      expect(screen.queryByRole('heading', { name: 'Keep the Studio close.' })).not.toBeInTheDocument(),
+      expect(
+        screen.queryByRole('heading', { name: 'Keep the Studio close.' }),
+      ).not.toBeInTheDocument(),
     );
   });
 

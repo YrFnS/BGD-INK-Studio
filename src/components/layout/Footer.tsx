@@ -40,12 +40,8 @@ export const Footer: React.FC = () => {
         };
 
   const links: ContactLink[] = [
-    BRAND.contact.instagramUrl
-      ? { label: copy.instagram, href: BRAND.contact.instagramUrl }
-      : null,
-    whatsappNumber
-      ? { label: copy.whatsapp, href: `https://wa.me/${whatsappNumber}` }
-      : null,
+    BRAND.contact.instagramUrl ? { label: copy.instagram, href: BRAND.contact.instagramUrl } : null,
+    whatsappNumber ? { label: copy.whatsapp, href: `https://wa.me/${whatsappNumber}` } : null,
     BRAND.contact.email ? { label: copy.email, href: `mailto:${BRAND.contact.email}` } : null,
   ].filter((link): link is ContactLink => Boolean(link));
 
@@ -55,7 +51,10 @@ export const Footer: React.FC = () => {
         <div className="grid gap-10 lg:grid-cols-[1.1fr_.9fr] lg:gap-20">
           <div>
             <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-[#f4f1ea] font-display text-[10px] font-black tracking-[-0.05em] text-black" dir="ltr">
+              <span
+                className="grid h-10 w-10 place-items-center rounded-full bg-[#f4f1ea] font-display text-[10px] font-black tracking-[-0.05em] text-black"
+                dir="ltr"
+              >
                 B/I
               </span>
               <div>
@@ -108,7 +107,10 @@ export const Footer: React.FC = () => {
           )}
 
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-white/28">
-            <bdi dir="ltr">© {year} {BRAND.productName}</bdi> · {copy.rights}
+            <bdi dir="ltr">
+              © {year} {BRAND.productName}
+            </bdi>{' '}
+            · {copy.rights}
           </p>
         </div>
       </div>

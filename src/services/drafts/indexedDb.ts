@@ -1,11 +1,6 @@
 import { BRAND } from '@/config/brand';
 import { normalizeDraftQuantity } from '@/config/draft';
-import {
-  DEFAULT_PRINT_SURFACE_ID,
-  OrderDetails,
-  PrintSurfaceId,
-  Size,
-} from '@/types';
+import { DEFAULT_PRINT_SURFACE_ID, OrderDetails, PrintSurfaceId, Size } from '@/types';
 import {
   CreateDesignDraftInput,
   DESIGN_DRAFT_VERSION,
@@ -58,9 +53,10 @@ type LegacyStoredDecalLayer = Omit<
 
 type LegacyDesignDraftRecord = Omit<
   DesignDraftRecord,
-  'version' | 'name' | 'quantity' | 'decals' | 'assetIds'
+  'version' | 'revision' | 'name' | 'quantity' | 'decals' | 'assetIds'
 > & {
   version?: unknown;
+  revision?: unknown;
   name?: unknown;
   quantity?: unknown;
   decals?: LegacyStoredDecalLayer[];
@@ -102,36 +98,26 @@ const normalizeOptionalPositiveNumber = (value: unknown): number | undefined =>
   typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
 
 const normalizeOptionalFraction = (value: unknown): number | undefined =>
-  typeof value === 'number' && Number.isFinite(value)
-    ? Math.min(1, Math.max(0, value))
-    : undefined;
+  typeof value === 'number' && Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : undefined;
 
-const normalizeStoredLayer = (
-  layer: LegacyStoredDecalLayer,
-  index: number,
-): StoredDecalLayer => ({
+const normalizeStoredLayer = (layer: LegacyStoredDecalLayer, index: number): StoredDecalLayer => ({
   ...layer,
   name:
     typeof layer.name === 'string' && normalizeLayerName(layer.name)
       ? normalizeLayerName(layer.name)
       : createLayerName(layer.fileName, index),
   visible: typeof layer.visible === 'boolean' ? layer.visible : true,
-  surfaceId: isPrintSurfaceId(layer.surfaceId)
-    ? layer.surfaceId
-    : DEFAULT_PRINT_SURFACE_ID,
+  surfaceId: isPrintSurfaceId(layer.surfaceId) ? layer.surfaceId : DEFAULT_PRINT_SURFACE_ID,
   pixelWidth: normalizeOptionalPositiveNumber(layer.pixelWidth),
   pixelHeight: normalizeOptionalPositiveNumber(layer.pixelHeight),
   aspectRatio: normalizeOptionalPositiveNumber(layer.aspectRatio),
-  hasTransparency:
-    typeof layer.hasTransparency === 'boolean' ? layer.hasTransparency : undefined,
+  hasTransparency: typeof layer.hasTransparency === 'boolean' ? layer.hasTransparency : undefined,
   transparentPixelRatio: normalizeOptionalFraction(layer.transparentPixelRatio),
   transparentPaddingRatio: normalizeOptionalFraction(layer.transparentPaddingRatio),
 });
 
 const normalizeDraftRecord = (draft: LegacyDesignDraftRecord): DesignDraftRecord => {
-  const decals = Array.isArray(draft.decals)
-    ? draft.decals.map(normalizeStoredLayer)
-    : [];
+  const decals = Array.isArray(draft.decals) ? draft.decals.map(normalizeStoredLayer) : [];
   const storedAssetIds = Array.isArray(draft.assetIds)
     ? draft.assetIds.filter((assetId): assetId is string => typeof assetId === 'string')
     : [];
@@ -139,12 +125,14 @@ const normalizeDraftRecord = (draft: LegacyDesignDraftRecord): DesignDraftRecord
   return {
     ...draft,
     version: DESIGN_DRAFT_VERSION,
+    revision:
+      typeof draft.revision === 'number' && Number.isInteger(draft.revision) && draft.revision >= 0
+        ? draft.revision
+        : 0,
     name: typeof draft.name === 'string' ? draft.name : '',
     quantity: normalizeDraftQuantity(draft.quantity),
     decals,
-    assetIds: Array.from(
-      new Set([...storedAssetIds, ...decals.map((layer) => layer.assetId)]),
-    ),
+    assetIds: Array.from(new Set([...storedAssetIds, ...decals.map((layer) => layer.assetId)])),
   };
 };
 
@@ -290,25 +278,30 @@ const getArtworkAssets = async (assetIds: string[]): Promise<Map<string, StoredA
   return assetsById;
 };
 
-const putDraftRecord = async (draft: DesignDraftRecord): Promise<void> => {
-  const database = await openDatabase();
-  const transaction = database.transaction(DRAFT_STORE, 'readwrite');
-  const completion = waitForTransaction(transaction);
-  transaction.objectStore(DRAFT_STORE).put(draft);
-  await completion;
-};
-
 const updateDraftRecord = async (
   draftId: string,
   update: (draft: DesignDraftRecord) => DesignDraftRecord,
 ): Promise<DesignDraftRecord> => {
-  const currentDraft = await getDraftRecord(draftId);
-  if (!currentDraft) {
+  const database = await openDatabase();
+  const transaction = database.transaction(DRAFT_STORE, 'readwrite');
+  const completion = waitForTransaction(transaction);
+  const draftStore = transaction.objectStore(DRAFT_STORE);
+  const storedDraft = await requestToPromise(
+    draftStore.get(draftId) as IDBRequest<LegacyDesignDraftRecord | undefined>,
+  );
+
+  if (!storedDraft) {
+    await completion;
     throw new DraftStorageError('DRAFT_NOT_FOUND', 'The requested design draft no longer exists.');
   }
 
-  const nextDraft = update(currentDraft);
-  await putDraftRecord(nextDraft);
+  const currentDraft = normalizeDraftRecord(storedDraft);
+  const nextDraft = {
+    ...update(currentDraft),
+    revision: currentDraft.revision + 1,
+  };
+  draftStore.put(nextDraft);
+  await completion;
   return nextDraft;
 };
 
@@ -338,8 +331,7 @@ const serializeLayer = (
     pixelWidth: normalizeOptionalPositiveNumber(layer.pixelWidth),
     pixelHeight: normalizeOptionalPositiveNumber(layer.pixelHeight),
     aspectRatio: normalizeOptionalPositiveNumber(layer.aspectRatio),
-    hasTransparency:
-      typeof layer.hasTransparency === 'boolean' ? layer.hasTransparency : undefined,
+    hasTransparency: typeof layer.hasTransparency === 'boolean' ? layer.hasTransparency : undefined,
     transparentPixelRatio: normalizeOptionalFraction(layer.transparentPixelRatio),
     transparentPaddingRatio: normalizeOptionalFraction(layer.transparentPaddingRatio),
   };
@@ -354,6 +346,7 @@ export const createDesignDraft = async ({
   const now = new Date().toISOString();
   const draft: DesignDraftRecord = {
     version: DESIGN_DRAFT_VERSION,
+    revision: 0,
     id: createId('draft'),
     name: '',
     productId,
@@ -464,22 +457,49 @@ export const loadDesignDraft = async (draftId: string): Promise<HydratedDesignDr
 export const saveDesignDraft = async (
   draftId: string,
   snapshot: DesignDraftSnapshot,
-): Promise<DesignDraftRecord> =>
-  updateDraftRecord(draftId, (draft) => {
-    const decals = snapshot.decals.map(serializeLayer);
-    return {
-      ...draft,
-      color: snapshot.color,
-      size: snapshot.size,
-      notes: snapshot.notes,
-      activeDecalId: snapshot.activeDecalId,
-      decals,
-      assetIds: Array.from(
-        new Set([...draft.assetIds, ...decals.map((layer) => layer.assetId)]),
-      ),
-      updatedAt: new Date().toISOString(),
-    };
-  });
+): Promise<DesignDraftRecord> => {
+  const decals = snapshot.decals.map(serializeLayer);
+  const retainedAssetIds = (snapshot.retainedAssetIds ?? []).filter(
+    (assetId): assetId is string => typeof assetId === 'string' && assetId.length > 0,
+  );
+  const liveAssetIds = Array.from(
+    new Set([...decals.map((layer) => layer.assetId), ...retainedAssetIds]),
+  );
+
+  const database = await openDatabase();
+  const transaction = database.transaction([DRAFT_STORE, ASSET_STORE], 'readwrite');
+  const completion = waitForTransaction(transaction);
+  const draftStore = transaction.objectStore(DRAFT_STORE);
+  const storedDraft = await requestToPromise(
+    draftStore.get(draftId) as IDBRequest<LegacyDesignDraftRecord | undefined>,
+  );
+
+  if (!storedDraft) {
+    await completion;
+    throw new DraftStorageError('DRAFT_NOT_FOUND', 'The requested design draft no longer exists.');
+  }
+
+  const draft = normalizeDraftRecord(storedDraft);
+  const nextDraft: DesignDraftRecord = {
+    ...draft,
+    revision: draft.revision + 1,
+    color: snapshot.color,
+    size: snapshot.size,
+    notes: snapshot.notes,
+    activeDecalId: snapshot.activeDecalId,
+    decals,
+    assetIds: liveAssetIds,
+    updatedAt: new Date().toISOString(),
+  };
+
+  draftStore.put(nextDraft);
+  const assetStore = transaction.objectStore(ASSET_STORE);
+  draft.assetIds
+    .filter((assetId) => !liveAssetIds.includes(assetId))
+    .forEach((assetId) => assetStore.delete(assetId));
+  await completion;
+  return nextDraft;
+};
 
 export const renameDesignDraft = async (
   draftId: string,
@@ -558,6 +578,7 @@ export const duplicateDesignDraft = async (
 
   const duplicate: DesignDraftRecord = {
     ...sourceDraft,
+    revision: 0,
     id: createId('draft'),
     name: normalizeDraftName(name) || normalizeDraftName(sourceDraft.name),
     activeDecalId: sourceDraft.activeDecalId
@@ -599,9 +620,7 @@ export const storeArtworkFile = async (
   const transaction = database.transaction([DRAFT_STORE, ASSET_STORE], 'readwrite');
   const completion = waitForTransaction(transaction);
   const draftStore = transaction.objectStore(DRAFT_STORE);
-  const draftRequest = draftStore.get(draftId) as IDBRequest<
-    LegacyDesignDraftRecord | undefined
-  >;
+  const draftRequest = draftStore.get(draftId) as IDBRequest<LegacyDesignDraftRecord | undefined>;
   const storedDraft = await requestToPromise(draftRequest);
 
   if (!storedDraft) {
@@ -614,6 +633,7 @@ export const storeArtworkFile = async (
   transaction.objectStore(ASSET_STORE).add(asset);
   draftStore.put({
     ...draft,
+    revision: draft.revision + 1,
     assetIds: Array.from(new Set([...draft.assetIds, asset.id])),
     updatedAt: new Date().toISOString(),
   });
@@ -669,9 +689,9 @@ export const deleteDesignDraft = async (draftId: string): Promise<void> => {
   transaction.objectStore(DRAFT_STORE).delete(draftId);
 
   const assetStore = transaction.objectStore(ASSET_STORE);
-  Array.from(
-    new Set([...draft.assetIds, ...draft.decals.map((layer) => layer.assetId)]),
-  ).forEach((assetId) => assetStore.delete(assetId));
+  Array.from(new Set([...draft.assetIds, ...draft.decals.map((layer) => layer.assetId)])).forEach(
+    (assetId) => assetStore.delete(assetId),
+  );
   await completion;
 };
 

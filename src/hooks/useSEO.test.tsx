@@ -3,13 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { AppProvider } from '@/contexts/AppContext';
 import { useSEO } from './useSEO';
 
-const SeoHarness = ({
-  titleKey,
-  descriptionKey,
-}: {
-  titleKey: string;
-  descriptionKey: string;
-}) => {
+const SeoHarness = ({ titleKey, descriptionKey }: { titleKey: string; descriptionKey: string }) => {
   useSEO(titleKey, descriptionKey);
   return null;
 };

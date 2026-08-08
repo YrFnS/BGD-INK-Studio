@@ -94,11 +94,7 @@ const DecalItem = ({
   textureAnisotropy: 2 | 4 | 8;
   renderingQuality: RenderingQuality;
 }) => {
-  const texture = useOptimizedArtworkTexture(
-    layer.url,
-    renderingQuality,
-    textureAnisotropy,
-  );
+  const texture = useOptimizedArtworkTexture(layer.url, renderingQuality, textureAnisotropy);
   const aspectRatio = normalizeArtworkAspectRatio(layer.aspectRatio);
   const dimensions = getArtworkModelDimensions(layer.scale, surface, aspectRatio);
 
@@ -209,8 +205,7 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
         : cloneColoredMaterial(targetMesh.material, color),
     [color, targetMesh.material],
   );
-  const activeLayer =
-    decals.find((layer) => layer.id === activeDecalId && layer.visible) ?? null;
+  const activeLayer = decals.find((layer) => layer.id === activeDecalId && layer.visible) ?? null;
   const activeLayerRef = useRef<DecalLayer | null>(activeLayer);
   activeLayerRef.current = activeLayer;
   const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
@@ -312,11 +307,7 @@ export const ShirtModel: React.FC<ShirtModelProps> = ({
     if (baseline.kind === 'single') {
       const current = activePointersRef.current.get(baseline.pointerId);
       if (!current) return;
-      const transform = calculateSinglePointerTransform(
-        baseline.initial,
-        baseline.start,
-        current,
-      );
+      const transform = calculateSinglePointerTransform(baseline.initial, baseline.start, current);
       onDecalTransformChange(transform.scale, transform.rotation);
       return;
     }

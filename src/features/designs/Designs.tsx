@@ -437,7 +437,10 @@ export const Designs: React.FC<DesignsProps> = ({ onOpenDraft, onCreateNew }) =>
                     >
                       {prepared ? copy.prepared : copy.draft}
                     </span>
-                    <span className="rounded-full bg-black/55 px-3 py-1 text-xs font-bold text-white backdrop-blur" dir="ltr">
+                    <span
+                      className="rounded-full bg-black/55 px-3 py-1 text-xs font-bold text-white backdrop-blur"
+                      dir="ltr"
+                    >
                       {summary.size}
                     </span>
                   </div>

@@ -46,21 +46,13 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
           duration: 1.05,
           stagger: 0.09,
         })
-        .from(
-          '.p3-hero-copy',
-          { y: 28, opacity: 0, duration: 0.72, stagger: 0.08 },
-          '-=0.62',
-        )
+        .from('.p3-hero-copy', { y: 28, opacity: 0, duration: 0.72, stagger: 0.08 }, '-=0.62')
         .from(
           '.p3-workbench',
           { xPercent: language === 'ar' ? -7 : 7, scale: 0.965, opacity: 0, duration: 1.1 },
           '-=0.9',
         )
-        .from(
-          '.p3-proof-point',
-          { y: 20, opacity: 0, duration: 0.6, stagger: 0.06 },
-          '-=0.5',
-        );
+        .from('.p3-proof-point', { y: 20, opacity: 0, duration: 0.6, stagger: 0.06 }, '-=0.5');
     }, mainRef);
 
     return () => context.revert();
@@ -404,7 +396,8 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onOpenDesigns }) => {
           </Magnetic>
         </div>
         <p className="relative mx-auto mt-14 max-w-[1450px] border-t border-white/25 pt-5 text-[10px] font-black uppercase tracking-[0.22em] text-white/50">
-          <bdi dir="ltr">{BRAND.displayName}</bdi> · {getLocalizedBrandText(BRAND.location, language)}
+          <bdi dir="ltr">{BRAND.displayName}</bdi> ·{' '}
+          {getLocalizedBrandText(BRAND.location, language)}
         </p>
       </section>
     </div>

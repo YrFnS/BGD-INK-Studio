@@ -24,11 +24,7 @@ const orderDetails = {
   house: '',
 };
 
-const renderReceipt = (
-  onReset = vi.fn(),
-  onOpenDesigns = vi.fn(),
-  onStartNew = vi.fn(),
-) =>
+const renderReceipt = (onReset = vi.fn(), onOpenDesigns = vi.fn(), onStartNew = vi.fn()) =>
   render(
     <AppProvider>
       <Success

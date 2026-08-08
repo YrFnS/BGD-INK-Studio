@@ -37,9 +37,7 @@ test('downloads a multi-surface PNG proof and URL-free JSON specification', asyn
   const specificationDownloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download JSON specification' }).click();
   const specificationDownload = await specificationDownloadPromise;
-  expect(specificationDownload.suggestedFilename()).toMatch(
-    /^bgd-ink-.*-specification\.json$/,
-  );
+  expect(specificationDownload.suggestedFilename()).toMatch(/^bgd-ink-.*-specification\.json$/);
   const specificationPath = await specificationDownload.path();
   expect(specificationPath).not.toBeNull();
   const specificationText = await readFile(specificationPath as string, 'utf8');

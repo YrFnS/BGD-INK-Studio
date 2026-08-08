@@ -102,7 +102,8 @@ describe('IndexedDB design drafts', () => {
 
     const restored = await loadDesignDraft(draft.id);
     expect(restored).not.toBeNull();
-    expect(restored?.version).toBe(5);
+    expect(restored?.version).toBe(6);
+    expect(restored?.revision).toBeGreaterThan(0);
     expect(restored?.quantity).toBe(8);
     expect(restored?.assetIds).toEqual([]);
     expect(restored?.checkoutDetails).toEqual({

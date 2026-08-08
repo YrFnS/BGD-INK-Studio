@@ -56,7 +56,11 @@ export const STUDIO_GUIDE_CONTENT = {
       { id: 'status', href: '#status', label: { en: 'Current status', ar: 'الحالة الحالية' } },
       { id: 'sizing', href: '#sizing', label: { en: 'Sizing', ar: 'القياسات' } },
       { id: 'methods', href: '#methods', label: { en: 'Print methods', ar: 'طرق الطباعة' } },
-      { id: 'preparation', href: '#preparation', label: { en: 'Artwork prep', ar: 'تجهيز التصميم' } },
+      {
+        id: 'preparation',
+        href: '#preparation',
+        label: { en: 'Artwork prep', ar: 'تجهيز التصميم' },
+      },
       { id: 'policies', href: '#policies', label: { en: 'Prototype limits', ar: 'حدود النسخة' } },
       { id: 'faq', href: '#faq', label: { en: 'FAQ', ar: 'الأسئلة' } },
     ],
@@ -113,7 +117,10 @@ export const STUDIO_GUIDE_CONTENT = {
       en: 'Until the exact blank and its size run are physically measured, generic chest and length numbers would be misleading. Use the workflow below to compare a garment you already like.',
       ar: 'لحد ما نقيس القطعة المعتمدة فعلياً بكل المقاسات، أي أرقام عامة للصدر والطول راح تكون مضللة. استخدم الخطوات أدناه وقارن بقطعة مرتاح على قياسها.',
     },
-    pendingTitle: { en: 'Exact garment chart pending', ar: 'جدول القياسات الحقيقي بعده قيد التأكيد' },
+    pendingTitle: {
+      en: 'Exact garment chart pending',
+      ar: 'جدول القياسات الحقيقي بعده قيد التأكيد',
+    },
     pendingDescription: {
       en: 'The final chart needs the approved garment blank, every offered size, a consistent measuring method, and an allowed manufacturing tolerance.',
       ar: 'الجدول النهائي يحتاج القطعة المعتمدة، كل المقاسات اللي راح تنعرض، طريقة قياس ثابتة، ونسبة سماح واضحة لاختلاف التصنيع.',
@@ -294,7 +301,10 @@ export const STUDIO_GUIDE_CONTENT = {
     items: [
       {
         id: 'real-order',
-        question: { en: 'Does saving the draft send a real order?', ar: 'هل حفظ المسودة يرسل طلب حقيقي؟' },
+        question: {
+          en: 'Does saving the draft send a real order?',
+          ar: 'هل حفظ المسودة يرسل طلب حقيقي؟',
+        },
         answer: {
           en: 'No. It saves a local receipt and marks the design as prepared locally only inside this browser. No studio, payment service, or production team receives it.',
           ar: 'لا. ينحفظ إيصال محلي، وينعلّم التصميم كمجهّز محلياً داخل هذا المتصفح فقط. ما يوصل للستوديو أو خدمة دفع أو فريق إنتاج.',

@@ -59,18 +59,25 @@ for (const relativePath of customerFacingFiles) {
 
 const heroSource = contentsByFile.get('src/features/hero/Hero.tsx') ?? '';
 if (/\p{Extended_Pictographic}/u.test(heroSource)) {
-  failures.push('src/features/hero/Hero.tsx: emoji cannot be used as the owned process-icon system');
+  failures.push(
+    'src/features/hero/Hero.tsx: emoji cannot be used as the owned process-icon system',
+  );
 }
 
 const productsSource = contentsByFile.get('src/data/products.ts') ?? '';
-const imagePaths = Array.from(productsSource.matchAll(/image:\s*['"]([^'"]+)['"]/g), (match) => match[1]);
+const imagePaths = Array.from(
+  productsSource.matchAll(/image:\s*['"]([^'"]+)['"]/g),
+  (match) => match[1],
+);
 if (imagePaths.length === 0) {
   failures.push('src/data/products.ts: no product artwork paths were found');
 }
 
 for (const imagePath of imagePaths) {
   if (!imagePath.startsWith('/brand/products/') || !imagePath.endsWith('.svg')) {
-    failures.push(`src/data/products.ts: product artwork must be an owned /brand/products/*.svg asset, received ${imagePath}`);
+    failures.push(
+      `src/data/products.ts: product artwork must be an owned /brand/products/*.svg asset, received ${imagePath}`,
+    );
     continue;
   }
 

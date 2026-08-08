@@ -31,10 +31,7 @@ describe('Studio Guide', () => {
     expect(screen.getAllByText('Reference only')).toHaveLength(3);
     expect(screen.getByText('Does saving the draft send a real order?')).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Guide sections' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Print methods/ })).toHaveAttribute(
-      'href',
-      '#methods',
-    );
+    expect(screen.getByRole('link', { name: /Print methods/ })).toHaveAttribute('href', '#methods');
 
     fireEvent.click(screen.getByRole('button', { name: 'Browse model-ready garments' }));
     fireEvent.click(screen.getByRole('button', { name: 'Open my saved designs' }));
@@ -51,10 +48,7 @@ describe('Studio Guide', () => {
       screen.getByRole('heading', { name: 'اعرف شنو المؤكد قبل لا تبدأ التصميم.' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'أقسام الدليل' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /طرق الطباعة/ })).toHaveAttribute(
-      'href',
-      '#methods',
-    );
+    expect(screen.getByRole('link', { name: /طرق الطباعة/ })).toHaveAttribute('href', '#methods');
     expect(screen.getAllByText('مرجع عام')).toHaveLength(3);
     expect(screen.getByText('هل حفظ المسودة يرسل طلب حقيقي؟')).toBeInTheDocument();
     expect(document.documentElement).toHaveAttribute('lang', 'ar');

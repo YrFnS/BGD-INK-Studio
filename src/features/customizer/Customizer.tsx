@@ -18,13 +18,8 @@ import {
   saveDesignDraft,
   storeArtworkFile,
 } from '@/services/drafts';
-import {
-  DEFAULT_PRINT_SURFACE_ID,
-  DecalLayer,
-  PrintSurfaceId,
-  Product,
-  Size,
-} from '@/types';
+import { registerDraftPersistenceFlusher } from '@/persistenceCoordinator';
+import { DEFAULT_PRINT_SURFACE_ID, DecalLayer, PrintSurfaceId, Product, Size } from '@/types';
 import {
   analyzeArtworkFile,
   analyzeArtworkUrl,
@@ -50,10 +45,7 @@ import {
   clampScaleToSurface,
   createDefaultSurfaceTransform,
 } from './printArea';
-import type {
-  PreviewMode,
-  RenderingFallbackReason,
-} from './renderingCapabilities';
+import type { PreviewMode, RenderingFallbackReason } from './renderingCapabilities';
 import { Scene } from './Scene';
 import { useRenderingEnvironment } from './useRenderingEnvironment';
 import { validateArtworkFile } from './artworkValidation';
@@ -76,7 +68,10 @@ const createLayerId = (): string => {
 };
 
 const createLayerName = (fileName: string, index: number): string => {
-  const name = fileName.replace(/\.[^.]+$/, '').trim().replace(/\s+/g, ' ');
+  const name = fileName
+    .replace(/\.[^.]+$/, '')
+    .trim()
+    .replace(/\s+/g, ' ');
   return name.slice(0, 60) || `Artwork ${index + 1}`;
 };
 
@@ -86,13 +81,29 @@ const createSnapshot = (
   notes: string,
   activeDecalId: string | null,
   decals: DecalLayer[],
+  retainedAssetIds: string[] = [],
 ): DesignDraftSnapshot => ({
   color,
   size,
   notes,
   activeDecalId,
   decals,
+  retainedAssetIds,
 });
+
+const collectRetainedAssetIds = (history: EditorHistory | null, decals: DecalLayer[]): string[] => {
+  const assetIds = new Set(decals.flatMap((layer) => (layer.assetId ? [layer.assetId] : [])));
+
+  if (history) {
+    [...history.past, history.present, ...history.future].forEach((snapshot) => {
+      snapshot.decals.forEach((layer) => {
+        if (layer.assetId) assetIds.add(layer.assetId);
+      });
+    });
+  }
+
+  return Array.from(assetIds);
+};
 
 const normalizeLayerForModel = (
   layer: DecalLayer,
@@ -135,12 +146,8 @@ const analyzeRestoredLayer = async (layer: DecalLayer): Promise<DecalLayer> => {
 export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onMissingDraft }) => {
   const { theme, t, language } = useAppContext();
   const { showToast } = useToast();
-  const {
-    isPageVisible,
-    renderingProfile,
-    webglSupport,
-    recheckWebGLSupport,
-  } = useRenderingEnvironment();
+  const { isPageVisible, renderingProfile, webglSupport, recheckWebGLSupport } =
+    useRenderingEnvironment();
 
   useSEO('seo.customizer.title', 'seo.customizer.description');
 
@@ -150,9 +157,8 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   const [modelConfig, setModelConfig] = useState<ReadyProductModelConfig | null>(null);
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState<Size>(Size.L);
-  const [selectedSurfaceId, setSelectedSurfaceId] = useState<PrintSurfaceId>(
-    DEFAULT_PRINT_SURFACE_ID,
-  );
+  const [selectedSurfaceId, setSelectedSurfaceId] =
+    useState<PrintSurfaceId>(DEFAULT_PRINT_SURFACE_ID);
   const [notes, setNotes] = useState('');
   const [decals, setDecals] = useState<DecalLayer[]>([]);
   const [activeDecalId, setActiveDecalId] = useState<string | null>(null);
@@ -183,6 +189,13 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   const mountedRef = useRef(true);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const saveVersionRef = useRef(0);
+  const pendingSaveRef = useRef<DesignDraftSnapshot | null>(null);
+  const autosaveTimerRef = useRef<number | null>(null);
+  const languageRef = useRef(language);
+
+  useEffect(() => {
+    languageRef.current = language;
+  }, [language]);
 
   const updateHistoryAvailability = useCallback((history = historyRef.current) => {
     setCanUndo(Boolean(history?.past.length));
@@ -205,9 +218,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     const normalizedDecals = config
       ? snapshot.decals.map((layer, index) => normalizeLayerForModel(layer, config, index))
       : snapshot.decals;
-    const activeLayer = normalizedDecals.find(
-      (layer) => layer.id === snapshot.activeDecalId,
-    );
+    const activeLayer = normalizedDecals.find((layer) => layer.id === snapshot.activeDecalId);
     const hasSelectedSurface = config?.surfaces.some(
       (surface) => surface.id === snapshot.selectedSurfaceId,
     );
@@ -338,6 +349,24 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     [draftId],
   );
 
+  const flushPendingSave = useCallback(async (): Promise<void> => {
+    if (autosaveTimerRef.current !== null) {
+      window.clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+
+    const pendingSnapshot = pendingSaveRef.current;
+    pendingSaveRef.current = null;
+
+    if (pendingSnapshot) await queueDraftSave(pendingSnapshot);
+    await saveQueueRef.current;
+  }, [queueDraftSave]);
+
+  useEffect(
+    () => registerDraftPersistenceFlusher(`customizer:${draftId}`, flushPendingSave),
+    [draftId, flushPendingSave],
+  );
+
   useEffect(() => {
     if (webglSupport !== 'unsupported') return;
     endEditorGesture();
@@ -405,8 +434,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
             ? draft.color
             : matchingProduct.colors[0],
           size: draft.size,
-          selectedSurfaceId:
-            restoredActiveLayer?.surfaceId ?? matchingModelConfig.defaultSurfaceId,
+          selectedSurfaceId: restoredActiveLayer?.surfaceId ?? matchingModelConfig.defaultSurfaceId,
           activeDecalId: restoredActiveLayer?.id ?? null,
           decals: normalizedDecals,
         };
@@ -422,7 +450,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
 
         if (draft.missingAssetCount > 0) {
           showToast(
-            language === 'ar'
+            languageRef.current === 'ar'
               ? `تعذر استرجاع ${draft.missingAssetCount} من ملفات التصميم.`
               : `${draft.missingAssetCount} artwork file(s) could not be restored.`,
             'error',
@@ -444,18 +472,38 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
       historyRef.current = null;
       gestureStartRef.current = null;
     };
-  }, [applyEditorSnapshot, draftId, language, showToast, updateHistoryAvailability]);
+  }, [applyEditorSnapshot, draftId, showToast, updateHistoryAvailability]);
 
   useEffect(() => {
     if (loadStatus !== 'ready') return undefined;
 
     setSaveStatus('unsaved');
-    const snapshot = createSnapshot(selectedColor, selectedSize, notes, activeDecalId, decals);
-    const timer = window.setTimeout(() => {
-      void queueDraftSave(snapshot).catch(() => undefined);
+    pendingSaveRef.current = createSnapshot(
+      selectedColor,
+      selectedSize,
+      notes,
+      activeDecalId,
+      decals,
+      collectRetainedAssetIds(historyRef.current, decals),
+    );
+
+    if (autosaveTimerRef.current !== null) window.clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = window.setTimeout(() => {
+      autosaveTimerRef.current = null;
+      const pendingSnapshot = pendingSaveRef.current;
+      pendingSaveRef.current = null;
+      if (!pendingSnapshot) return;
+      void queueDraftSave(pendingSnapshot).catch(() => {
+        pendingSaveRef.current = pendingSnapshot;
+      });
     }, 650);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      if (autosaveTimerRef.current !== null) {
+        window.clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
   }, [activeDecalId, decals, loadStatus, notes, queueDraftSave, selectedColor, selectedSize]);
 
   useEffect(() => {
@@ -579,8 +627,8 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
       const nextDecals = current.decals.filter((layer) => layer.id !== id);
       const nextActiveLayer =
         current.activeDecalId === id
-          ? nextDecals[Math.min(index, nextDecals.length - 1)] ?? null
-          : nextDecals.find((layer) => layer.id === current.activeDecalId) ?? null;
+          ? (nextDecals[Math.min(index, nextDecals.length - 1)] ?? null)
+          : (nextDecals.find((layer) => layer.id === current.activeDecalId) ?? null);
 
       return {
         ...current,
@@ -591,9 +639,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     });
 
     showToast(
-      language === 'ar'
-        ? 'تم حذف الطبقة. يمكنك التراجع.'
-        : 'Layer removed. You can undo.',
+      language === 'ar' ? 'تم حذف الطبقة. يمكنك التراجع.' : 'Layer removed. You can undo.',
       'info',
     );
   };
@@ -609,11 +655,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
 
         const surface = getPrintSurface(config, layer.surfaceId);
         const aspectRatio = normalizeArtworkAspectRatio(layer.aspectRatio);
-        const scale = clampScaleToSurface(
-          updates.scale ?? layer.scale,
-          surface,
-          aspectRatio,
-        );
+        const scale = clampScaleToSurface(updates.scale ?? layer.scale, surface, aspectRatio);
         const position = clampPositionToSurface(
           updates.position ?? layer.position,
           surface,
@@ -673,8 +715,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     const next = {
       ...current,
       selectedSurfaceId: surfaceId,
-      activeDecalId:
-        activeLayer && activeLayer.surfaceId === surfaceId ? activeLayer.id : null,
+      activeDecalId: activeLayer && activeLayer.surfaceId === surfaceId ? activeLayer.id : null,
     };
     applyEditorSnapshot(next);
     syncHistoryPresent(next);
@@ -846,10 +887,12 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
       notes,
       activeDecalIdRef.current,
       decalsRef.current,
+      collectRetainedAssetIds(historyRef.current, decalsRef.current),
     );
 
     try {
-      await queueDraftSave(snapshot);
+      pendingSaveRef.current = snapshot;
+      await flushPendingSave();
       onCheckout(draftId);
     } catch {
       showToast(

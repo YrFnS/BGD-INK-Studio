@@ -122,9 +122,7 @@ export const PRODUCT_MODEL_CONFIGS: Record<string, ProductModelConfig> = {
 export const getProductModelConfig = (productId: string): ProductModelConfig | null =>
   PRODUCT_MODEL_CONFIGS[productId] ?? null;
 
-export const getReadyProductModelConfig = (
-  productId: string,
-): ReadyProductModelConfig | null => {
+export const getReadyProductModelConfig = (productId: string): ReadyProductModelConfig | null => {
   const config = getProductModelConfig(productId);
   return config?.status === 'ready' ? config : null;
 };

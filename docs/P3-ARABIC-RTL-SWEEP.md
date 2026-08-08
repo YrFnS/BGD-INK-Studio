@@ -17,13 +17,13 @@ bgd-ink-language
 On every language change and restored page load, the application keeps these document attributes synchronized:
 
 ```html
-<html lang="ar" dir="rtl" data-language="ar">
+<html lang="ar" dir="rtl" data-language="ar"></html>
 ```
 
 or:
 
 ```html
-<html lang="en" dir="ltr" data-language="en">
+<html lang="en" dir="ltr" data-language="en"></html>
 ```
 
 This means a direct refresh no longer resets an Arabic customer to English, and layout behavior can rely on the document language instead of component-local assumptions.
@@ -123,15 +123,15 @@ The draft-recovery journey continues to verify artwork, notes, contact fields, q
 
 The reviewed bilingual/RTL work remains within the existing production budgets:
 
-| Metric | Current | Limit |
-| --- | ---: | ---: |
-| Initial JavaScript, gzip | 97.56 KiB | 140 KiB |
-| Initial CSS, gzip | 15.48 KiB | 16 KiB |
-| Largest async JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
-| Largest JavaScript chunk, raw | 651.42 KiB | 800 KiB |
-| Total JavaScript, gzip | 400.60 KiB | 410 KiB |
-| Total JavaScript, raw | 1,365.58 KiB | 1,400 KiB |
-| Total CSS, gzip | 15.48 KiB | 16.5 KiB |
+| Metric                               |      Current |     Limit |
+| ------------------------------------ | -----------: | --------: |
+| Initial JavaScript, gzip             |    97.56 KiB |   140 KiB |
+| Initial CSS, gzip                    |    15.48 KiB |    16 KiB |
+| Largest async JavaScript chunk, gzip |   168.08 KiB |   230 KiB |
+| Largest JavaScript chunk, raw        |   651.42 KiB |   800 KiB |
+| Total JavaScript, gzip               |   400.60 KiB |   410 KiB |
+| Total JavaScript, raw                | 1,365.58 KiB | 1,400 KiB |
+| Total CSS, gzip                      |    15.48 KiB |  16.5 KiB |
 
 No budget was raised for this work.
 

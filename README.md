@@ -116,6 +116,21 @@ Still dependent on approved business content and hardware:
 - Approved privacy, returns, care, and fulfillment policies
 - Physical Android, iPhone, and tablet validation
 
+### P5 — pre-launch hardening
+
+Implemented on `agent/bgd-ink-p5-prelaunch-hardening`:
+
+- Flushes pending customizer and preparation saves before internal navigation and browser history transitions
+- Keeps language changes from reloading the active editor
+- Removes the obsolete duplicate local receipt store and purges legacy customer-contact records
+- Uses atomic IndexedDB draft updates with revisions and bounded artwork cleanup
+- Requires an explicit verified URL and indexability flag before publishing canonical or crawlable output
+- Localizes WhatsApp handoff fields and resolves the garment display name
+- Verifies every owned product asset in the fresh PWA precache
+- Removes third-party font requests and adds a restrictive production Content Security Policy
+- Localizes global loading and crash recovery states
+- Removes the unused GSAP package while retaining the local Web Animations adapter
+
 ### P4 — delivery, SEO, and controlled PWA
 
 The code-only foundation is complete:
@@ -245,15 +260,15 @@ Current validated coverage:
 
 ## Routes
 
-| Route | Purpose | Search visibility |
-| --- | --- | --- |
-| `/` | Premium landing page | Public |
-| `/catalog` | Model-aware garment selection | Public |
-| `/guide` | Measurement, method, policy, and FAQ guidance | Public |
-| `/designs` | Recent local designs | Private/noindex |
-| `/studio/:draftId` | Recoverable 3D editor | Private/noindex |
-| `/checkout/:draftId` | Recoverable local draft preparation | Private/noindex |
-| `/draft/:draftId` | Local draft receipt | Private/noindex |
+| Route                | Purpose                                       | Search visibility |
+| -------------------- | --------------------------------------------- | ----------------- |
+| `/`                  | Premium landing page                          | Public            |
+| `/catalog`           | Model-aware garment selection                 | Public            |
+| `/guide`             | Measurement, method, policy, and FAQ guidance | Public            |
+| `/designs`           | Recent local designs                          | Private/noindex   |
+| `/studio/:draftId`   | Recoverable 3D editor                         | Private/noindex   |
+| `/checkout/:draftId` | Recoverable local draft preparation           | Private/noindex   |
+| `/draft/:draftId`    | Local draft receipt                           | Private/noindex   |
 
 Browser Back/Forward navigation is supported. Netlify direct-route fallback is provided through `public/_redirects`.
 
@@ -344,15 +359,15 @@ The action is hidden until a verified WhatsApp number is configured in `src/conf
 
 Three.js remains lazy and excluded from the initial storefront.
 
-| Metric | Current | Limit |
-| --- | ---: | ---: |
-| Initial JavaScript, gzip | 74.81 KiB | 90 KiB |
-| Initial CSS, gzip | 15.97 KiB | 16 KiB |
-| Largest async JavaScript chunk, gzip | 168.08 KiB | 200 KiB |
-| Largest JavaScript chunk, raw | 651.42 KiB | 725 KiB |
-| Total JavaScript, gzip | 381.03 KiB | 390 KiB |
-| Total JavaScript, raw | 1,322.97 KiB | 1,350 KiB |
-| Total CSS, gzip | 15.97 KiB | 17 KiB |
+| Metric                               |      Current |     Limit |
+| ------------------------------------ | -----------: | --------: |
+| Initial JavaScript, gzip             |    74.81 KiB |    90 KiB |
+| Initial CSS, gzip                    |    15.97 KiB |    16 KiB |
+| Largest async JavaScript chunk, gzip |   168.08 KiB |   200 KiB |
+| Largest JavaScript chunk, raw        |   651.42 KiB |   725 KiB |
+| Total JavaScript, gzip               |   381.03 KiB |   390 KiB |
+| Total JavaScript, raw                | 1,322.97 KiB | 1,350 KiB |
+| Total CSS, gzip                      |    15.97 KiB |    17 KiB |
 
 No P4 budget was raised.
 

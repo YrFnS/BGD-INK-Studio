@@ -94,7 +94,8 @@ export const Catalog: React.FC<CatalogProps> = ({
   }, [products, status]);
 
   const readyProductCount = useMemo(
-    () => products.filter((product) => product.inStock && isProductCustomizerReady(product.id)).length,
+    () =>
+      products.filter((product) => product.inStock && isProductCustomizerReady(product.id)).length,
     [products],
   );
 
@@ -332,7 +333,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                               : 'border border-black/10 text-black/38 dark:border-white/10 dark:text-white/35'
                           }`}
                         >
-                          {isBusy ? preparingText : unavailableLabel ?? t('catalog.startDesign')}
+                          {isBusy ? preparingText : (unavailableLabel ?? t('catalog.startDesign'))}
                         </span>
                       </div>
                     </div>

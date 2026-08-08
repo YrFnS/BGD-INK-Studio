@@ -90,7 +90,9 @@ describe('Arabic customizer controls', () => {
   it('keeps layer actions and transform values clear inside RTL controls', () => {
     renderControls([layer], layer.id);
 
-    expect(screen.getByRole('button', { name: 'الطبقة المختارة: شعار الفريق' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'الطبقة المختارة: شعار الفريق' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'اخفِ الطبقة' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'انسخ الطبقة' })).toBeInTheDocument();
     expect(screen.getByLabelText('اسم الطبقة')).toHaveAttribute('dir', 'auto');

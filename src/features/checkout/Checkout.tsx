@@ -17,6 +17,7 @@ import {
   saveCheckoutDetails,
   saveDraftQuantity,
 } from '@/services/drafts';
+import { registerDraftPersistenceFlusher } from '@/persistenceCoordinator';
 import { OrderDetails, PendingOrder, Product } from '@/types';
 import { submitOrder } from './services';
 import { BAGHDAD_AREA_OPTIONS, checkoutSchema } from './validation';
@@ -67,6 +68,8 @@ export const Checkout: React.FC<CheckoutProps> = ({
   const restoredDraftRef = useRef<HydratedDesignDraft | null>(null);
   const submitControllerRef = useRef<AbortController | null>(null);
   const preparationSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const pendingPreparationRef = useRef<{ details: OrderDetails; quantity: number } | null>(null);
+  const preparationTimerRef = useRef<number | null>(null);
 
   const copy = isArabic
     ? {
@@ -88,10 +91,8 @@ export const Checkout: React.FC<CheckoutProps> = ({
           'تعذر حفظ معلومات التواصل أو الكمية داخل المتصفح. جرّب الحفظ مرة ثانية قبل ما تكمل.',
         retrySave: 'أعد محاولة الحفظ',
         retryingSave: 'جاري إعادة الحفظ…',
-        artworkNotStored:
-          'ملفات التصميم لازم تنحفظ على هذا الجهاز قبل ما نكدر نحفظ إيصال المسودة.',
-        submitFailed:
-          'تعذر حفظ إيصال المسودة محلياً. راجع مساحة التخزين بالمتصفح وحاول مرة ثانية.',
+        artworkNotStored: 'ملفات التصميم لازم تنحفظ على هذا الجهاز قبل ما نكدر نحفظ إيصال المسودة.',
+        submitFailed: 'تعذر حفظ إيصال المسودة محلياً. راجع مساحة التخزين بالمتصفح وحاول مرة ثانية.',
         saving: 'جاري حفظ المسودة…',
         quantity: 'الكمية المحلية',
         decreaseQuantity: 'قلّل الكمية',
@@ -172,6 +173,23 @@ export const Checkout: React.FC<CheckoutProps> = ({
     [draftId],
   );
 
+  const flushPreparationSave = useCallback(async (): Promise<void> => {
+    if (preparationTimerRef.current !== null) {
+      window.clearTimeout(preparationTimerRef.current);
+      preparationTimerRef.current = null;
+    }
+
+    const pending = pendingPreparationRef.current;
+    pendingPreparationRef.current = null;
+    if (pending) await queuePreparationSave(pending.details, pending.quantity);
+    await preparationSaveQueueRef.current;
+  }, [queuePreparationSave]);
+
+  useEffect(
+    () => registerDraftPersistenceFlusher(`checkout:${draftId}`, flushPreparationSave),
+    [draftId, flushPreparationSave],
+  );
+
   useEffect(() => {
     const controller = new AbortController();
     let disposed = false;
@@ -228,11 +246,25 @@ export const Checkout: React.FC<CheckoutProps> = ({
     if (loadStatus !== 'ready') return undefined;
 
     setFormSaveFailed(false);
-    const timer = window.setTimeout(() => {
-      void queuePreparationSave(formData, quantity).catch(() => setFormSaveFailed(true));
+    pendingPreparationRef.current = { details: formData, quantity };
+    if (preparationTimerRef.current !== null) window.clearTimeout(preparationTimerRef.current);
+    preparationTimerRef.current = window.setTimeout(() => {
+      preparationTimerRef.current = null;
+      const pending = pendingPreparationRef.current;
+      pendingPreparationRef.current = null;
+      if (!pending) return;
+      void queuePreparationSave(pending.details, pending.quantity).catch(() => {
+        pendingPreparationRef.current = pending;
+        setFormSaveFailed(true);
+      });
     }, 500);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      if (preparationTimerRef.current !== null) {
+        window.clearTimeout(preparationTimerRef.current);
+        preparationTimerRef.current = null;
+      }
+    };
   }, [formData, loadStatus, quantity, queuePreparationSave]);
 
   useEffect(() => {
@@ -295,7 +327,8 @@ export const Checkout: React.FC<CheckoutProps> = ({
     setSubmitError(null);
 
     try {
-      await queuePreparationSave(formData, quantity);
+      pendingPreparationRef.current = { details: formData, quantity };
+      await flushPreparationSave();
       setFormSaveFailed(false);
     } catch {
       setFormSaveFailed(true);
@@ -336,8 +369,11 @@ export const Checkout: React.FC<CheckoutProps> = ({
     submitControllerRef.current = controller;
 
     try {
-      await preparationSaveQueueRef.current.catch(() => undefined);
-      await queuePreparationSave(normalizedDetails, pendingOrder.quantity);
+      pendingPreparationRef.current = {
+        details: normalizedDetails,
+        quantity: pendingOrder.quantity,
+      };
+      await flushPreparationSave();
       setFormSaveFailed(false);
       const result = await submitOrder(draftId, pendingOrder, normalizedDetails, controller.signal);
       await markDesignDraftPrepared(draftId, result.orderId);
@@ -358,7 +394,11 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
   if (loadStatus === 'loading') {
     return (
-      <div className="flex min-h-[70vh] items-center justify-center px-4 pt-24" role="status" aria-live="polite">
+      <div
+        className="flex min-h-[70vh] items-center justify-center px-4 pt-24"
+        role="status"
+        aria-live="polite"
+      >
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-black dark:border-gray-800 dark:border-t-white" />
           <p className="text-sm font-medium text-gray-500">{copy.loading}</p>
@@ -425,18 +465,38 @@ export const Checkout: React.FC<CheckoutProps> = ({
               stroke="currentColor"
               aria-hidden="true"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             <span className="font-medium">{t('common.back')}</span>
           </button>
 
-          <p className={isArabic ? 'mb-3 text-[11px] font-black text-accent' : 'mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-accent'}>
+          <p
+            className={
+              isArabic
+                ? 'mb-3 text-[11px] font-black text-accent'
+                : 'mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-accent'
+            }
+          >
             {copy.eyebrow}
           </p>
-          <h1 className={isArabic ? 'mb-3 text-3xl font-bold leading-[1.35]' : 'mb-3 text-3xl font-bold uppercase tracking-tight'}>
+          <h1
+            className={
+              isArabic
+                ? 'mb-3 text-3xl font-bold leading-[1.35]'
+                : 'mb-3 text-3xl font-bold uppercase tracking-tight'
+            }
+          >
             {t('checkout.title')}
           </h1>
-          <p className="mb-8 max-w-xl text-sm leading-7 text-gray-500 dark:text-gray-400" dir="auto">
+          <p
+            className="mb-8 max-w-xl text-sm leading-7 text-gray-500 dark:text-gray-400"
+            dir="auto"
+          >
             {copy.introduction}
           </p>
 
@@ -529,8 +589,19 @@ export const Checkout: React.FC<CheckoutProps> = ({
                   ))}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 end-4 flex items-center text-gray-500">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </div>
               </div>
@@ -583,7 +654,10 @@ export const Checkout: React.FC<CheckoutProps> = ({
             )}
 
             {submitError && (
-              <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm leading-7 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100" role="alert">
+              <p
+                className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm leading-7 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100"
+                role="alert"
+              >
                 {submitError}
               </p>
             )}
@@ -598,27 +672,49 @@ export const Checkout: React.FC<CheckoutProps> = ({
           </form>
         </div>
 
-        <aside className="order-summary h-fit min-w-0 rounded-[2rem] border border-black/10 bg-[#ece7de] p-6 dark:border-white/10 dark:bg-[#0d0d0d] sm:p-8" aria-label={t('checkout.summary')}>
+        <aside
+          className="order-summary h-fit min-w-0 rounded-[2rem] border border-black/10 bg-[#ece7de] p-6 dark:border-white/10 dark:bg-[#0d0d0d] sm:p-8"
+          aria-label={t('checkout.summary')}
+        >
           <div className="mb-6 flex items-center justify-between gap-4">
-            <h2 className={isArabic ? 'text-xl font-bold leading-8' : 'text-xl font-bold uppercase tracking-tight'}>
+            <h2
+              className={
+                isArabic
+                  ? 'text-xl font-bold leading-8'
+                  : 'text-xl font-bold uppercase tracking-tight'
+              }
+            >
               {t('checkout.summary')}
             </h2>
-            <span className={isArabic
-              ? 'rounded-full border border-black/10 bg-white/50 px-3 py-1.5 text-[9px] font-black text-black/55 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/48'
-              : 'rounded-full border border-black/10 bg-white/50 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.13em] text-black/55 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/48'}
+            <span
+              className={
+                isArabic
+                  ? 'rounded-full border border-black/10 bg-white/50 px-3 py-1.5 text-[9px] font-black text-black/55 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/48'
+                  : 'rounded-full border border-black/10 bg-white/50 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.13em] text-black/55 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/48'
+              }
             >
               {copy.localOnly}
             </span>
           </div>
 
           <div className="relative mb-6 aspect-square overflow-hidden rounded-2xl border border-black/10 bg-[#f4f1ea] dark:border-white/10 dark:bg-black">
-            <img src={product.image} alt={t(product.name)} className="h-full w-full object-contain p-5 opacity-90" />
-            <div className="absolute inset-0 opacity-30 mix-blend-multiply" style={{ backgroundColor: pendingOrder.color }} />
+            <img
+              src={product.image}
+              alt={t(product.name)}
+              className="h-full w-full object-contain p-5 opacity-90"
+            />
+            <div
+              className="absolute inset-0 opacity-30 mix-blend-multiply"
+              style={{ backgroundColor: pendingOrder.color }}
+            />
 
             {pendingOrder.decals
               .filter((layer) => layer.visible)
               .map((layer) => (
-                <div key={layer.id} className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div
+                  key={layer.id}
+                  className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                >
                   <img
                     src={layer.url}
                     alt={layer.name || copy.artworkPreview}
@@ -650,7 +746,10 @@ export const Checkout: React.FC<CheckoutProps> = ({
               <div className="min-w-0 rounded-xl border border-black/10 bg-white/45 p-3 dark:border-white/10 dark:bg-white/[0.035]">
                 <span className={compactLabelClass}>{t('customizer.color')}</span>
                 <span className="mt-2 flex min-w-0 items-center gap-2 font-bold">
-                  <span className="h-4 w-4 shrink-0 rounded-full border border-black/20 dark:border-white/20" style={{ backgroundColor: pendingOrder.color }} />
+                  <span
+                    className="h-4 w-4 shrink-0 rounded-full border border-black/20 dark:border-white/20"
+                    style={{ backgroundColor: pendingOrder.color }}
+                  />
                   <bdi className="technical-ltr truncate" dir="ltr">
                     {pendingOrder.color}
                   </bdi>
@@ -662,7 +761,10 @@ export const Checkout: React.FC<CheckoutProps> = ({
               <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <span className="block font-bold">{copy.quantity}</span>
-                  <bdi className="technical-ltr mt-1 block text-xs text-black/42 dark:text-white/38" dir="ltr">
+                  <bdi
+                    className="technical-ltr mt-1 block text-xs text-black/42 dark:text-white/38"
+                    dir="ltr"
+                  >
                     {MIN_DRAFT_QUANTITY}–{MAX_DRAFT_QUANTITY}
                   </bdi>
                 </div>
@@ -714,8 +816,13 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
             {pendingOrder.notes && (
               <div className="border-b border-black/10 py-3 dark:border-white/10">
-                <span className="mb-1 block text-black/48 dark:text-white/42">{t('customizer.notes')}</span>
-                <p className="break-words font-medium italic text-black/62 dark:text-white/55" dir="auto">
+                <span className="mb-1 block text-black/48 dark:text-white/42">
+                  {t('customizer.notes')}
+                </span>
+                <p
+                  className="break-words font-medium italic text-black/62 dark:text-white/55"
+                  dir="auto"
+                >
                   “{pendingOrder.notes}”
                 </p>
               </div>
@@ -725,7 +832,8 @@ export const Checkout: React.FC<CheckoutProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-black/45 dark:text-white/40">
                 <span>{copy.unitPrice}</span>
                 <bdi className="technical-ltr" dir="ltr">
-                  {formatPrice(pendingOrder.basePrice)} {t('common.price')} × {pendingOrder.quantity}
+                  {formatPrice(pendingOrder.basePrice)} {t('common.price')} ×{' '}
+                  {pendingOrder.quantity}
                 </bdi>
               </div>
               <div className="flex flex-wrap items-end justify-between gap-4">
@@ -735,7 +843,10 @@ export const Checkout: React.FC<CheckoutProps> = ({
                     {copy.estimateNote}
                   </span>
                 </div>
-                <bdi className="technical-ltr text-end text-2xl font-black tracking-[-0.03em]" dir="ltr">
+                <bdi
+                  className="technical-ltr text-end text-2xl font-black tracking-[-0.03em]"
+                  dir="ltr"
+                >
                   {formatPrice(localEstimate)} {t('common.price')}
                 </bdi>
               </div>

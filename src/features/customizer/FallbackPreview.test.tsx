@@ -35,7 +35,9 @@ describe('safe 2D fallback', () => {
     const { container } = renderFallback(onRetry3d);
 
     expect(screen.getByText('Safe 2D preview')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /Classic T-Shirt.*Print area: Front/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: /Classic T-Shirt.*Print area: Front/ }),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Try 3D again' }));
     expect(onRetry3d).toHaveBeenCalledOnce();
