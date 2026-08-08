@@ -117,7 +117,7 @@ export const PwaPrompt: React.FC = () => {
 
   return (
     <aside
-      className="fixed inset-x-3 z-50 mx-auto max-w-lg rounded-3xl border border-black/10 bg-paper p-4 text-ink shadow-2xl dark:border-white/10 dark:bg-surface dark:text-primary sm:inset-x-6 sm:p-5"
+      className="fixed inset-x-3 z-50 mx-auto max-w-lg rounded-3xl border border-black/10 bg-paper p-4 text-ink shadow-2xl dark:border-white/10 dark:bg-surface dark:text-primary"
       style={{ bottom: 'max(0.75rem, calc(0.5rem + var(--safe-area-bottom)))' }}
       role="status"
       aria-live="polite"
@@ -131,12 +131,12 @@ export const PwaPrompt: React.FC = () => {
           B/I
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-black uppercase tracking-widest text-accent">{copy.eyebrow}</p>
+          <p className="text-xs font-black uppercase text-accent">{copy.eyebrow}</p>
           <h2 className="mt-1 text-lg font-black">{copy.title}</h2>
-          <p className="mt-2 text-sm leading-6 text-black/60 dark:text-white/60" dir="auto">
+          <p className="mt-2 text-sm leading-6 text-secondary" dir="auto">
             {copy.description}
           </p>
-          <p className="mt-2 text-xs font-semibold text-black/40 dark:text-white/40">
+          <p className="mt-2 text-xs font-semibold text-secondary">
             <bdi dir="ltr">{BRAND.productName}</bdi>
           </p>
         </div>
@@ -146,14 +146,14 @@ export const PwaPrompt: React.FC = () => {
         <button
           type="button"
           onClick={handleDismiss}
-          className="min-h-11 rounded-full border border-black/10 px-5 text-xs font-black transition-colors hover:border-black/30 hover:bg-white dark:border-white/10 dark:hover:border-white/30 dark:hover:bg-white/5"
+          className="min-h-11 rounded-full border border-black/10 px-5 text-xs font-black dark:border-white/10"
         >
           {copy.dismiss}
         </button>
         <button
           type="button"
           onClick={() => void handlePrimaryAction()}
-          className="min-h-11 rounded-full bg-accent px-5 text-xs font-black text-white transition-transform hover:-translate-y-0.5"
+          className="min-h-11 rounded-full bg-accent px-5 text-xs font-black text-white"
         >
           {copy.action}
         </button>
