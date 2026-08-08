@@ -1,0 +1,70 @@
+name: P5 hardening bootstrap
+
+on:
+  push:
+    branches:
+      - agent/bgd-ink-p5-prelaunch-hardening
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p5-hardening-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apply-and-validate:
+    name: Apply and validate P5 hardening
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout P5 branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/bgd-ink-p5-prelaunch-hardening
+          fetch-depth: 0
+          lfs: true
+
+      - name: Set up Node.js and npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install current locked dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Apply the P5 migration
+        run: node scripts/p5-hardening.mjs
+
+      - name: Refresh the lockfile after dependency cleanup
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Reinstall the final locked dependency graph
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Format the final source
+        run: npm run format
+
+      - name: Run the complete fast validation gate
+        run: npm run check
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run desktop, mobile, and tablet browser journeys
+        run: npm run test:e2e
+
+      - name: Run the production PWA journey
+        run: npm run test:pwa
+
+      - name: Commit the validated hardening changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "harden local persistence and delivery boundaries"
+          git push origin HEAD:agent/bgd-ink-p5-prelaunch-hardening
