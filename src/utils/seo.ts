@@ -178,7 +178,10 @@ export const buildRouteStructuredData = ({
     graph.push({
       '@type': 'ItemList',
       '@id': itemListId,
-      name: language === 'ar' ? 'قطع BGD/INK المحلية' : 'BGD/INK local garments',
+      name:
+        language === 'ar'
+          ? `قطع ${BRAND.displayName} المحلية`
+          : `${BRAND.displayName} local garments`,
       numberOfItems: PRODUCTS.length,
       itemListElement: PRODUCTS.map((product, index) => {
         const presentation = getProductPresentation(product.id);
