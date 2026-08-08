@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
@@ -11,6 +11,7 @@ const files = {
     'utf8',
   ),
   magnetic: await readFile(path.join(root, 'src/components/ui/Magnetic.tsx'), 'utf8'),
+  runtimeJourney: await readFile(path.join(root, 'e2e/runtime-shell.spec.ts'), 'utf8'),
 };
 
 const failures = [];
@@ -22,6 +23,19 @@ const requirePattern = (source, pattern, message) => {
 const forbidPattern = (source, pattern, message) => {
   if (pattern.test(source)) failures.push(message);
 };
+
+for (const relativePath of [
+  'src/components/ui/Cursor.tsx',
+  'src/components/ui/Noise.tsx',
+  'src/components/ui/Preloader.tsx',
+]) {
+  try {
+    await access(path.join(root, relativePath));
+    failures.push(`${relativePath} must stay removed from the runtime shell`);
+  } catch {
+    // The obsolete effect is absent as required.
+  }
+}
 
 forbidPattern(
   files.app,
@@ -68,6 +82,21 @@ forbidPattern(
   /mousemove|getBoundingClientRect|quickTo|from ['"]gsap['"]|useEffect|useRef/,
   'primary actions must not perform layout-driven pointer animation work',
 );
+requirePattern(
+  files.runtimeJourney,
+  /not\.toHaveCSS\('cursor', 'none'\)/,
+  'the Chromium runtime journey must verify native cursor behavior',
+);
+requirePattern(
+  files.runtimeJourney,
+  /data-runtime-marker/,
+  'the Chromium runtime journey must prove same-route rerenders preserve the route container',
+);
+requirePattern(
+  files.runtimeJourney,
+  /page\.goBack\(\)[\s\S]*page\.goForward\(\)/,
+  'the Chromium runtime journey must cover browser Back and Forward navigation',
+);
 
 if (failures.length > 0) {
   console.error('\nRuntime-shell validation failed:\n');
@@ -76,5 +105,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  'Runtime-shell validation passed: native cursors, immediate startup, lightweight route motion, and layout-free primary actions are enforced.',
+  'Runtime-shell validation passed: native cursors, immediate startup, lightweight route motion, stable history navigation, and layout-free primary actions are enforced.',
 );
