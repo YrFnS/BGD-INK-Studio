@@ -2,9 +2,6 @@ import React, { ReactNode, Suspense, useRef, useState } from 'react';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { PageTransition } from '@/components/layout/PageTransition';
-import { Cursor } from '@/components/ui/Cursor';
-import { Noise } from '@/components/ui/Noise';
-import { Preloader } from '@/components/ui/Preloader';
 import { PwaPrompt } from '@/components/ui/PwaPrompt';
 import { PLATFORM_STATUS, getPlatformText } from '@/config/platform';
 import { AppProvider, useAppContext } from '@/contexts/AppContext';
@@ -250,9 +247,6 @@ const AppContent = () => {
 
   return (
     <div className="relative flex min-h-screen flex-col bg-paper font-sans text-ink transition-colors duration-300 selection:bg-accent selection:text-white dark:bg-background dark:text-primary">
-      <Preloader />
-      <Noise />
-      <Cursor />
       <PwaPrompt />
 
       <Header currentView={view} onNavigate={handleHeaderNavigation} />
