@@ -1,6 +1,5 @@
 import { fileURLToPath, URL } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 const manualChunks = (id: string): string | undefined => {
@@ -18,7 +17,7 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',
   },
-  plugins: [tailwindcss(), react()],
+  plugins: [tailwindcss()],
   build: {
     manifest: true,
     rollupOptions: {
@@ -30,6 +29,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      gsap: fileURLToPath(new URL('./src/utils/gsap-lite.ts', import.meta.url)),
     },
   },
 });

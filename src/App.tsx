@@ -17,6 +17,9 @@ import { OrderDetails, PendingOrder, Product, ViewState } from '@/types';
 const Catalog = React.lazy(() =>
   import('@/features/catalog/Catalog').then((module) => ({ default: module.Catalog })),
 );
+const Guide = React.lazy(() =>
+  import('@/features/guide/Guide').then((module) => ({ default: module.Guide })),
+);
 const Designs = React.lazy(() =>
   import('@/features/designs/Designs').then((module) => ({ default: module.Designs })),
 );
@@ -145,6 +148,11 @@ const AppContent = () => {
       return;
     }
 
+    if (nextView === 'GUIDE') {
+      navigate(routes.guide());
+      return;
+    }
+
     if (nextView === 'DESIGNS') {
       navigate(routes.designs());
       return;
@@ -156,9 +164,21 @@ const AppContent = () => {
   const renderRoute = () => {
     switch (route.view) {
       case 'HOME':
-        return <Hero onStart={() => navigate(routes.catalog())} />;
+        return (
+          <Hero
+            onStart={() => navigate(routes.catalog())}
+            onOpenDesigns={() => navigate(routes.designs())}
+          />
+        );
       case 'CATALOG':
         return <Catalog onSelectProduct={handleProductSelect} busyProductId={busyProductId} />;
+      case 'GUIDE':
+        return (
+          <Guide
+            onOpenCatalog={() => navigate(routes.catalog())}
+            onOpenDesigns={() => navigate(routes.designs())}
+          />
+        );
       case 'DESIGNS':
         return (
           <Designs
@@ -196,6 +216,8 @@ const AppContent = () => {
             orderDetails={matchingSubmission?.details}
             pendingOrder={matchingSubmission?.pendingOrder}
             onReset={handleReset}
+            onOpenDesigns={() => navigate(routes.designs())}
+            onStartNew={() => navigate(routes.catalog())}
           />
         );
       }
@@ -203,7 +225,7 @@ const AppContent = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-white font-sans text-black transition-colors duration-300 selection:bg-accent selection:text-white dark:bg-black dark:text-white">
+    <div className="relative flex min-h-screen flex-col bg-paper font-sans text-ink transition-colors duration-300 selection:bg-accent selection:text-white dark:bg-background dark:text-primary">
       <Preloader />
       <Noise />
       <Cursor />
@@ -212,7 +234,7 @@ const AppContent = () => {
 
       {PLATFORM_STATUS.phase === 'prototype' && (
         <div
-          className="relative z-40 mt-16 border-b border-amber-300/40 bg-amber-50 px-4 py-2 text-center text-xs font-semibold text-amber-950 dark:border-amber-700/40 dark:bg-amber-950/40 dark:text-amber-100"
+          className="relative z-40 mt-16 border-b border-black/10 bg-[#e9e3d8] px-4 py-2.5 text-center text-[10px] font-black uppercase tracking-[0.16em] text-black/65 dark:border-white/10 dark:bg-[#101010] dark:text-white/55"
           role="status"
         >
           {getPlatformText(PLATFORM_STATUS.notice, language)}

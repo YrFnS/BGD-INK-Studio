@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { checkoutSchema } from './validation';
+import {
+  BAGHDAD_AREA_OPTIONS,
+  checkoutSchema,
+  getBaghdadAreaLabel,
+} from './validation';
 
-describe('checkout validation', () => {
-  it('normalizes a valid Iraqi delivery form', () => {
+describe('draft-preparation validation', () => {
+  it('normalizes a valid Iraqi contact form', () => {
     expect(
       checkoutSchema.parse({
         fullName: '  Yasser Test  ',
@@ -50,5 +54,15 @@ describe('checkout validation', () => {
         expect.arrayContaining(['area', 'street']),
       );
     }
+  });
+
+  it('keeps stable stored area values while localizing the visible Baghdad labels', () => {
+    expect(getBaghdadAreaLabel('Al-Mansour', 'en')).toBe('Al-Mansour');
+    expect(getBaghdadAreaLabel('Al-Mansour', 'ar')).toBe('المنصور');
+    expect(getBaghdadAreaLabel('Baghdad Al-Jadida', 'ar')).toBe('بغداد الجديدة');
+    expect(getBaghdadAreaLabel('Unknown Area', 'ar')).toBe('Unknown Area');
+
+    expect(BAGHDAD_AREA_OPTIONS.map((option) => option.value)).toContain('Other');
+    expect(BAGHDAD_AREA_OPTIONS.every((option) => option.label.en && option.label.ar)).toBe(true);
   });
 });

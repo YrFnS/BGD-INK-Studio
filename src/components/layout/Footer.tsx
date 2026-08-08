@@ -12,46 +12,103 @@ export const Footer: React.FC = () => {
   const year = new Date().getFullYear();
   const whatsappNumber = getConfiguredWhatsAppNumber();
 
+  const copy =
+    language === 'ar'
+      ? {
+          statement: 'ستوديو محلي لتجهيز ومراجعة مسودات الطباعة على الملابس.',
+          local: 'المسودات والتصاميم تبقى على هذا الجهاز',
+          noAccount: 'ما يحتاج حساب',
+          prototype: 'النسخة الحالية ما تستلم طلبات حقيقية',
+          rights: 'جميع الحقوق محفوظة',
+          contactPending: 'قنوات التواصل الرسمية تظهر بعد تأكيدها',
+          contactNavigation: 'روابط التواصل الرسمية',
+          instagram: 'إنستغرام',
+          whatsapp: 'واتساب',
+          email: 'البريد الإلكتروني',
+        }
+      : {
+          statement: 'A local studio for preparing and reviewing custom-apparel print drafts.',
+          local: 'Drafts and artwork stay on this device',
+          noAccount: 'No account required',
+          prototype: 'The current preview does not accept real orders',
+          rights: 'All rights reserved',
+          contactPending: 'Official contact channels will appear after verification',
+          contactNavigation: 'Official contact links',
+          instagram: 'Instagram',
+          whatsapp: 'WhatsApp',
+          email: 'Email',
+        };
+
   const links: ContactLink[] = [
-    BRAND.contact.instagramUrl ? { label: 'Instagram', href: BRAND.contact.instagramUrl } : null,
-    whatsappNumber ? { label: 'WhatsApp', href: `https://wa.me/${whatsappNumber}` } : null,
-    BRAND.contact.email ? { label: 'Email', href: `mailto:${BRAND.contact.email}` } : null,
+    BRAND.contact.instagramUrl
+      ? { label: copy.instagram, href: BRAND.contact.instagramUrl }
+      : null,
+    whatsappNumber
+      ? { label: copy.whatsapp, href: `https://wa.me/${whatsappNumber}` }
+      : null,
+    BRAND.contact.email ? { label: copy.email, href: `mailto:${BRAND.contact.email}` } : null,
   ].filter((link): link is ContactLink => Boolean(link));
 
   return (
-    <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black transition-colors duration-300 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-center md:text-start">
-            <h2 className="text-2xl font-bold tracking-tighter text-black dark:text-white font-display">
-              {BRAND.displayName}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {getLocalizedBrandText(BRAND.tagline, language)} ·{' '}
-              {getLocalizedBrandText(BRAND.location, language)}
+    <footer className="border-t border-black/10 bg-[#111111] py-12 text-[#f4f1ea] dark:border-white/10 sm:py-16">
+      <div className="mx-auto max-w-[1450px] px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-10 lg:grid-cols-[1.1fr_.9fr] lg:gap-20">
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-[#f4f1ea] font-display text-[10px] font-black tracking-[-0.05em] text-black" dir="ltr">
+                B/I
+              </span>
+              <div>
+                <h2 className="font-display text-xl font-black tracking-[-0.045em]">
+                  <bdi dir="ltr">{BRAND.displayName}</bdi>
+                </h2>
+                <p className="mt-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-white/35">
+                  {getLocalizedBrandText(BRAND.location, language)}
+                </p>
+              </div>
+            </div>
+            <p className="mt-6 max-w-xl text-base leading-7 text-white/52 sm:text-lg sm:leading-8">
+              {copy.statement}
             </p>
           </div>
 
-          {links.length > 0 && (
-            <nav className="flex gap-6" aria-label="Contact links">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            {[copy.local, copy.noAccount, copy.prototype].map((item, index) => (
+              <div
+                key={item}
+                className="flex min-h-16 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3"
+              >
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${index === 2 ? 'bg-accent' : 'bg-emerald-400'}`}
+                  aria-hidden="true"
+                />
+                <span className="text-xs font-semibold leading-5 text-white/55">{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-12 flex flex-col gap-6 border-t border-white/10 pt-8 md:flex-row md:items-center md:justify-between">
+          {links.length > 0 ? (
+            <nav className="flex flex-wrap gap-x-6 gap-y-3" aria-label={copy.contactNavigation}>
               {links.map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
                   target={link.href.startsWith('http') ? '_blank' : undefined}
                   rel={link.href.startsWith('http') ? 'noreferrer' : undefined}
-                  className="text-gray-400 hover:text-black dark:hover:text-white transition-colors text-sm font-medium"
+                  className="text-xs font-black uppercase tracking-[0.13em] text-white/42 transition-colors hover:text-white"
                 >
                   {link.label}
                 </a>
               ))}
             </nav>
+          ) : (
+            <p className="text-xs font-semibold text-white/35">{copy.contactPending}</p>
           )}
-        </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-900 text-center">
-          <p className="text-xs text-gray-400 dark:text-gray-600">
-            &copy; {year} {BRAND.productName}. All rights reserved.
+          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-white/28">
+            <bdi dir="ltr">© {year} {BRAND.productName}</bdi> · {copy.rights}
           </p>
         </div>
       </div>

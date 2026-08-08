@@ -5,9 +5,11 @@
 @theme {
   --color-background: #050505;
   --color-surface: #111111;
-  --color-primary: #ffffff;
-  --color-secondary: #a1a1aa;
-  --color-accent: #dc2626;
+  --color-primary: #f4f1ea;
+  --color-secondary: #a8a29a;
+  --color-accent: #e13b2d;
+  --color-paper: #f4f1ea;
+  --color-ink: #111111;
 
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Syne', ui-sans-serif, system-ui, sans-serif;
@@ -39,10 +41,30 @@
   }
 }
 
+@keyframes studio-garment-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-0.35deg);
+  }
+
+  50% {
+    transform: translate3d(0, -8px, 0) rotate(0.35deg);
+  }
+}
+
 @layer base {
   :root {
     color-scheme: light;
     font-family: var(--font-sans);
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --app-header-height: calc(4rem + var(--safe-area-top));
+  }
+
+  :root[lang='ar'] {
+    font-family: var(--font-arabic);
   }
 
   :root.dark {
@@ -51,8 +73,10 @@
 
   html {
     min-width: 320px;
-    background: #ffffff;
+    overflow-x: clip;
+    background: var(--color-paper);
     scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--app-header-height) + 1rem);
   }
 
   html.dark {
@@ -61,17 +85,30 @@
 
   body {
     min-width: 320px;
-    min-height: 100vh;
+    min-height: 100dvh;
     margin: 0;
-    background: #ffffff;
-    color: #000000;
+    overflow-x: clip;
+    background: var(--color-paper);
+    color: var(--color-ink);
     -webkit-tap-highlight-color: transparent;
     text-rendering: optimizeLegibility;
   }
 
+  #root {
+    min-height: 100dvh;
+  }
+
+  html[lang='ar'] body {
+    font-family: var(--font-arabic);
+  }
+
+  html[lang='ar'] .font-display {
+    font-family: var(--font-arabic);
+  }
+
   .dark body {
     background: var(--color-background);
-    color: #ffffff;
+    color: var(--color-primary);
   }
 
   button,
@@ -79,6 +116,27 @@
   select,
   textarea {
     font: inherit;
+  }
+
+  html[dir='rtl'] input,
+  html[dir='rtl'] select,
+  html[dir='rtl'] textarea {
+    text-align: start;
+  }
+
+  html[dir='rtl'] .font-mono,
+  html[dir='rtl'] input[type='number'],
+  html[dir='rtl'] [data-technical] {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  input[type='tel'],
+  input[type='email'],
+  input[type='url'] {
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: isolate;
   }
 
   button:not(:disabled),
@@ -89,6 +147,65 @@
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
+  }
+}
+
+.technical-ltr,
+bdi[dir='ltr'] {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.min-h-screen {
+  min-height: 100dvh;
+}
+
+header.fixed.top-0 {
+  padding-top: var(--safe-area-top);
+}
+
+header.fixed.top-0 > div {
+  padding-inline-start: max(0.75rem, var(--safe-area-left));
+  padding-inline-end: max(0.75rem, var(--safe-area-right));
+}
+
+header.fixed.top-0 + [role='status'] {
+  margin-top: var(--app-header-height) !important;
+  padding-inline-start: max(1rem, var(--safe-area-left));
+  padding-inline-end: max(1rem, var(--safe-area-right));
+}
+
+#mobile-navigation {
+  top: var(--app-header-height) !important;
+  height: calc(100dvh - var(--app-header-height)) !important;
+  padding-inline-start: max(1.25rem, var(--safe-area-left));
+  padding-inline-end: max(1.25rem, var(--safe-area-right));
+  padding-bottom: max(2rem, calc(1rem + var(--safe-area-bottom)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+footer {
+  padding-bottom: max(3rem, calc(3rem + var(--safe-area-bottom)));
+}
+
+.studio-garment-drift {
+  animation: studio-garment-drift 6s ease-in-out infinite;
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  #mobile-navigation {
+    padding-top: 0.75rem;
+    padding-bottom: max(0.75rem, var(--safe-area-bottom));
+  }
+
+  #mobile-navigation > div {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+  }
+
+  #mobile-navigation button {
+    min-height: 2.75rem;
   }
 }
 

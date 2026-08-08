@@ -7,6 +7,7 @@ describe('application routes', () => {
     const supportedRoutes = [
       routes.home(),
       routes.catalog(),
+      routes.guide(),
       routes.designs(),
       routes.customizer('draft-123'),
       routes.checkout('draft-456'),
@@ -27,6 +28,7 @@ describe('application routes', () => {
   });
 
   it('normalizes trailing slashes and rejects malformed identifiers', () => {
+    expect(parseAppRoute('/guide///')).toEqual(routes.guide());
     expect(parseAppRoute('/designs///')).toEqual(routes.designs());
     expect(parseAppRoute('/studio/%E0%A4%A')).toEqual(routes.home());
     expect(parseAppRoute('/unknown')).toEqual(routes.home());
@@ -37,9 +39,9 @@ describe('useAppRouter', () => {
   it('pushes and replaces History API routes', () => {
     const { result } = renderHook(() => useAppRouter());
 
-    act(() => result.current.navigate(routes.designs()));
-    expect(window.location.pathname).toBe('/designs');
-    expect(result.current.route).toEqual(routes.designs());
+    act(() => result.current.navigate(routes.guide()));
+    expect(window.location.pathname).toBe('/guide');
+    expect(result.current.route).toEqual(routes.guide());
 
     act(() => result.current.navigate(routes.catalog(), { replace: true, scroll: false }));
     expect(window.location.pathname).toBe('/catalog');

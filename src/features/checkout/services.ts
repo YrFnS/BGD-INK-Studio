@@ -34,6 +34,7 @@ export const generateWhatsAppLink = (
 *Item:* ${order.productName}
 *Size:* ${order.size}
 *Color:* ${order.color}
+*Quantity:* ${order.quantity}
 *Design layers:* ${order.decals.length}
 ------------------
 *Customer:* ${details.fullName}

@@ -6,6 +6,7 @@ import {
   createDesignDraft,
   deleteDesignDraft,
   listDesignDrafts,
+  markDesignDraftSubmitted,
   releaseDraftSummaryObjectUrls,
   renameDesignDraft,
 } from '@/services/drafts';
@@ -37,6 +38,7 @@ const renderWorkspace = (onOpenDraft = vi.fn(), onCreateNew = vi.fn()) =>
   );
 
 beforeEach(async () => {
+  window.localStorage.clear();
   toastMocks.showToast.mockReset();
   await clearAllDrafts();
 });
@@ -47,7 +49,7 @@ describe('My Designs workspace', () => {
     const onCreateNew = vi.fn();
     const { container } = renderWorkspace(vi.fn(), onCreateNew);
 
-    expect(await screen.findByRole('heading', { name: 'MY DESIGNS' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'MY LOCAL DESIGNS' })).toBeInTheDocument();
     expect(await screen.findByText('No saved designs yet')).toBeInTheDocument();
 
     const createButtons = screen.getAllByRole('button', { name: 'Create new design' });
@@ -63,24 +65,28 @@ describe('My Designs workspace', () => {
     expect(results.violations).toEqual([]);
   });
 
-  it('lists a stored design and exposes its primary actions', async () => {
+  it('lists a prepared local draft with quantity and truthful status', async () => {
     const draft = await createDesignDraft({
       productId: 'tshirt-classic',
       color: '#000000',
       size: Size.L,
+      quantity: 4,
     });
     await renameDesignDraft(draft.id, 'Team launch shirts');
+    await markDesignDraftSubmitted(draft.id, 'BGD-LOCAL-TEST');
 
     const onOpenDraft = vi.fn();
     renderWorkspace(onOpenDraft);
 
     expect(await screen.findByText('Team launch shirts')).toBeInTheDocument();
     expect(screen.getByText('Classic T-Shirt')).toBeInTheDocument();
+    expect(screen.getByText('Prepared locally')).toBeInTheDocument();
+    expect(screen.getByText('Quantity').parentElement).toHaveTextContent('4');
     expect(screen.getByRole('button', { name: 'Rename' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open design' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open draft' }));
     expect(onOpenDraft).toHaveBeenCalledWith(draft.id);
   });
 });

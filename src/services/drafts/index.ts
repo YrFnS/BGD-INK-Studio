@@ -8,10 +8,10 @@ export {
   markDesignDraftSubmitted,
   releaseDraftObjectUrls,
   renameDesignDraft,
-  saveCheckoutDetails,
   saveDesignDraft,
   storeArtworkFile,
 } from './indexedDb';
+export { saveCheckoutDetails, saveDraftQuantity } from './checkoutQueue';
 export { releaseDraftSummaryObjectUrls } from './objectUrls';
 export type {
   CreateDesignDraftInput,

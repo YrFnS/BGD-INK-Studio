@@ -1,5 +1,7 @@
-import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
+import React, { useEffect, useRef, useState } from 'react';
+import { BRAND } from '@/config/brand';
+import { calculateLocalDraftEstimate } from '@/config/draft';
 import { PLATFORM_STATUS, getPlatformText } from '@/config/platform';
 import { useAppContext } from '@/contexts/AppContext';
 import { OrderDetails, PendingOrder } from '@/types';
@@ -10,6 +12,8 @@ interface SuccessProps {
   orderDetails?: OrderDetails;
   pendingOrder?: PendingOrder;
   onReset: () => void;
+  onOpenDesigns: () => void;
+  onStartNew: () => void;
 }
 
 export const Success: React.FC<SuccessProps> = ({
@@ -17,30 +21,23 @@ export const Success: React.FC<SuccessProps> = ({
   orderDetails,
   pendingOrder,
   onReset,
+  onOpenDesigns,
+  onStartNew,
 }) => {
   const { t, language } = useAppContext();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
 
     const context = gsap.context(() => {
-      const timeline = gsap.timeline({ defaults: { ease: 'back.out(1.7)' } });
-      timeline.from('.success-icon', {
-        scale: 0,
-        opacity: 0,
-        duration: 0.7,
-        ease: 'elastic.out(1, 0.5)',
-      });
+      const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      timeline.from('.receipt-mark', { scale: 0.8, opacity: 0, duration: 0.55 });
       timeline.from(
-        '.success-text',
-        { y: 20, opacity: 0, duration: 0.45, stagger: 0.08, ease: 'power2.out' },
-        '-=0.35',
-      );
-      timeline.from(
-        '.success-action',
-        { y: 24, opacity: 0, duration: 0.45, stagger: 0.08, ease: 'power3.out' },
-        '-=0.15',
+        '.receipt-reveal',
+        { y: 18, opacity: 0, duration: 0.45, stagger: 0.07 },
+        '-=0.25',
       );
     }, containerRef);
 
@@ -59,75 +56,226 @@ export const Success: React.FC<SuccessProps> = ({
   const message = isPrototype
     ? getPlatformText(PLATFORM_STATUS.savedDraftMessage, language)
     : t('success.message');
+  const localEstimate = pendingOrder
+    ? calculateLocalDraftEstimate(pendingOrder.basePrice, pendingOrder.quantity)
+    : null;
+  const formatPrice = (price: number): string =>
+    new Intl.NumberFormat(language === 'ar' ? 'ar-IQ' : 'en-US').format(price);
+
+  const copy =
+    language === 'ar'
+      ? {
+          eyebrow: 'إيصال مسودة محلية',
+          copyId: 'انسخ رقم المسودة',
+          copied: 'اننسخ الرقم',
+          summary: 'ملخص التجهيز',
+          garment: 'القطعة',
+          variant: 'القياس واللون',
+          quantity: 'الكمية',
+          estimate: 'التقدير المحلي',
+          estimateNote: 'مو عرض سعر أو طلب مؤكد',
+          detailsUnavailable:
+            'بعد تحديث الصفحة تبقى المسودة محفوظة ضمن تصاميمي، بس هذا الإيصال المختصر يعرض رقمها فقط.',
+          openDesigns: 'افتح تصاميمي',
+          startNew: 'ابدأ مسودة جديدة',
+          home: 'العودة للرئيسية',
+          deviceOnly: 'محفوظ بهذا المتصفح فقط',
+        }
+      : {
+          eyebrow: 'Local draft receipt',
+          copyId: 'Copy draft ID',
+          copied: 'Copied',
+          summary: 'Preparation summary',
+          garment: 'Garment',
+          variant: 'Size and colour',
+          quantity: 'Quantity',
+          estimate: 'Local estimate',
+          estimateNote: 'Not a quote or confirmed order',
+          detailsUnavailable:
+            'After a refresh, the draft remains available in My Designs, while this compact receipt shows only its identifier.',
+          openDesigns: 'Open My Designs',
+          startNew: 'Start another draft',
+          home: 'Back to home',
+          deviceOnly: 'Saved in this browser only',
+        };
+
+  const handleCopyId = async () => {
+    try {
+      await navigator.clipboard.writeText(orderId);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   return (
     <div
       ref={containerRef}
-      className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center p-4 pb-16 pt-24 text-center"
+      className="mx-auto min-h-screen max-w-6xl px-4 pb-16 pt-24 sm:px-6 sm:pt-32 lg:px-8"
     >
-      <div className="success-icon relative mb-8 h-24 w-24" aria-hidden="true">
-        <div className="absolute inset-0 animate-ping rounded-full bg-amber-500 opacity-20" />
-        <div className="relative flex h-full w-full items-center justify-center rounded-full bg-amber-500 shadow-xl shadow-amber-500/30">
-          <svg
-            className="h-12 w-12 text-black"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2.5}
-              d="M12 8v4m0 4h.01M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"
-            />
-          </svg>
+      <div className="overflow-hidden rounded-[2rem] border border-black/10 bg-[#ece7de] shadow-[0_30px_90px_rgba(17,17,17,.12)] dark:border-white/10 dark:bg-[#0d0d0d] sm:rounded-[2.75rem]">
+        <div className="grid lg:grid-cols-[.9fr_1.1fr]">
+          <section className="relative overflow-hidden bg-[#111111] p-6 text-[#f5f1e8] sm:p-10 lg:p-12">
+            <div className="pointer-events-none absolute inset-0 opacity-25 [background-image:linear-gradient(to_right,rgba(255,255,255,.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.12)_1px,transparent_1px)] [background-size:42px_42px]" />
+            <div className="pointer-events-none absolute -end-20 -top-24 h-72 w-72 rounded-full bg-accent/35 blur-3xl" />
+
+            <div className="relative">
+              <div className="receipt-mark grid h-16 w-16 place-items-center rounded-full border border-white/15 bg-white/[0.06]">
+                <svg
+                  className="h-8 w-8 text-accent"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m5 13 4 4L19 7" />
+                </svg>
+              </div>
+
+              <p className="receipt-reveal mt-8 text-[10px] font-black uppercase tracking-[0.24em] text-white/42">
+                {copy.eyebrow} / <bdi dir="ltr">{BRAND.displayName}</bdi>
+              </p>
+              <h1 className="receipt-reveal mt-4 text-4xl font-black tracking-[-0.05em] sm:text-5xl">
+                {title}
+              </h1>
+              <p className="receipt-reveal mt-5 max-w-xl text-sm leading-7 text-white/54 sm:text-base sm:leading-8">
+                {message}
+              </p>
+
+              <div className="receipt-reveal mt-8 rounded-2xl border border-white/10 bg-black/30 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <span className="block text-[9px] font-black uppercase tracking-[0.18em] text-white/38">
+                      {identifierLabel}
+                    </span>
+                    <bdi
+                      dir="ltr"
+                      className="mt-2 block break-all font-mono text-sm font-black text-white"
+                    >
+                      {orderId}
+                    </bdi>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyId}
+                    className="min-h-11 shrink-0 rounded-full border border-white/15 bg-white/[0.06] px-4 text-xs font-black transition-colors hover:bg-white hover:text-black"
+                    aria-live="polite"
+                  >
+                    {copied ? copy.copied : copy.copyId}
+                  </button>
+                </div>
+              </div>
+
+              <div className="receipt-reveal mt-5 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.17em] text-white/38">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" />
+                {copy.deviceOnly}
+              </div>
+            </div>
+          </section>
+
+          <section className="p-6 sm:p-10 lg:p-12">
+            {pendingOrder ? (
+              <div className="receipt-reveal">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-accent">
+                  {copy.summary}
+                </p>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-black/10 bg-white/55 p-4 dark:border-white/10 dark:bg-white/[0.035]">
+                    <span className="text-[9px] font-black uppercase tracking-[0.15em] text-black/38 dark:text-white/34">
+                      {copy.garment}
+                    </span>
+                    <span className="mt-2 block text-lg font-black">{t(pendingOrder.productName)}</span>
+                  </div>
+                  <div className="rounded-2xl border border-black/10 bg-white/55 p-4 dark:border-white/10 dark:bg-white/[0.035]">
+                    <span className="text-[9px] font-black uppercase tracking-[0.15em] text-black/38 dark:text-white/34">
+                      {copy.variant}
+                    </span>
+                    <span className="mt-2 flex items-center gap-2 text-lg font-black">
+                      <bdi dir="ltr">{pendingOrder.size}</bdi>
+                      <span
+                        className="h-4 w-4 rounded-full border border-black/20 dark:border-white/20"
+                        style={{ backgroundColor: pendingOrder.color }}
+                        aria-label={pendingOrder.color}
+                        role="img"
+                      />
+                    </span>
+                  </div>
+                  <div className="rounded-2xl border border-black/10 bg-white/55 p-4 dark:border-white/10 dark:bg-white/[0.035]">
+                    <span className="text-[9px] font-black uppercase tracking-[0.15em] text-black/38 dark:text-white/34">
+                      {copy.quantity}
+                    </span>
+                    <bdi dir="auto" className="mt-2 block font-mono text-2xl font-black">
+                      {pendingOrder.quantity}
+                    </bdi>
+                  </div>
+                  <div className="rounded-2xl border border-black/10 bg-white/55 p-4 dark:border-white/10 dark:bg-white/[0.035]">
+                    <span className="text-[9px] font-black uppercase tracking-[0.15em] text-black/38 dark:text-white/34">
+                      {copy.estimate}
+                    </span>
+                    <bdi dir="auto" className="mt-2 block text-lg font-black">
+                      {localEstimate === null
+                        ? '—'
+                        : `${formatPrice(localEstimate)} ${t('common.price')}`}
+                    </bdi>
+                    <span className="mt-1 block text-[9px] text-black/42 dark:text-white/38">
+                      {copy.estimateNote}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="receipt-reveal rounded-2xl border border-black/10 bg-white/55 p-5 text-sm leading-7 text-black/55 dark:border-white/10 dark:bg-white/[0.035] dark:text-white/48">
+                {copy.detailsUnavailable}
+              </p>
+            )}
+
+            {isPrototype && (
+              <div
+                className="receipt-reveal mt-5 rounded-2xl border border-amber-400/35 bg-amber-500/[0.08] p-4 text-sm leading-7 text-amber-950 dark:text-amber-100"
+                role="alert"
+              >
+                {getPlatformText(PLATFORM_STATUS.notice, language)}
+              </div>
+            )}
+
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={onOpenDesigns}
+                className="receipt-reveal min-h-14 rounded-full bg-accent px-6 text-sm font-black uppercase tracking-[0.12em] text-white transition-transform hover:-translate-y-0.5"
+              >
+                {copy.openDesigns}
+              </button>
+              <button
+                type="button"
+                onClick={onStartNew}
+                className="receipt-reveal min-h-14 rounded-full bg-[#111111] px-6 text-sm font-black uppercase tracking-[0.12em] text-white transition-transform hover:-translate-y-0.5 dark:bg-[#f4f1ea] dark:text-black"
+              >
+                {copy.startNew}
+              </button>
+            </div>
+
+            {whatsappLink && (
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="receipt-reveal mt-3 flex min-h-14 w-full items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-6 text-sm font-black text-emerald-800 transition-colors hover:bg-emerald-500 hover:text-white dark:text-emerald-300"
+              >
+                {t('success.whatsapp')}
+              </a>
+            )}
+
+            <button
+              type="button"
+              onClick={onReset}
+              className="receipt-reveal mt-3 min-h-12 w-full text-sm font-bold text-black/48 underline-offset-4 hover:text-black hover:underline dark:text-white/42 dark:hover:text-white"
+            >
+              {copy.home}
+            </button>
+          </section>
         </div>
-      </div>
-
-      <h2 className="success-text mb-3 text-4xl font-bold tracking-tight text-black dark:text-white">
-        {title}
-      </h2>
-
-      <div className="success-text mb-6 rounded-lg border border-gray-200 bg-gray-50 px-6 py-2 font-mono text-lg dark:border-zinc-800 dark:bg-zinc-900">
-        <span className="me-2 text-gray-500">{identifierLabel}:</span>
-        <span className="font-bold text-black dark:text-white">#{orderId}</span>
-      </div>
-
-      <p className="success-text mb-8 leading-relaxed text-gray-600 dark:text-gray-300">
-        {message}
-      </p>
-
-      {isPrototype && (
-        <div
-          className="success-text mb-8 w-full rounded-2xl border border-amber-300/60 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-100"
-          role="alert"
-        >
-          {getPlatformText(PLATFORM_STATUS.notice, language)}
-        </div>
-      )}
-
-      <div className="w-full space-y-4">
-        {whatsappLink && (
-          <a
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="success-action flex w-full items-center justify-center gap-3 rounded-full bg-[#25D366] py-4 text-lg font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-[#20bd5a] hover:shadow-xl"
-          >
-            <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.8c-.1-.2 0-.4.1-.5l.4-.5.2-.4c.1-.1 0-.3 0-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.2-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.5 3.8.6.3 1.1.4 1.5.5.6.2 1.2.2 1.7.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.2-.3-.3-.6-.4Z" />
-            </svg>
-            {t('success.whatsapp')}
-          </a>
-        )}
-
-        <button
-          type="button"
-          onClick={onReset}
-          className="success-action w-full rounded-full border border-gray-200 bg-white py-4 font-bold text-black transition-colors hover:bg-gray-50 dark:border-zinc-800 dark:bg-black dark:text-white dark:hover:bg-zinc-900"
-        >
-          {t('success.home')}
-        </button>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const stablePng = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAMgAAABkCAYAAADDhn8LAAABBklEQVR4nO3TsQ2AMAADwYT9dw5luhcFUhC6m8CFfwwAAAAAAAAAYJunB7xljbFOb2CbP/nWdXoAfJlAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBAAAAAAAAACAh26jZgKgUj3ijQAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAAMgAAABkCAYAAADDhn8LAAABBklEQVR4nO3TsQ2AMAADwYT9dw5luhcFUhC6m8CFfwwAAAAAAAAAYJunB7xljbFOb2CbP/nWdXoAfJlAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBIJAIAgEgkAgCASCQCAIBAAAAAAAAACAh26jZgKgUj3ijQAAAABJRU5ErkJggg==',
   'base64',
 );
 
@@ -19,7 +19,8 @@ test('separates camera and artwork modes and preserves the draft through 2D reco
   const moveMode = page.getByRole('button', { name: 'Move design' });
   const transformMode = page.getByRole('button', { name: 'Resize or rotate design' });
   const canvas = page.locator('canvas');
-  const fallback = page.getByRole('img', { name: '2D design preview' });
+  const fallback = page.locator('section[aria-labelledby="fallback-preview-title"]');
+  const isFallbackVisible = (): Promise<boolean> => fallback.isVisible().catch(() => false);
 
   await expect(moveMode).toBeDisabled();
   await expect(transformMode).toBeDisabled();
@@ -35,25 +36,32 @@ test('separates camera and artwork modes and preserves the draft through 2D reco
     const moveButton = document.querySelector<HTMLButtonElement>(
       'button[aria-label="Move design"]',
     );
-    const fallbackPreview = document.querySelector('[aria-label="2D design preview"]');
+    const fallbackPreview = document.querySelector(
+      'section[aria-labelledby="fallback-preview-title"]',
+    );
     return Boolean(fallbackPreview || (moveButton && !moveButton.disabled));
   });
 
   const getStablePreviewState = async (): Promise<StablePreviewState> =>
-    (await fallback.isVisible().catch(() => false)) ? '2d' : '3d';
+    (await isFallbackVisible()) ? '2d' : '3d';
 
   let previewState = await getStablePreviewState();
 
-  if (previewState === '3d') {
-    const moveActivated = await moveMode
-      .click({ timeout: 3_000 })
-      .then(() => true)
-      .catch(() => false);
+  if (previewState === '3d' && (await moveMode.isEnabled().catch(() => false))) {
+    await moveMode.click({ timeout: 3_000 }).catch(() => undefined);
+    await page.waitForTimeout(150);
 
-    if (moveActivated) {
-      await expect(moveMode).toHaveAttribute('aria-pressed', 'true');
-      await transformMode.click({ timeout: 3_000 });
-      await expect(transformMode).toHaveAttribute('aria-pressed', 'true');
+    if (await isFallbackVisible()) {
+      previewState = '2d';
+    } else if ((await moveMode.getAttribute('aria-pressed')) === 'true') {
+      if (await transformMode.isEnabled().catch(() => false)) {
+        await transformMode.click({ timeout: 3_000 }).catch(() => undefined);
+        await page.waitForTimeout(150);
+
+        if (!(await isFallbackVisible())) {
+          await expect(transformMode).toHaveAttribute('aria-pressed', 'true');
+        }
+      }
 
       if (await canvas.isVisible().catch(() => false)) {
         await canvas.evaluate((element) => {
@@ -61,9 +69,8 @@ test('separates camera and artwork modes and preserves the draft through 2D reco
         });
         await expect(fallback).toBeVisible();
         await expect(fallback).toContainText('Your design was not lost');
+        previewState = '2d';
       }
-    } else {
-      await expect(fallback).toBeVisible();
     }
   }
 

@@ -96,31 +96,54 @@ export const Controls: React.FC<ControlsProps> = ({
       ? scaleToArtworkWidthCm(activeDecal.scale, activeSurface)
       : null;
 
-  const copy = {
-    upload: language === 'ar' ? 'إضافة طبقة' : 'Add layer',
-    uploading: language === 'ar' ? 'جاري حفظ الصورة…' : 'Saving artwork…',
-    selectedLayer: language === 'ar' ? 'الطبقة المحددة' : 'Selected layer',
-    layerName: language === 'ar' ? 'اسم الطبقة' : 'Layer name',
-    rotation: language === 'ar' ? 'الدوران' : 'Rotation',
-    undo: language === 'ar' ? 'تراجع' : 'Undo',
-    redo: language === 'ar' ? 'إعادة' : 'Redo',
-    duplicate: language === 'ar' ? 'نسخ' : 'Duplicate',
-    hide: language === 'ar' ? 'إخفاء' : 'Hide',
-    show: language === 'ar' ? 'إظهار' : 'Show',
-    forward: language === 'ar' ? 'للأمام' : 'Bring forward',
-    backward: language === 'ar' ? 'للخلف' : 'Send backward',
-    hidden: language === 'ar' ? 'مخفية' : 'Hidden',
-    dragHelp:
-      language === 'ar'
-        ? 'اسحب التصميم داخل حدود مساحة الطباعة. كل حركة وحجم ودوران يمكن التراجع عنها.'
-        : 'Drag inside the print boundary. Placement, size, and rotation can all be undone.',
-  };
+  const copy =
+    language === 'ar'
+      ? {
+          upload: 'أضف طبقة',
+          uploading: 'جارٍ تجهيز الصورة…',
+          layersTitle: 'طبقات التصميم',
+          selectedLayer: 'الطبقة المختارة',
+          layerName: 'اسم الطبقة',
+          rotation: 'زاوية الدوران',
+          undo: 'تراجع',
+          redo: 'إعادة',
+          editHistory: 'سجل التعديلات',
+          duplicate: 'انسخ الطبقة',
+          hide: 'اخفِ الطبقة',
+          show: 'أظهر الطبقة',
+          forward: 'قدّم الطبقة',
+          backward: 'رجّع الطبقة',
+          hidden: 'مخفية',
+          firstLayer: 'أضف أول طبقة تصميم',
+          dragHelp:
+            'حرّك التصميم داخل حدود الطباعة. تگدر تتراجع عن التحريك وتغيير الحجم والدوران.',
+        }
+      : {
+          upload: 'Add layer',
+          uploading: 'Preparing artwork…',
+          layersTitle: 'Artwork layers',
+          selectedLayer: 'Selected layer',
+          layerName: 'Layer name',
+          rotation: 'Rotation',
+          undo: 'Undo',
+          redo: 'Redo',
+          editHistory: 'Edit history',
+          duplicate: 'Duplicate layer',
+          hide: 'Hide layer',
+          show: 'Show layer',
+          forward: 'Bring layer forward',
+          backward: 'Send layer backward',
+          hidden: 'Hidden',
+          firstLayer: 'Add the first artwork layer',
+          dragHelp:
+            'Move the artwork inside the print boundary. Placement, size, and rotation can all be undone.',
+        };
 
   const saveStatusText: Record<DraftSaveStatus, string> = {
     saved: language === 'ar' ? 'محفوظ على هذا الجهاز' : 'Saved on this device',
-    unsaved: language === 'ar' ? 'تغييرات بانتظار الحفظ' : 'Changes waiting to save',
-    saving: language === 'ar' ? 'جاري الحفظ…' : 'Saving…',
-    error: language === 'ar' ? 'تعذر حفظ المسودة' : 'Draft could not be saved',
+    unsaved: language === 'ar' ? 'أكو تغييرات تنتظر الحفظ' : 'Changes waiting to save',
+    saving: language === 'ar' ? 'جارٍ الحفظ…' : 'Saving…',
+    error: language === 'ar' ? 'ما گدرنا نحفظ المسودة' : 'Draft could not be saved',
   };
 
   const beginKeyboardTransform = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -132,26 +155,29 @@ export const Controls: React.FC<ControlsProps> = ({
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <div
+      className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+      dir={language === 'ar' ? 'rtl' : 'ltr'}
+    >
       <div className="no-scrollbar flex-grow space-y-8 overflow-y-auto p-6">
-        <div className="flex items-center gap-2" role="toolbar" aria-label={language === 'ar' ? 'سجل التعديلات' : 'Edit history'}>
+        <div className="flex items-center gap-2" role="toolbar" aria-label={copy.editHistory}>
           <button
             type="button"
             onClick={onUndo}
             disabled={!canUndo}
             className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold transition-colors hover:border-black disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-white"
-            aria-label={`${copy.undo} (Ctrl+Z)`}
+            aria-label={`${copy.undo} — Ctrl+Z`}
           >
-            ↶ {copy.undo}
+            <span aria-hidden="true">↶</span> {copy.undo}
           </button>
           <button
             type="button"
             onClick={onRedo}
             disabled={!canRedo}
             className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold transition-colors hover:border-black disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-white"
-            aria-label={`${copy.redo} (Ctrl+Shift+Z)`}
+            aria-label={`${copy.redo} — Ctrl+Shift+Z`}
           >
-            ↷ {copy.redo}
+            <span aria-hidden="true">↷</span> {copy.redo}
           </button>
         </div>
 
@@ -206,12 +232,13 @@ export const Controls: React.FC<ControlsProps> = ({
           <legend className="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
             {t('customizer.size')}
           </legend>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-2" dir="ltr">
             {sizes.map((size) => (
               <button
                 type="button"
                 key={size}
                 onClick={() => onSizeChange(size)}
+                aria-label={`${t('customizer.size')}: ${size}`}
                 aria-pressed={selectedSize === size}
                 className={`rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
                   selectedSize === size
@@ -219,7 +246,9 @@ export const Controls: React.FC<ControlsProps> = ({
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700'
                 }`}
               >
-                {size}
+                <bdi className="technical-ltr" dir="ltr">
+                  {size}
+                </bdi>
               </button>
             ))}
           </div>
@@ -243,9 +272,9 @@ export const Controls: React.FC<ControlsProps> = ({
                 }`}
               >
                 <span className="block text-sm font-bold">{t(surface.labelKey)}</span>
-                <span className="mt-1 block font-mono text-[10px] opacity-70">
+                <bdi className="technical-ltr mt-1 block font-mono text-[10px] opacity-70" dir="ltr">
                   {surface.physicalWidthCm} × {surface.physicalHeightCm} cm
-                </span>
+                </bdi>
               </button>
             ))}
           </div>
@@ -257,7 +286,10 @@ export const Controls: React.FC<ControlsProps> = ({
               id="artwork-layers-label"
               className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400"
             >
-              {t('customizer.upload')} ({decals.length})
+              {copy.layersTitle}{' '}
+              <bdi className="technical-ltr" dir="ltr">
+                ({decals.length})
+              </bdi>
             </h3>
             <input
               type="file"
@@ -281,10 +313,11 @@ export const Controls: React.FC<ControlsProps> = ({
               type="button"
               onClick={triggerFileUpload}
               disabled={isUploading}
+              aria-label={copy.firstLayer}
               className="group flex h-24 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-accent disabled:cursor-wait dark:border-zinc-700 dark:bg-zinc-900/50 dark:hover:border-accent"
             >
               <span className="text-sm font-medium text-gray-500 group-hover:text-accent">
-                {isUploading ? copy.uploading : t('customizer.upload')}
+                {isUploading ? copy.uploading : copy.firstLayer}
               </span>
               {selectedSurface && (
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
@@ -296,7 +329,7 @@ export const Controls: React.FC<ControlsProps> = ({
             <div className="space-y-4">
               <div
                 className="no-scrollbar flex gap-2 overflow-x-auto pb-2"
-                aria-label={t('customizer.upload')}
+                aria-label={copy.layersTitle}
               >
                 {decals.map((layer, index) => {
                   const layerSurface = surfaces.find((surface) => surface.id === layer.surfaceId);
@@ -305,8 +338,14 @@ export const Controls: React.FC<ControlsProps> = ({
                       type="button"
                       key={layer.id}
                       onClick={() => onSetActiveDecal(layer.id)}
-                      aria-label={`${copy.selectedLayer} ${index + 1}`}
+                      aria-label={
+                        language === 'ar'
+                          ? `${copy.selectedLayer}: ${layer.name}`
+                          : `${copy.selectedLayer} ${index + 1}`
+                      }
                       aria-pressed={activeDecalId === layer.id}
+                      aria-posinset={index + 1}
+                      aria-setsize={decals.length}
                       className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
                         activeDecalId === layer.id
                           ? 'border-accent ring-2 ring-accent/20'
@@ -317,6 +356,7 @@ export const Controls: React.FC<ControlsProps> = ({
                         src={layer.url}
                         alt={layer.name}
                         className="h-full w-full object-cover"
+                        dir="auto"
                       />
                       {layerSurface && (
                         <span className="pointer-events-none absolute inset-x-1 bottom-1 truncate rounded bg-black/75 px-1 py-0.5 text-[8px] font-bold uppercase text-white">
@@ -339,18 +379,21 @@ export const Controls: React.FC<ControlsProps> = ({
               {activeDecal && activeSurface && activeScaleLimits && (
                 <div className="animate-fade-in space-y-4 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-800/50">
                   <div className="flex items-center justify-between gap-3">
-                    <div>
+                    <div className="min-w-0">
                       <span className="block text-xs font-bold uppercase text-gray-500">
                         {copy.selectedLayer}
                       </span>
                       <span className="mt-1 block text-[10px] font-medium text-gray-400">
-                        {t(activeSurface.labelKey)} · {activeDecalIndex + 1}/{decals.length}
+                        {t(activeSurface.labelKey)} ·{' '}
+                        <bdi className="technical-ltr" dir="ltr">
+                          {activeDecalIndex + 1}/{decals.length}
+                        </bdi>
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => onRemoveDecal(activeDecal.id)}
-                      className="text-xs font-bold text-red-500 hover:text-red-600"
+                      className="shrink-0 text-xs font-bold text-red-500 hover:text-red-600"
                     >
                       {t('customizer.remove')}
                     </button>
@@ -369,6 +412,7 @@ export const Controls: React.FC<ControlsProps> = ({
                       type="text"
                       defaultValue={activeDecal.name}
                       maxLength={60}
+                      dir="auto"
                       onBlur={(event) => onRenameDecal(activeDecal.id, event.currentTarget.value)}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter') event.currentTarget.blur();
@@ -398,7 +442,7 @@ export const Controls: React.FC<ControlsProps> = ({
                       disabled={activeDecalIndex <= 0}
                       className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs font-bold hover:border-black disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-white"
                     >
-                      ↓ {copy.backward}
+                      <span aria-hidden="true">↓</span> {copy.backward}
                     </button>
                     <button
                       type="button"
@@ -406,25 +450,26 @@ export const Controls: React.FC<ControlsProps> = ({
                       disabled={activeDecalIndex >= decals.length - 1}
                       className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs font-bold hover:border-black disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-white"
                     >
-                      ↑ {copy.forward}
+                      <span aria-hidden="true">↑</span> {copy.forward}
                     </button>
                   </div>
 
                   <div>
-                    <div className="mb-1 flex items-center justify-between">
+                    <div className="mb-1 flex items-center justify-between gap-3">
                       <label
                         htmlFor={`layer-size-${activeDecal.id}`}
                         className="text-[10px] font-bold uppercase text-gray-400"
                       >
                         {t('customizer.artworkWidth')}
                       </label>
-                      <span className="font-mono text-[10px] text-gray-400">
+                      <bdi className="technical-ltr font-mono text-[10px] text-gray-400" dir="ltr">
                         {activeArtworkWidthCm?.toFixed(1)} cm
-                      </span>
+                      </bdi>
                     </div>
                     <input
                       id={`layer-size-${activeDecal.id}`}
                       type="range"
+                      dir="ltr"
                       min={activeScaleLimits.minimum}
                       max={activeScaleLimits.maximum}
                       step="0.005"
@@ -445,20 +490,21 @@ export const Controls: React.FC<ControlsProps> = ({
                   </div>
 
                   <div>
-                    <div className="mb-1 flex items-center justify-between">
+                    <div className="mb-1 flex items-center justify-between gap-3">
                       <label
                         htmlFor={`layer-rotation-${activeDecal.id}`}
                         className="text-[10px] font-bold uppercase text-gray-400"
                       >
                         {copy.rotation}
                       </label>
-                      <span className="font-mono text-[10px] text-gray-400">
+                      <bdi className="technical-ltr font-mono text-[10px] text-gray-400" dir="ltr">
                         {Math.round(activeDecal.userRotation * (180 / Math.PI))}°
-                      </span>
+                      </bdi>
                     </div>
                     <input
                       id={`layer-rotation-${activeDecal.id}`}
                       type="range"
+                      dir="ltr"
                       min="0"
                       max={Math.PI * 2}
                       step="0.1"
@@ -497,6 +543,7 @@ export const Controls: React.FC<ControlsProps> = ({
             value={notes}
             onChange={(event) => onNotesChange(event.target.value)}
             placeholder={t('customizer.notesPlaceholder')}
+            dir="auto"
             className="h-24 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent dark:border-zinc-700 dark:bg-zinc-800"
           />
         </div>

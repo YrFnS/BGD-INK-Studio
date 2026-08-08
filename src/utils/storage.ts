@@ -1,4 +1,5 @@
 import { BRAND } from '@/config/brand';
+import { normalizeDraftQuantity } from '@/config/draft';
 import { PLATFORM_STATUS } from '@/config/platform';
 import { PRODUCTS as INITIAL_PRODUCTS } from '@/data/products';
 import { Order, Product } from '@/types';
@@ -17,10 +18,10 @@ const LEGACY_KEYS = {
 } as const;
 
 const INITIAL_GALLERY = [
-  'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1503342394128-c104d54dba01?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1576566588028-4147f3842f27?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+  '/brand/products/classic-tshirt.svg',
+  '/brand/products/oversized-tee.svg',
+  '/brand/products/premium-hoodie.svg',
+  '/brand/products/urban-vest.svg',
 ];
 
 const getBrowserStorage = (): Storage | null => {
@@ -83,29 +84,80 @@ const cloneInitialProducts = (): Product[] =>
     colors: [...product.colors],
   }));
 
+const normalizeStoredProducts = (storedProducts: Product[]): Product[] =>
+  INITIAL_PRODUCTS.map((canonical) => {
+    const stored = storedProducts.find((candidate) => candidate.id === canonical.id);
+    const storedColors = Array.isArray(stored?.colors)
+      ? stored.colors.filter((color): color is string => typeof color === 'string' && color.length > 0)
+      : [];
+    const storedPrice =
+      typeof stored?.basePrice === 'number' && Number.isFinite(stored.basePrice) && stored.basePrice >= 0
+        ? stored.basePrice
+        : canonical.basePrice;
+
+    return {
+      ...canonical,
+      basePrice: storedPrice,
+      colors: storedColors.length > 0 ? storedColors : [...canonical.colors],
+      inStock: typeof stored?.inStock === 'boolean' ? stored.inStock : canonical.inStock,
+      // Identity, product type, and customer-facing artwork remain canonical so legacy
+      // stock-photo URLs cannot return after the P3 owned-asset migration.
+      name: canonical.name,
+      type: canonical.type,
+      image: canonical.image,
+    };
+  });
+
 export const getProducts = (): Product[] => {
   const fallback = cloneInitialProducts();
-  const products = readJson<Product[]>(KEYS.products, fallback);
+  const stored = readJson<Product[]>(KEYS.products, fallback);
+  const normalized = normalizeStoredProducts(Array.isArray(stored) ? stored : fallback);
 
-  if (products === fallback) {
-    writeJson(KEYS.products, fallback);
+  if (JSON.stringify(stored) !== JSON.stringify(normalized)) {
+    writeJson(KEYS.products, normalized);
   }
 
-  return products;
+  return normalized;
+};
+
+const normalizeGallery = (gallery: string[]): string[] => {
+  const normalized = gallery
+    .filter((item): item is string => typeof item === 'string' && item.length > 0)
+    .map((item, index) =>
+      /images\.unsplash\.com/i.test(item) ? INITIAL_GALLERY[index % INITIAL_GALLERY.length] : item,
+    );
+
+  return normalized.length > 0 ? normalized : [...INITIAL_GALLERY];
 };
 
 export const getGallery = (): string[] => {
   const fallback = [...INITIAL_GALLERY];
-  const gallery = readJson<string[]>(KEYS.gallery, fallback);
+  const stored = readJson<string[]>(KEYS.gallery, fallback);
+  const normalized = normalizeGallery(Array.isArray(stored) ? stored : fallback);
 
-  if (gallery === fallback) {
-    writeJson(KEYS.gallery, fallback);
+  if (JSON.stringify(stored) !== JSON.stringify(normalized)) {
+    writeJson(KEYS.gallery, normalized);
   }
 
-  return gallery;
+  return normalized;
 };
 
-export const getOrders = (): Order[] => readJson<Order[]>(KEYS.orders, []);
+const normalizeStoredOrders = (orders: Order[]): Order[] =>
+  orders.map((order) => ({
+    ...order,
+    quantity: normalizeDraftQuantity(order.quantity),
+  }));
+
+export const getOrders = (): Order[] => {
+  const stored = readJson<Order[]>(KEYS.orders, []);
+  const normalized = normalizeStoredOrders(Array.isArray(stored) ? stored : []);
+
+  if (JSON.stringify(stored) !== JSON.stringify(normalized)) {
+    writeJson(KEYS.orders, normalized);
+  }
+
+  return normalized;
+};
 
 export const saveOrder = (order: Order): boolean => {
   if (!PLATFORM_STATUS.localOrderStorageEnabled) return false;

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1500" role="img" aria-labelledby="title desc">
+  <title id="title">BGD/INK Classic T-shirt</title>
+  <desc id="desc">Editorial product illustration with a marked front print surface.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#171717"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="fabric" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4f1e8"/>
+      <stop offset="0.55" stop-color="#d9d4c8"/>
+      <stop offset="1" stop-color="#aaa397"/>
+    </linearGradient>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M60 0H0V60" fill="none" stroke="#ffffff" stroke-opacity=".055" stroke-width="2"/>
+    </pattern>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="34" stdDeviation="28" flood-color="#000" flood-opacity=".55"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="1500" rx="56" fill="url(#bg)"/>
+  <rect x="28" y="28" width="1144" height="1444" rx="38" fill="url(#grid)" stroke="#fff" stroke-opacity=".09"/>
+  <circle cx="1030" cy="180" r="132" fill="#e13b2d" opacity=".92"/>
+  <circle cx="1030" cy="180" r="88" fill="none" stroke="#080808" stroke-width="3" opacity=".55"/>
+  <g fill="#f4f1e8" font-family="Arial, Helvetica, sans-serif">
+    <text x="86" y="112" font-size="30" font-weight="700" letter-spacing="8">BGD/INK / 01</text>
+    <text x="86" y="151" font-size="17" letter-spacing="5" opacity=".58">MODEL-READY / FRONT + BACK</text>
+  </g>
+  <g filter="url(#shadow)" transform="translate(0 70)">
+    <path d="M389 285c58-45 112-66 211-66s153 21 211 66l177 112-88 202-125-65v657H425V534l-125 65-88-202 177-112Z" fill="url(#fabric)" stroke="#fff" stroke-opacity=".35" stroke-width="4"/>
+    <path d="M503 240c9 72 42 108 97 108s88-36 97-108" fill="none" stroke="#7c766d" stroke-width="28" stroke-linecap="round"/>
+    <path d="M425 534c58 22 112 34 175 34s117-12 175-34" fill="none" stroke="#8e887e" stroke-opacity=".28" stroke-width="3"/>
+    <rect x="454" y="484" width="292" height="374" rx="8" fill="#e13b2d" fill-opacity=".06" stroke="#e13b2d" stroke-width="4" stroke-dasharray="18 14"/>
+    <path d="M476 508h58M476 508v58M724 508h-58M724 508v58M476 834h58M476 834v-58M724 834h-58M724 834v-58" fill="none" stroke="#e13b2d" stroke-width="7" stroke-linecap="square"/>
+    <g transform="translate(516 603)">
+      <rect width="168" height="112" rx="18" fill="#0b0b0b"/>
+      <path d="M29 29h110v10H29zm0 23h72v10H29zm0 23h90v10H29z" fill="#f4f1e8"/>
+      <rect x="116" y="70" width="24" height="24" rx="4" fill="#e13b2d"/>
+    </g>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="86" y="1330" fill="#f4f1e8" font-size="54" font-weight="700" letter-spacing="-2">CLASSIC T-SHIRT</text>
+    <text x="86" y="1380" fill="#f4f1e8" fill-opacity=".56" font-size="22" letter-spacing="4">APPROVED 3D GARMENT</text>
+    <path d="M86 1422h1028" stroke="#fff" stroke-opacity=".13"/>
+    <text x="86" y="1458" fill="#f4f1e8" fill-opacity=".45" font-size="17" letter-spacing="3">PHYSICAL PRINT VALUES REQUIRE FINAL CONFIRMATION</text>
+  </g>
+</svg>

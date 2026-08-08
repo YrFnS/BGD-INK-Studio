@@ -13,7 +13,7 @@ For the current roadmap:
 - The application remains a frontend-only React/Vite project.
 - Products continue to come from local typed configuration.
 - Designs and original artwork remain in browser IndexedDB on the current device.
-- Submitted designs remain local drafts; they are not accepted as real shop orders.
+- Prepared design receipts remain local drafts; they are not accepted as real shop orders.
 - No account system, staff portal, production API, database, inventory service, or object-storage integration will be built.
 - P2 and P3 focus on the 3D customizer, customer experience, accessibility, mobile behavior, visual quality, and local exports.
 
@@ -28,7 +28,7 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Preserve legacy `ashus_*` browser data through a non-destructive migration.
 - [x] Remove browser-exposed Gemini/API-key configuration.
 - [x] Remove the hardcoded client-side admin PIN and public admin entry.
-- [x] Label browser persistence and submitted designs explicitly as local prototype drafts.
+- [x] Label browser persistence and prepared design receipts explicitly as local prototype drafts.
 - [x] Keep typed local product, artwork, draft, and submission service boundaries.
 - [x] Remove misleading service-worker and offline-mode claims.
 - [x] Replace the false completed checklist with the maintained P0-P4 roadmap.
@@ -46,8 +46,8 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Add unit, component, failure-state, accessibility, Arabic RTL, and mobile interaction tests.
 - [x] Add Playwright customer recovery and mobile navigation journeys.
 - [x] Add GitHub Actions for locked install, typecheck, lint, tests, build, budgets, and browser journeys.
-- [x] Add real routes for catalog, designs, editor, checkout, and draft confirmation.
-- [x] Add recoverable IndexedDB drafts, original artwork blobs, autosave, and checkout recovery.
+- [x] Add real routes for catalog, designs, editor, draft preparation, and local receipt.
+- [x] Add recoverable IndexedDB drafts, original artwork blobs, autosave, and draft-preparation recovery.
 - [x] Add the My Designs reopen, rename, duplicate, and delete workspace.
 - [x] Replace AI Studio documentation with setup, architecture, deployment, safety, and troubleshooting guidance.
 - [x] Pin Node.js and npm, commit the lockfile, use cached `npm ci`, and cancel superseded CI runs.
@@ -107,18 +107,80 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Establish measured GLB and artwork-texture budgets from the current Classic T-shirt baseline.
 - [ ] Compress and re-audit the approved final garment GLBs and their embedded textures after genuine product assets are available.
 
-## P3 — Premium storefront and customer journey
+## P3 — Premium storefront and customer journey — IN PROGRESS
 
-- [ ] Establish the complete BGD/INK identity and owned visual asset library.
-- [ ] Replace generic stock imagery, emoji, and unverified testimonials.
-- [ ] Add real product photography and completed customer work.
-- [ ] Add locally configured price ranges, production times, size guides, and printing-method explanations.
-- [ ] Add quantity and variant-selection UX using local product data.
-- [ ] Complete the Iraqi Arabic and RTL content review.
-- [ ] Add real contact information, policies, care guidance, and frequently asked questions.
-- [ ] Keep motion intentional, accessible, and restrained.
-- [ ] Finish a touch-first mobile customizer and draft-checkout experience across representative real devices.
-- [ ] Link reviews to verifiable customer work or remove them.
+### Identity, visual assets, and trust
+
+- [x] Create `agent/bgd-ink-p3-premium-storefront` from the complete P2 branch.
+- [x] Establish the editorial print-lab direction with paper, ink, signal-color, measurement-grid, and production-annotation language.
+- [x] Add an owned vector garment library for all four locally configured catalog products.
+- [x] Replace customer-facing stock photography with owned local assets.
+- [x] Replace emoji process graphics with an owned SVG icon system.
+- [x] Remove fabricated-looking anonymous testimonials instead of presenting them as customer proof.
+- [x] Remove unsupported material, printing-method, wash-performance, superlative, and delivery claims.
+- [x] Add a permanent CI trust gate for stock imagery, fabricated reviews, emoji icons, and unsupported promises.
+- [x] Add a verified-versus-pending information system so unconfirmed prices, timing, measurements, and business details are visibly separated from implemented editor capabilities.
+- [ ] Add approved real product photography.
+- [ ] Add approved completed-customer-work photography.
+- [ ] Finish the complete BGD/INK identity and owned campaign asset library.
+
+### Premium storefront and catalog
+
+- [x] Rebuild the homepage around the real editor, local-draft, quality-analysis, and export capabilities.
+- [x] Add a premium model-aware studio workbench visual without loading Three.js on the homepage.
+- [x] Rebuild the catalog hierarchy around model readiness, availability, starting price, configured colors, and editor sizes.
+- [x] Keep unfinished products visible while clearly locking unavailable customization.
+- [x] Add explicit local-price and no-real-order context.
+- [x] Redesign the desktop header, RTL-aware mobile navigation, prototype notice, and footer.
+- [x] Migrate legacy stored product records to owned canonical imagery while preserving local price, color, and stock values.
+- [x] Add the `/guide` route with measurement instructions, method education, draft-preparation guidance, policies, and FAQs.
+- [x] Explain that exact size charts, production timing, and price quotations remain pending rather than inventing values.
+- [x] Add reference-only DTF, screen-printing, and embroidery explanations without claiming current availability.
+- [x] Add a mobile-friendly Guide section navigator and stable anchored sections.
+- [ ] Confirm final price ranges with the business.
+- [ ] Add confirmed production times.
+- [ ] Add approved product-specific size guides.
+- [ ] Add confirmed printing-method explanations.
+
+### Customer journey and business information
+
+- [x] Add prototype-specific local-data, artwork-rights, colour-preview, calibration, and no-commerce policies.
+- [x] Add an honest bilingual FAQ covering orders, local storage, file formats, sizes, mobile editing, and pending contact channels.
+- [x] Add an Iraqi-Arabic first pass for the guide, navigation labels, and mobile accessibility names.
+- [x] Add unit accessibility coverage and a real English/Arabic Chromium guide journey.
+- [x] Add recoverable local quantity preparation alongside the existing size/color variant selection, including a local estimate and explicit no-stock/no-quote wording.
+- [x] Serialize contact and quantity autosaves so rapid local preparation changes cannot overwrite one another.
+- [x] Finish touch-first draft-preparation and receipt polish with a local receipt, draft-ID copy, prepared variant, quantity, estimate, and direct My Designs/new-draft actions.
+- [x] Persist the English/Iraqi-Arabic preference across refreshes and keep document `lang`, `dir`, and `data-language` synchronized.
+- [x] Complete the Iraqi-Arabic editorial pass for the homepage, catalog, global notices, footer, My Designs, and local receipt.
+- [x] Keep phone fields, number inputs, prices, sizes, draft IDs, file formats, and collection codes readable inside RTL layouts.
+- [x] Replace misleading submitted/sent workspace status with truthful prepared-locally status and expose each saved draft's quantity.
+- [x] Add a permanent localization/RTL CI gate plus mobile Chromium coverage for persisted Arabic, RTL navigation, and horizontal-overflow prevention.
+- [x] Complete the Iraqi-Arabic terminology and dense RTL review for customizer controls, interaction modes, artwork quality, 2D recovery, and local handoff tools.
+- [x] Keep range controls, centimeters, pixels, DPI, degrees, 2D/3D labels, layer positions, and mixed-direction names stable inside the RTL editor.
+- [x] Keep the retry action outside image semantics in the safe 2D fallback and cover the recovery surface with accessibility tests.
+- [x] Add a GPU-portable Pixel 5 Arabic customizer journey covering upload, quality guidance, 2D recovery, handoff tools, and horizontal-overflow prevention.
+- [x] Complete the long-form Studio Guide Iraqi-Arabic editorial review without upgrading unverified business claims.
+- [x] Complete the contextual RTL review for the Guide's dense cards, FAQs, method references, technical indices, and section navigation.
+- [x] Localize Baghdad area labels while preserving stable stored values for existing drafts.
+- [x] Add an accessible preparation-validation summary, first-invalid-field focus, draft-load retry, and local-autosave retry.
+- [x] Add a Pixel 5 Iraqi-Arabic preparation journey covering validation, localized areas, receipt creation, My Designs state, and overflow prevention.
+- [ ] Add official contact information after verification.
+- [ ] Add approved business policies, care guidance, and returns information.
+- [ ] Link future reviews to verifiable customer work or keep the review section absent.
+
+### Performance and responsive finalization
+
+- [x] Replace the shipped GSAP runtime with a tested, repository-specific Web Animations compatibility layer.
+- [x] Preserve existing page, toast, cursor, magnetic, catalog, preparation, receipt, and editor motion behavior without shipping the full GSAP runtime.
+- [x] Reduce initial JavaScript from 97.56 KiB to 71.07 KiB gzip and total JavaScript from 403.79 KiB to 377.29 KiB gzip.
+- [x] Tighten JavaScript and CSS performance budgets after the measured reduction.
+- [x] Add display-cutout safe areas, dynamic viewport height, software-keyboard resizing, contained mobile-menu scrolling, and short-landscape handling.
+- [x] Add application-wide, reduced-motion-aware same-page section scrolling with synchronized URL hashes.
+- [x] Add a permanent responsive-shell source gate.
+- [x] Add iPhone portrait/short-landscape/restored-portrait and iPad Arabic orientation-sized browser journeys.
+- [x] Expand the complete gate to 71 unit/component/accessibility tests across 26 files and 11 Chromium journeys.
+- [ ] Validate the complete journey on representative physical Android phones, iPhones, and tablets.
 
 ## P4 — Frontend delivery, PWA, SEO, and growth
 

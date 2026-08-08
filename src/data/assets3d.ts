@@ -1,4 +1,3 @@
-import { useGLTF } from '@react-three/drei';
 import { DEFAULT_PRINT_SURFACE_ID, PrintSurfaceId } from '@/types';
 
 export interface ModelBounds {
@@ -138,12 +137,3 @@ export const getPrintSurface = (
   surfaceId: PrintSurfaceId,
 ): PrintSurfaceDefinition =>
   config.surfaces.find((surface) => surface.id === surfaceId) ?? config.surfaces[0];
-
-if (typeof window !== 'undefined' && !import.meta.env.TEST) {
-  const modelUrls = new Set(
-    Object.values(PRODUCT_MODEL_CONFIGS).flatMap((config) =>
-      config.status === 'ready' ? [config.modelUrl] : [],
-    ),
-  );
-  modelUrls.forEach((url) => useGLTF.preload(url));
-}

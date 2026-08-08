@@ -17,8 +17,10 @@ const LanguageProbe = () => {
 };
 
 beforeEach(() => {
+  window.localStorage.clear();
   document.documentElement.lang = 'en';
   document.documentElement.dir = 'ltr';
+  delete document.documentElement.dataset.language;
 });
 
 describe('AppProvider language direction', () => {
@@ -32,7 +34,24 @@ describe('AppProvider language direction', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Arabic' }));
 
     expect(screen.getByTestId('language')).toHaveTextContent('ar');
-    expect(screen.getByTestId('catalog-label')).toHaveTextContent('الموديلات');
+    expect(screen.getByTestId('catalog-label')).toHaveTextContent('القطع');
+    expect(document.documentElement).toHaveAttribute('lang', 'ar');
+    expect(document.documentElement).toHaveAttribute('dir', 'rtl');
+    expect(document.documentElement).toHaveAttribute('data-language', 'ar');
+    expect(window.localStorage.getItem('bgd-ink-language')).toBe('ar');
+  });
+
+  it('restores the saved Arabic preference on the next mount', () => {
+    window.localStorage.setItem('bgd-ink-language', 'ar');
+
+    render(
+      <AppProvider>
+        <LanguageProbe />
+      </AppProvider>,
+    );
+
+    expect(screen.getByTestId('language')).toHaveTextContent('ar');
+    expect(screen.getByTestId('catalog-label')).toHaveTextContent('القطع');
     expect(document.documentElement).toHaveAttribute('lang', 'ar');
     expect(document.documentElement).toHaveAttribute('dir', 'rtl');
   });

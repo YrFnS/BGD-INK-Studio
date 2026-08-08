@@ -12,6 +12,7 @@ import {
   renameDesignDraft,
   saveCheckoutDetails,
   saveDesignDraft,
+  saveDraftQuantity,
   storeArtworkFile,
 } from './index';
 
@@ -68,11 +69,12 @@ beforeEach(clearAllDrafts);
 afterEach(clearAllDrafts);
 
 describe('IndexedDB design drafts', () => {
-  it('creates, renames, lists, and restores draft metadata', async () => {
+  it('creates, renames, lists, and restores draft metadata and quantity', async () => {
     const draft = await createDesignDraft({
       productId: 'tshirt-classic',
       color: '#000000',
       size: Size.L,
+      quantity: 3,
     });
 
     await renameDesignDraft(draft.id, '  Team   launch shirts  ');
@@ -83,6 +85,7 @@ describe('IndexedDB design drafts', () => {
       street: 'Main street',
       house: '12',
     });
+    await saveDraftQuantity(draft.id, 8);
 
     const summaries = await listDesignDrafts();
     expect(summaries).toHaveLength(1);
@@ -91,6 +94,7 @@ describe('IndexedDB design drafts', () => {
       name: 'Team launch shirts',
       productId: 'tshirt-classic',
       size: Size.L,
+      quantity: 8,
       layerCount: 0,
       previewUrl: null,
     });
@@ -98,7 +102,8 @@ describe('IndexedDB design drafts', () => {
 
     const restored = await loadDesignDraft(draft.id);
     expect(restored).not.toBeNull();
-    expect(restored?.version).toBe(4);
+    expect(restored?.version).toBe(5);
+    expect(restored?.quantity).toBe(8);
     expect(restored?.assetIds).toEqual([]);
     expect(restored?.checkoutDetails).toEqual({
       fullName: 'Yasser Ahmed',
@@ -107,6 +112,18 @@ describe('IndexedDB design drafts', () => {
       street: 'Main street',
       house: '12',
     });
+  });
+
+  it('normalizes quantity to the supported local range', async () => {
+    const draft = await createDesignDraft({
+      productId: 'tshirt-classic',
+      color: '#000000',
+      quantity: 0,
+    });
+    expect(draft.quantity).toBe(1);
+
+    const updated = await saveDraftQuantity(draft.id, 999);
+    expect(updated.quantity).toBe(50);
   });
 
   it('persists layer names, visibility, surfaces, quality metadata, and artwork blobs', async () => {
@@ -146,10 +163,11 @@ describe('IndexedDB design drafts', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
 
-  it('duplicates artwork and editable quality metadata independently', async () => {
+  it('duplicates quantity, artwork, and editable quality metadata independently', async () => {
     const source = await createDesignDraft({
       productId: 'tshirt-classic',
       color: '#000000',
+      quantity: 12,
     });
     await renameDesignDraft(source.id, 'Original design');
     await addArtworkLayer(source.id);
@@ -168,6 +186,7 @@ describe('IndexedDB design drafts', () => {
 
     expect(duplicateDraft).not.toBeNull();
     expect(duplicateDraft?.name).toBe('Copy of Original design');
+    expect(duplicateDraft?.quantity).toBe(12);
     expect(duplicateDraft?.submittedOrderId).toBeNull();
     expect(duplicateDraft?.checkoutDetails).toEqual({
       fullName: '',

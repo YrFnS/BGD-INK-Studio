@@ -40,9 +40,10 @@ interface WorkspaceCopy {
   untitled: string;
   updated: string;
   layers: string;
+  quantity: string;
   noArtwork: string;
   draft: string;
-  submitted: string;
+  prepared: string;
   open: string;
   rename: string;
   duplicate: string;
@@ -61,24 +62,25 @@ interface WorkspaceCopy {
 
 const WORKSPACE_COPY: Record<Language, WorkspaceCopy> = {
   en: {
-    title: 'MY DESIGNS',
+    title: 'MY LOCAL DESIGNS',
     subtitle:
-      'Continue designs saved on this browser. Artwork and edits stay on this device until server storage is connected.',
+      'Continue drafts saved in this browser. Artwork, quantity, and edits remain on this device, and clearing browser data can permanently remove them.',
     create: 'Create new design',
     emptyTitle: 'No saved designs yet',
     emptyDescription:
-      'Choose a product and your design will appear here automatically as you work.',
+      'Choose a model-ready garment and the draft will appear here automatically as you work.',
     loading: 'Loading saved designs…',
     errorTitle: 'Saved designs could not be loaded',
     errorDescription: 'The browser database may be unavailable or temporarily blocked.',
     retry: 'Try again',
     untitled: 'Untitled design',
     updated: 'Updated',
-    layers: 'artwork layers',
+    layers: 'Layers',
+    quantity: 'Quantity',
     noArtwork: 'No artwork yet',
     draft: 'Draft',
-    submitted: 'Submitted',
-    open: 'Open design',
+    prepared: 'Prepared locally',
+    open: 'Open draft',
     rename: 'Rename',
     duplicate: 'Duplicate',
     delete: 'Delete',
@@ -94,32 +96,33 @@ const WORKSPACE_COPY: Record<Language, WorkspaceCopy> = {
     copyPrefix: 'Copy of',
   },
   ar: {
-    title: 'تصاميمي',
+    title: 'تصاميمي المحلية',
     subtitle:
-      'كمّل التصاميم المحفوظة بهذا المتصفح. الملفات والتعديلات تبقى على هذا الجهاز لحين ربط التخزين بالسيرفر.',
+      'كمّل المسودات المحفوظة بهذا المتصفح. التصميم والكمية والتعديلات تبقى على هذا الجهاز، ومسح بيانات المتصفح ممكن يحذفها نهائياً.',
     create: 'تصميم جديد',
     emptyTitle: 'ما عندك تصاميم محفوظة حالياً',
-    emptyDescription: 'اختار موديل، وتصميمك راح يظهر هنا تلقائياً أثناء العمل.',
+    emptyDescription: 'اختار قطعة جاهزة للمحرر، والمسودة راح تظهر هنا تلقائياً أثناء الشغل.',
     loading: 'جاري تحميل التصاميم المحفوظة…',
     errorTitle: 'تعذر تحميل التصاميم المحفوظة',
-    errorDescription: 'قد تكون قاعدة بيانات المتصفح غير متاحة أو محجوبة مؤقتاً.',
-    retry: 'إعادة المحاولة',
+    errorDescription: 'ممكن تكون قاعدة بيانات المتصفح غير متاحة أو محجوبة مؤقتاً.',
+    retry: 'حاول مرة ثانية',
     untitled: 'تصميم بدون اسم',
     updated: 'آخر تعديل',
-    layers: 'طبقات تصميم',
+    layers: 'الطبقات',
+    quantity: 'الكمية',
     noArtwork: 'ماكو تصميم مرفوع بعد',
     draft: 'مسودة',
-    submitted: 'تم الإرسال',
-    open: 'فتح التصميم',
+    prepared: 'مجهّزة محلياً',
+    open: 'فتح المسودة',
     rename: 'تغيير الاسم',
-    duplicate: 'نسخ',
+    duplicate: 'إنشاء نسخة',
     delete: 'حذف',
     cancel: 'إلغاء',
     save: 'حفظ الاسم',
     confirmDelete: 'حذف نهائي',
     deleteQuestion: 'تحذف هذا التصميم وملفاته المحفوظة من هذا الجهاز؟',
     renameSuccess: 'تم تغيير اسم التصميم',
-    duplicateSuccess: 'تم نسخ التصميم',
+    duplicateSuccess: 'تم إنشاء نسخة من التصميم',
     deleteSuccess: 'تم حذف التصميم',
     actionError: 'تعذر تحديث التصميم. حاول مرة ثانية.',
     nameRequired: 'اكتب اسم للتصميم.',
@@ -290,7 +293,7 @@ export const Designs: React.FC<DesignsProps> = ({ onOpenDraft, onCreateNew }) =>
       <div className="mb-12 flex flex-col gap-6 md:mb-16 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-accent">
-            {BRAND.productName}
+            <bdi dir="ltr">{BRAND.productName}</bdi>
           </p>
           <h1
             className={`mb-4 text-4xl font-bold tracking-tighter md:text-6xl ${language === 'en' ? 'font-display' : ''}`}
@@ -380,7 +383,7 @@ export const Designs: React.FC<DesignsProps> = ({ onOpenDraft, onCreateNew }) =>
           {summaries.map((summary) => {
             const product = productsById.get(summary.productId);
             const displayName = getDisplayName(summary);
-            const submitted = Boolean(summary.submittedOrderId);
+            const prepared = Boolean(summary.submittedOrderId);
             const busy = isBusy(summary.id);
             const editing = editingDraftId === summary.id;
             const confirmingDelete = deleteConfirmationId === summary.id;
@@ -427,14 +430,14 @@ export const Designs: React.FC<DesignsProps> = ({ onOpenDraft, onCreateNew }) =>
                   <div className="absolute start-4 top-4 flex items-center gap-2">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-bold backdrop-blur ${
-                        submitted
+                        prepared
                           ? 'bg-emerald-500/90 text-white'
                           : 'bg-white/90 text-black dark:bg-black/80 dark:text-white'
                       }`}
                     >
-                      {submitted ? copy.submitted : copy.draft}
+                      {prepared ? copy.prepared : copy.draft}
                     </span>
-                    <span className="rounded-full bg-black/55 px-3 py-1 text-xs font-bold text-white backdrop-blur">
+                    <span className="rounded-full bg-black/55 px-3 py-1 text-xs font-bold text-white backdrop-blur" dir="ltr">
                       {summary.size}
                     </span>
                   </div>
@@ -453,6 +456,7 @@ export const Designs: React.FC<DesignsProps> = ({ onOpenDraft, onCreateNew }) =>
                         maxLength={80}
                         autoFocus
                         disabled={busy}
+                        dir="auto"
                         className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 font-bold text-black outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 dark:border-zinc-700 dark:bg-black dark:text-white"
                       />
                       <div className="flex gap-2">
@@ -480,16 +484,17 @@ export const Designs: React.FC<DesignsProps> = ({ onOpenDraft, onCreateNew }) =>
                     <h2
                       className="mb-2 truncate text-2xl font-bold tracking-tight"
                       title={displayName}
+                      dir="auto"
                     >
                       {displayName}
                     </h2>
                   )}
 
                   <p className="mb-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                    {product ? t(product.name) : summary.productId}
+                    {product ? t(product.name) : <bdi dir="ltr">{summary.productId}</bdi>}
                   </p>
 
-                  <dl className="mb-6 grid grid-cols-2 gap-3 rounded-2xl bg-gray-50 p-4 text-sm dark:bg-black/35">
+                  <dl className="mb-6 grid grid-cols-2 gap-3 rounded-2xl bg-gray-50 p-4 text-sm dark:bg-black/35 sm:grid-cols-3">
                     <div>
                       <dt className="text-xs text-gray-500 dark:text-gray-500">{copy.updated}</dt>
                       <dd className="mt-1 font-semibold">
@@ -498,7 +503,15 @@ export const Designs: React.FC<DesignsProps> = ({ onOpenDraft, onCreateNew }) =>
                     </div>
                     <div>
                       <dt className="text-xs text-gray-500 dark:text-gray-500">{copy.layers}</dt>
-                      <dd className="mt-1 font-semibold">{summary.layerCount}</dd>
+                      <dd className="mt-1 font-semibold">
+                        <bdi dir="ltr">{summary.layerCount}</bdi>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-gray-500 dark:text-gray-500">{copy.quantity}</dt>
+                      <dd className="mt-1 font-semibold">
+                        <bdi dir="ltr">{summary.quantity}</bdi>
+                      </dd>
                     </div>
                   </dl>
 
