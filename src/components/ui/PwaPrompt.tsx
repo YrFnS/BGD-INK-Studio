@@ -15,6 +15,8 @@ interface BeforeInstallPromptEvent extends Event {
   }>;
 }
 
+type PromptMode = 'update' | 'offline' | 'install';
+
 const INSTALL_DISMISSED_KEY = 'bgd-ink-install-dismissed';
 
 export const PwaPrompt: React.FC = () => {
@@ -22,6 +24,8 @@ export const PwaPrompt: React.FC = () => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [updateRegistration, setUpdateRegistration] =
     useState<ServiceWorkerRegistration | null>(null);
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [offlineNoticeDismissed, setOfflineNoticeDismissed] = useState(false);
 
   useEffect(() => {
     const handleInstallPrompt = (event: Event) => {
@@ -40,18 +44,38 @@ export const PwaPrompt: React.FC = () => {
       setUpdateRegistration(updateEvent.detail.registration);
     };
 
+    const handleOnline = () => {
+      setIsOnline(true);
+      setOfflineNoticeDismissed(false);
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      setOfflineNoticeDismissed(false);
+    };
+
     window.addEventListener('beforeinstallprompt', handleInstallPrompt);
     window.addEventListener('appinstalled', handleInstalled);
     window.addEventListener(PWA_UPDATE_EVENT, handleUpdateAvailable);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
       window.removeEventListener('appinstalled', handleInstalled);
       window.removeEventListener(PWA_UPDATE_EVENT, handleUpdateAvailable);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
-  const mode = updateRegistration ? 'update' : installPrompt ? 'install' : null;
+  const mode: PromptMode | null = updateRegistration
+    ? 'update'
+    : !isOnline && !offlineNoticeDismissed
+      ? 'offline'
+      : installPrompt
+        ? 'install'
+        : null;
   if (!mode) return null;
 
   const copy =
@@ -65,14 +89,23 @@ export const PwaPrompt: React.FC = () => {
             action: 'حدّث هسه',
             dismiss: 'بعدين',
           }
-        : {
-            eyebrow: 'ثبّت الستوديو',
-            title: 'خلي الستوديو قريب منك.',
-            description:
-              'ثبّت اختصار واحفظ الواجهة الخفيفة للفتح الأسرع. تصاميمك تبقى داخل هذا المتصفح فقط.',
-            action: 'ثبّت التطبيق',
-            dismiss: 'مو هسه',
-          }
+        : mode === 'offline'
+          ? {
+              eyebrow: 'بدون اتصال',
+              title: 'أنت هسه بدون إنترنت.',
+              description:
+                'الشاشات والملفات اللي انفتحت قبل ممكن تشتغل من ذاكرة المتصفح. أي ملف جديد أو غير محفوظ يحتاج اتصال.',
+              action: '',
+              dismiss: 'تمام',
+            }
+          : {
+              eyebrow: 'ثبّت الستوديو',
+              title: 'خلي الستوديو قريب منك.',
+              description:
+                'ثبّت اختصار واحفظ الواجهة الخفيفة للفتح الأسرع. تصاميمك تبقى داخل هذا المتصفح فقط.',
+              action: 'ثبّت التطبيق',
+              dismiss: 'مو هسه',
+            }
       : mode === 'update'
         ? {
             eyebrow: 'Studio update',
@@ -82,14 +115,23 @@ export const PwaPrompt: React.FC = () => {
             action: 'Update now',
             dismiss: 'Later',
           }
-        : {
-            eyebrow: 'Install the Studio',
-            title: 'Keep the Studio close.',
-            description:
-              'Install a shortcut and cache the lightweight shell for faster access. Designs still remain only in this browser.',
-            action: 'Install app',
-            dismiss: 'Not now',
-          };
+        : mode === 'offline'
+          ? {
+              eyebrow: 'Offline mode',
+              title: 'You are offline.',
+              description:
+                'Previously opened screens and files may work from this browser cache. New or uncached content still needs a connection.',
+              action: '',
+              dismiss: 'Got it',
+            }
+          : {
+              eyebrow: 'Install the Studio',
+              title: 'Keep the Studio close.',
+              description:
+                'Install a shortcut and cache the lightweight shell for faster access. Designs still remain only in this browser.',
+              action: 'Install app',
+              dismiss: 'Not now',
+            };
 
   const handlePrimaryAction = async () => {
     if (updateRegistration) {
@@ -110,6 +152,8 @@ export const PwaPrompt: React.FC = () => {
     if (mode === 'install') {
       window.sessionStorage.setItem(INSTALL_DISMISSED_KEY, 'true');
       setInstallPrompt(null);
+    } else if (mode === 'offline') {
+      setOfflineNoticeDismissed(true);
     } else {
       setUpdateRegistration(null);
     }
@@ -150,13 +194,15 @@ export const PwaPrompt: React.FC = () => {
         >
           {copy.dismiss}
         </button>
-        <button
-          type="button"
-          onClick={() => void handlePrimaryAction()}
-          className="min-h-11 rounded-full bg-accent px-5 text-xs font-black text-white"
-        >
-          {copy.action}
-        </button>
+        {mode !== 'offline' && (
+          <button
+            type="button"
+            onClick={() => void handlePrimaryAction()}
+            className="min-h-11 rounded-full bg-accent px-5 text-xs font-black text-white"
+          >
+            {copy.action}
+          </button>
+        )}
       </div>
     </aside>
   );
