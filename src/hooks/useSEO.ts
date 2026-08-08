@@ -115,11 +115,14 @@ export const useSEO = (titleKey: string, descriptionKey: string) => {
       description,
       translate: t,
     });
-    let structuredDataElement = document.getElementById(STRUCTURED_DATA_ID);
+    const existingStructuredDataElement = document.getElementById(STRUCTURED_DATA_ID);
 
     if (structuredData) {
-      if (!(structuredDataElement instanceof HTMLScriptElement)) {
-        structuredDataElement?.remove();
+      let structuredDataElement: HTMLScriptElement;
+      if (existingStructuredDataElement instanceof HTMLScriptElement) {
+        structuredDataElement = existingStructuredDataElement;
+      } else {
+        existingStructuredDataElement?.remove();
         structuredDataElement = document.createElement('script');
         structuredDataElement.id = STRUCTURED_DATA_ID;
         structuredDataElement.type = 'application/ld+json';
@@ -128,7 +131,7 @@ export const useSEO = (titleKey: string, descriptionKey: string) => {
       }
       structuredDataElement.textContent = JSON.stringify(structuredData);
     } else {
-      structuredDataElement?.remove();
+      existingStructuredDataElement?.remove();
     }
   }, [description, language, t, title]);
 };
