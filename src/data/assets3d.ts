@@ -98,7 +98,7 @@ export const PRODUCT_MODEL_CONFIGS: Record<string, ProductModelConfig> = {
     scale: 1,
     position: [0, 0, 0],
     rotation: ROTATION_CORRECTION,
-    garmentMeshName: 'T_Shirt_male',
+    garmentMeshName: 'Object_2',
     defaultSurfaceId: DEFAULT_PRINT_SURFACE_ID,
     surfaces: CLASSIC_TSHIRT_SURFACES,
   },
