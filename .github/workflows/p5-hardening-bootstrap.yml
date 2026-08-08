@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - agent/bgd-ink-p5-prelaunch-hardening
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -36,8 +39,8 @@ jobs:
       - name: Install current locked dependencies
         run: npm ci --include=dev --no-audit --no-fund
 
-      - name: Apply the P5 migration
-        run: node scripts/p5-hardening.mjs
+      - name: Apply the verified P5 migration
+        run: node scripts/p5-hardening-runner.mjs
 
       - name: Refresh the lockfile after dependency cleanup
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
