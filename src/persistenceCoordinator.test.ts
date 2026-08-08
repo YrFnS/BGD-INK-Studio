@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   DRAFT_PERSISTENCE_FAILURE_EVENT,
   flushPendingDraftPersistence,
+  flushRetriablePendingValue,
   registerDraftPersistenceFlusher,
   resetDraftPersistenceCoordinatorForTests,
 } from './persistenceCoordinator';
@@ -20,6 +21,23 @@ describe('draft persistence coordinator', () => {
     await expect(flushPendingDraftPersistence()).resolves.toBe(true);
     expect(first).toHaveBeenCalledOnce();
     expect(second).toHaveBeenCalledOnce();
+  });
+
+  it('restores a pending value when its write fails so a later flush can retry it', async () => {
+    const pending = { draftId: 'draft-2', revision: 3 };
+    const restore = vi.fn();
+    const failure = new Error('storage unavailable');
+
+    await expect(
+      flushRetriablePendingValue(
+        pending,
+        vi.fn().mockRejectedValue(failure),
+        () => Promise.resolve(),
+        restore,
+      ),
+    ).rejects.toThrow('storage unavailable');
+    expect(restore).toHaveBeenCalledOnce();
+    expect(restore).toHaveBeenCalledWith(pending);
   });
 
   it('announces a failed flush and blocks the navigation decision', async () => {

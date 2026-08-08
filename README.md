@@ -43,6 +43,7 @@ main
     └── agent/bgd-ink-p2-models-print-areas
         └── agent/bgd-ink-p3-premium-storefront
             └── agent/bgd-ink-p4-delivery-seo-pwa
+                └── agent/bgd-ink-p5-prelaunch-hardening
 ```
 
 ### P0 — safe foundation and rebrand
@@ -268,21 +269,21 @@ Current validated coverage:
 
 ## Routes
 
-| Route | Purpose | Search visibility |
-| --- | --- | --- |
-| `/` | Premium landing page | Public |
-| `/catalog` | Model-aware garment selection | Public |
-| `/guide` | Measurement, method, policy, and FAQ guidance | Public |
-| `/designs` | Recent local designs | Private/noindex |
-| `/studio/:draftId` | Recoverable 3D editor | Private/noindex |
-| `/checkout/:draftId` | Recoverable local draft preparation | Private/noindex |
-| `/draft/:draftId` | Local draft receipt | Private/noindex |
+| Route                | Purpose                                       | Search visibility |
+| -------------------- | --------------------------------------------- | ----------------- |
+| `/`                  | Premium landing page                          | Public            |
+| `/catalog`           | Model-aware garment selection                 | Public            |
+| `/guide`             | Measurement, method, policy, and FAQ guidance | Public            |
+| `/designs`           | Recent local designs                          | Private/noindex   |
+| `/studio/:draftId`   | Recoverable 3D editor                         | Private/noindex   |
+| `/checkout/:draftId` | Recoverable local draft preparation           | Private/noindex   |
+| `/draft/:draftId`    | Local draft receipt                           | Private/noindex   |
 
 Browser Back/Forward navigation is supported. Netlify direct-route fallback is provided through `public/_redirects`.
 
 ## Local draft model
 
-IndexedDB draft version 5 stores:
+IndexedDB draft version 6 stores:
 
 - Draft name, product, colour, size, quantity, and notes
 - Original PNG, JPEG, or WebP artwork blobs
@@ -367,17 +368,17 @@ The action is hidden until a verified WhatsApp number is configured in `src/conf
 
 Three.js remains lazy and excluded from the initial storefront.
 
-| Metric | Current | Limit |
-| --- | ---: | ---: |
-| Initial JavaScript, gzip | 74.81 KiB | 90 KiB |
-| Initial CSS, gzip | 15.97 KiB | 16 KiB |
-| Largest async JavaScript chunk, gzip | 168.08 KiB | 200 KiB |
-| Largest JavaScript chunk, raw | 651.42 KiB | 725 KiB |
-| Total JavaScript, gzip | 381.03 KiB | 390 KiB |
-| Total JavaScript, raw | 1,322.97 KiB | 1,350 KiB |
-| Total CSS, gzip | 15.97 KiB | 17 KiB |
+| Metric                               |      Current |     Limit |
+| ------------------------------------ | -----------: | --------: |
+| Initial JavaScript, gzip             |    75.68 KiB |    90 KiB |
+| Initial CSS, gzip                    |    15.99 KiB |  16.5 KiB |
+| Largest async JavaScript chunk, gzip |   168.08 KiB |   200 KiB |
+| Largest JavaScript chunk, raw        |   651.42 KiB |   725 KiB |
+| Total JavaScript, gzip               |   381.95 KiB |   390 KiB |
+| Total JavaScript, raw                | 1,325.67 KiB | 1,350 KiB |
+| Total CSS, gzip                      |    15.99 KiB |    17 KiB |
 
-No P4 budget was raised.
+P5 restored practical initial-CSS headroom while keeping the total CSS and JavaScript limits unchanged.
 
 ## Safety boundaries
 

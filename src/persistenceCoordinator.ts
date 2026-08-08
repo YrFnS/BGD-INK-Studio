@@ -30,6 +30,21 @@ export const registerDraftPersistenceFlusher = (
   };
 };
 
+export const flushRetriablePendingValue = async <T>(
+  pendingValue: T | null,
+  persist: (value: T) => Promise<void>,
+  waitForQueue: () => Promise<void>,
+  restore: (value: T) => void,
+): Promise<void> => {
+  try {
+    if (pendingValue !== null) await persist(pendingValue);
+    await waitForQueue();
+  } catch (error) {
+    if (pendingValue !== null) restore(pendingValue);
+    throw error;
+  }
+};
+
 export const flushPendingDraftPersistence = async (
   options: { announce?: boolean } = {},
 ): Promise<boolean> => {

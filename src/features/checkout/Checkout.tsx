@@ -17,7 +17,10 @@ import {
   saveCheckoutDetails,
   saveDraftQuantity,
 } from '@/services/drafts';
-import { registerDraftPersistenceFlusher } from '@/persistenceCoordinator';
+import {
+  flushRetriablePendingValue,
+  registerDraftPersistenceFlusher,
+} from '@/persistenceCoordinator';
 import { OrderDetails, PendingOrder, Product } from '@/types';
 import { submitOrder } from './services';
 import { BAGHDAD_AREA_OPTIONS, checkoutSchema } from './validation';
@@ -181,8 +184,15 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
     const pending = pendingPreparationRef.current;
     pendingPreparationRef.current = null;
-    if (pending) await queuePreparationSave(pending.details, pending.quantity);
-    await preparationSaveQueueRef.current;
+
+    await flushRetriablePendingValue(
+      pending,
+      (value) => queuePreparationSave(value.details, value.quantity),
+      () => preparationSaveQueueRef.current,
+      (value) => {
+        pendingPreparationRef.current = value;
+      },
+    );
   }, [queuePreparationSave]);
 
   useEffect(

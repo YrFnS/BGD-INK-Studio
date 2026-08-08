@@ -18,7 +18,10 @@ import {
   saveDesignDraft,
   storeArtworkFile,
 } from '@/services/drafts';
-import { registerDraftPersistenceFlusher } from '@/persistenceCoordinator';
+import {
+  flushRetriablePendingValue,
+  registerDraftPersistenceFlusher,
+} from '@/persistenceCoordinator';
 import { DEFAULT_PRINT_SURFACE_ID, DecalLayer, PrintSurfaceId, Product, Size } from '@/types';
 import {
   analyzeArtworkFile,
@@ -358,8 +361,14 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     const pendingSnapshot = pendingSaveRef.current;
     pendingSaveRef.current = null;
 
-    if (pendingSnapshot) await queueDraftSave(pendingSnapshot);
-    await saveQueueRef.current;
+    await flushRetriablePendingValue(
+      pendingSnapshot,
+      queueDraftSave,
+      () => saveQueueRef.current,
+      (snapshot) => {
+        pendingSaveRef.current = snapshot;
+      },
+    );
   }, [queueDraftSave]);
 
   useEffect(
