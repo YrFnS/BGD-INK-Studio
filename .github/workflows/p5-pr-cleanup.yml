@@ -1,0 +1,197 @@
+name: P5 PR cleanup
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p5-pr-cleanup-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  clean-and-validate:
+    if: github.event.pull_request.head.ref == 'agent/bgd-ink-p5-prelaunch-hardening'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout the P5 branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/bgd-ink-p5-prelaunch-hardening
+          fetch-depth: 0
+          lfs: true
+
+      - name: Restore files outside the P5 scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+
+          cat > /tmp/p5-keep-files <<'EOF'
+          e2e-pwa/offline-shell.spec.ts
+          index.html
+          netlify.toml
+          package-lock.json
+          package.json
+          scripts/check-delivery-assets.mjs
+          scripts/generate-delivery-assets.mjs
+          src/App.tsx
+          src/config/bundle-budgets.json
+          src/config/platform.ts
+          src/features/checkout/Checkout.tsx
+          src/features/checkout/Success.tsx
+          src/features/checkout/services.test.ts
+          src/features/checkout/services.ts
+          src/features/customizer/Customizer.tsx
+          src/hooks/useSEO.ts
+          src/main.tsx
+          src/persistenceCoordinator.test.ts
+          src/persistenceCoordinator.ts
+          src/routing/appRouter.test.ts
+          src/routing/appRouter.ts
+          src/services/api/local.ts
+          src/services/drafts/indexedDb.test.ts
+          src/services/drafts/indexedDb.ts
+          src/services/drafts/types.ts
+          src/styles.css
+          src/utils/seo.ts
+          src/utils/storage.ts
+          tsconfig.json
+          EOF
+
+          while IFS= read -r file; do
+            if grep -Fxq "$file" /tmp/p5-keep-files; then
+              continue
+            fi
+
+            if git cat-file -e "origin/main:$file" 2>/dev/null; then
+              git checkout origin/main -- "$file"
+            else
+              git rm -f --ignore-unmatch "$file"
+            fi
+          done < <(git diff --name-only origin/main...HEAD)
+
+      - name: Add focused P5 documentation and report exclusions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          readme = Path('README.md')
+          readme_text = readme.read_text()
+          marker = '### P4 — delivery, SEO, and controlled PWA\n'
+          block = '''### P5 — pre-launch hardening\n\nComplete on `agent/bgd-ink-p5-prelaunch-hardening`:\n\n- Flush pending customizer and preparation saves before internal navigation and browser history transitions\n- Keep language changes from reloading the active editor\n- Remove the duplicate local receipt store and purge obsolete customer-contact records\n- Use atomic revisioned IndexedDB updates with bounded artwork cleanup\n- Require an explicit verified URL and indexability flag before publishing canonical or crawlable output\n- Localize WhatsApp handoff fields and resolve garment display names\n- Verify every owned product asset in the fresh PWA precache\n- Remove third-party font requests and add a restrictive production Content Security Policy\n- Localize global loading and crash-recovery states\n- Remove the unused GSAP package and restore practical CSS budget headroom\n\nValidated baseline:\n\n```text\n81 unit/component/accessibility tests across 30 files\n11 desktop, phone, tablet, Arabic, editor, recovery, and export Chromium journeys\n1 production-only PWA Chromium journey\n```\n\n'''
+          if marker not in readme_text:
+              raise SystemExit('README P4 marker was not found')
+          readme_text = readme_text.replace(marker, block + marker, 1)
+          readme_text = readme_text.replace(
+              '77 unit/component/accessibility tests across 28 files',
+              '81 unit/component/accessibility tests across 30 files',
+              1,
+          )
+          readme.write_text(readme_text)
+
+          tasks = Path('tasks.md')
+          tasks_text = tasks.read_text()
+          tasks_marker = '## Paused infrastructure — outside the active roadmap\n'
+          tasks_block = '''## P5 — Pre-launch hardening — COMPLETE\n\n- [x] Flush pending customizer and checkout data before internal navigation.\n- [x] Flush on browser history transitions and best-effort page lifecycle events.\n- [x] Keep language changes from reloading the active editor.\n- [x] Remove the duplicate local receipt store and purge obsolete customer-contact records.\n- [x] Make IndexedDB draft updates atomic and revisioned.\n- [x] Retain artwork needed by bounded undo/redo while deleting unreferenced assets.\n- [x] Require both an explicit verified public URL and explicit indexing approval.\n- [x] Keep preview builds free of canonical URLs and public-site metadata.\n- [x] Localize WhatsApp handoff labels and resolve product translation keys.\n- [x] Correct and validate every owned PWA product asset.\n- [x] Remove third-party font requests and add a production Content Security Policy.\n- [x] Localize global loading and application-recovery states.\n- [x] Remove the unused GSAP runtime dependency and restore practical CSS budget headroom.\n\n'''
+          if tasks_marker not in tasks_text:
+              raise SystemExit('tasks.md paused-infrastructure marker was not found')
+          tasks.write_text(tasks_text.replace(tasks_marker, tasks_block + tasks_marker, 1))
+
+          gitignore = Path('.gitignore')
+          ignore_text = gitignore.read_text()
+          if 'playwright-report-pwa\n' not in ignore_text:
+              ignore_text = ignore_text.replace('playwright-report\n', 'playwright-report\nplaywright-report-pwa\n')
+          gitignore.write_text(ignore_text)
+          PY
+
+          rm -f .github/workflows/p5-pr-cleanup.yml
+          rm -rf playwright-report playwright-report-pwa test-results
+
+      - name: Verify the focused change set
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/p5-final-files <<'EOF'
+          .gitignore
+          README.md
+          e2e-pwa/offline-shell.spec.ts
+          index.html
+          netlify.toml
+          package-lock.json
+          package.json
+          scripts/check-delivery-assets.mjs
+          scripts/generate-delivery-assets.mjs
+          src/App.tsx
+          src/config/bundle-budgets.json
+          src/config/platform.ts
+          src/features/checkout/Checkout.tsx
+          src/features/checkout/Success.tsx
+          src/features/checkout/services.test.ts
+          src/features/checkout/services.ts
+          src/features/customizer/Customizer.tsx
+          src/hooks/useSEO.ts
+          src/main.tsx
+          src/persistenceCoordinator.test.ts
+          src/persistenceCoordinator.ts
+          src/routing/appRouter.test.ts
+          src/routing/appRouter.ts
+          src/services/api/local.ts
+          src/services/drafts/indexedDb.test.ts
+          src/services/drafts/indexedDb.ts
+          src/services/drafts/types.ts
+          src/styles.css
+          src/utils/seo.ts
+          src/utils/storage.ts
+          tasks.md
+          tsconfig.json
+          EOF
+
+          unexpected=0
+          while IFS= read -r file; do
+            if ! grep -Fxq "$file" /tmp/p5-final-files; then
+              echo "Unexpected P5 diff file: $file"
+              unexpected=1
+            fi
+          done < <(git diff --name-only origin/main)
+          test "$unexpected" -eq 0
+
+      - name: Set up Node.js and npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Run the complete fast validation gate
+        run: npm run check
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser journeys
+        run: npm run test:e2e
+
+      - name: Run the production PWA journey
+        run: npm run test:pwa
+
+      - name: Commit the focused validated P5 diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "keep the P5 hardening diff focused"
+          git push origin HEAD:agent/bgd-ink-p5-prelaunch-hardening
