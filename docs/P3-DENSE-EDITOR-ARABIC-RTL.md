@@ -165,15 +165,15 @@ all bundle budgets
 
 Current measured production baseline:
 
-| Metric                               |      Current |     Limit |
-| ------------------------------------ | -----------: | --------: |
-| Initial JavaScript, gzip             |    97.56 KiB |   140 KiB |
-| Initial CSS, gzip                    |    15.51 KiB |    16 KiB |
-| Largest async JavaScript chunk, gzip |   168.08 KiB |   230 KiB |
-| Largest JavaScript chunk, raw        |   651.42 KiB |   800 KiB |
-| Total JavaScript, gzip               |   401.45 KiB |   410 KiB |
-| Total JavaScript, raw                | 1,368.65 KiB | 1,400 KiB |
-| Total CSS, gzip                      |    15.51 KiB |    17 KiB |
+| Metric | Current | Limit |
+| --- | ---: | ---: |
+| Initial JavaScript, gzip | 97.56 KiB | 140 KiB |
+| Initial CSS, gzip | 15.51 KiB | 16 KiB |
+| Largest async JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
+| Largest JavaScript chunk, raw | 651.42 KiB | 800 KiB |
+| Total JavaScript, gzip | 401.45 KiB | 410 KiB |
+| Total JavaScript, raw | 1,368.65 KiB | 1,400 KiB |
+| Total CSS, gzip | 15.51 KiB | 17 KiB |
 
 No budget was raised for this slice.
 

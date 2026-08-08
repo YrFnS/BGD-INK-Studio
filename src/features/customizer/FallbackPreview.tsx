@@ -31,7 +31,9 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
   const { language, t } = useAppContext();
   const width = surface.modelBounds.maxX - surface.modelBounds.minX;
   const height = surface.modelBounds.maxY - surface.modelBounds.minY;
-  const visibleLayers = decals.filter((layer) => layer.visible && layer.surfaceId === surface.id);
+  const visibleLayers = decals.filter(
+    (layer) => layer.visible && layer.surfaceId === surface.id,
+  );
 
   const copy =
     language === 'ar'
@@ -52,8 +54,7 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
           manual: 'The 2D preview is active. Your layers and local draft remain fully preserved.',
           unsupported: 'WebGL is unavailable on this device, so a safe 2D preview is being used.',
           lost: 'The 3D preview paused after its WebGL context was lost. Your design was not lost.',
-          model:
-            'The 3D garment model could not be rendered, but the local design remains available.',
+          model: 'The 3D garment model could not be rendered, but the local design remains available.',
           retry: 'Try 3D again',
           surface: 'Print area',
           noArtwork: 'No visible layer is placed on this surface.',
@@ -81,10 +82,7 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
         <p id="fallback-preview-title" className="text-sm font-bold">
           {copy.title}
         </p>
-        <p
-          id="fallback-preview-description"
-          className="mt-1 text-xs text-gray-600 dark:text-gray-300"
-        >
+        <p id="fallback-preview-description" className="mt-1 text-xs text-gray-600 dark:text-gray-300">
           {reasonText}
         </p>
         {canRetry3d && (
@@ -134,9 +132,10 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
           {visibleLayers.map((layer, order) => {
             const aspectRatio = normalizeArtworkAspectRatio(layer.aspectRatio);
             const x = ((layer.position[0] - surface.modelBounds.minX) / width) * 100;
-            const y = (1 - (layer.position[1] - surface.modelBounds.minY) / height) * 100;
+            const y =
+              (1 - (layer.position[1] - surface.modelBounds.minY) / height) * 100;
             const layerWidth = (layer.scale / width) * 100;
-            const layerHeight = (layer.scale / aspectRatio / height) * 100;
+            const layerHeight = ((layer.scale / aspectRatio) / height) * 100;
 
             return (
               <img
@@ -144,9 +143,7 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
                 src={layer.url}
                 alt={layer.name}
                 className={`absolute max-w-none select-none object-contain ${
-                  layer.id === activeDecalId
-                    ? 'ring-2 ring-white ring-offset-2 ring-offset-black/30'
-                    : ''
+                  layer.id === activeDecalId ? 'ring-2 ring-white ring-offset-2 ring-offset-black/30' : ''
                 }`}
                 style={{
                   left: toPercentage(x),

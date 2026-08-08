@@ -92,7 +92,9 @@ export const Controls: React.FC<ControlsProps> = ({
     : selectedSurface;
   const activeScaleLimits = activeSurface ? getSurfaceScaleLimits(activeSurface) : null;
   const activeArtworkWidthCm =
-    activeDecal && activeSurface ? scaleToArtworkWidthCm(activeDecal.scale, activeSurface) : null;
+    activeDecal && activeSurface
+      ? scaleToArtworkWidthCm(activeDecal.scale, activeSurface)
+      : null;
 
   const copy =
     language === 'ar'
@@ -113,7 +115,8 @@ export const Controls: React.FC<ControlsProps> = ({
           backward: 'رجّع الطبقة',
           hidden: 'مخفية',
           firstLayer: 'أضف أول طبقة تصميم',
-          dragHelp: 'حرّك التصميم داخل حدود الطباعة. تگدر تتراجع عن التحريك وتغيير الحجم والدوران.',
+          dragHelp:
+            'حرّك التصميم داخل حدود الطباعة. تگدر تتراجع عن التحريك وتغيير الحجم والدوران.',
         }
       : {
           upload: 'Add layer',
@@ -269,10 +272,7 @@ export const Controls: React.FC<ControlsProps> = ({
                 }`}
               >
                 <span className="block text-sm font-bold">{t(surface.labelKey)}</span>
-                <bdi
-                  className="technical-ltr mt-1 block font-mono text-[10px] opacity-70"
-                  dir="ltr"
-                >
+                <bdi className="technical-ltr mt-1 block font-mono text-[10px] opacity-70" dir="ltr">
                   {surface.physicalWidthCm} × {surface.physicalHeightCm} cm
                 </bdi>
               </button>

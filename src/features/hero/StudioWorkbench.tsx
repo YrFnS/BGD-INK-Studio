@@ -70,13 +70,7 @@ export const StudioWorkbench: React.FC = () => {
                   <stop offset="1" stopColor="#9e978e" />
                 </linearGradient>
                 <filter id="workbench-shadow" x="-40%" y="-30%" width="180%" height="190%">
-                  <feDropShadow
-                    dx="0"
-                    dy="25"
-                    stdDeviation="22"
-                    floodColor="#000"
-                    floodOpacity=".62"
-                  />
+                  <feDropShadow dx="0" dy="25" stdDeviation="22" floodColor="#000" floodOpacity=".62" />
                 </filter>
               </defs>
               <g filter="url(#workbench-shadow)">
@@ -158,18 +152,14 @@ export const StudioWorkbench: React.FC = () => {
                 {copy.quality}
               </p>
               <div className="mt-2 flex items-end justify-between gap-2">
-                <span className="text-xl font-black uppercase sm:text-2xl">
-                  {copy.qualityValue}
-                </span>
+                <span className="text-xl font-black uppercase sm:text-2xl">{copy.qualityValue}</span>
                 <span className="rounded-full bg-emerald-400/15 px-2 py-1 text-[9px] font-black text-emerald-300">
                   01
                 </span>
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3 backdrop-blur-md sm:p-4">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/45">
-                {copy.dpi}
-              </p>
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/45">{copy.dpi}</p>
               <div className="mt-2 flex items-end justify-between gap-2">
                 <span className="font-mono text-xl font-black sm:text-2xl">254</span>
                 <span className="text-[9px] font-bold text-white/40">{copy.physicalSize}</span>

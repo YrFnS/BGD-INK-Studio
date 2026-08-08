@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { PrintSurfaceDefinition, ReadyProductModelConfig } from '@/data/assets3d';
+import type {
+  PrintSurfaceDefinition,
+  ReadyProductModelConfig,
+} from '@/data/assets3d';
 import { ProductType, Size, type DecalLayer, type Product } from '@/types';
 import { artworkWidthCmToScale } from './printArea';
 import {
@@ -9,7 +12,9 @@ import {
   type ProductionExportInput,
 } from './productionExport';
 
-const createSurface = (id: 'front' | 'back'): PrintSurfaceDefinition => ({
+const createSurface = (
+  id: 'front' | 'back',
+): PrintSurfaceDefinition => ({
   id,
   labelKey: `customizer.surface.${id}`,
   side: id,
@@ -56,7 +61,9 @@ const product: Product = {
   inStock: true,
 };
 
-const createLayer = (overrides: Partial<DecalLayer> = {}): DecalLayer => ({
+const createLayer = (
+  overrides: Partial<DecalLayer> = {},
+): DecalLayer => ({
   id: 'layer-primary',
   name: 'Primary logo',
   visible: true,
@@ -144,7 +151,9 @@ describe('local production exports', () => {
       position: [offsetX, -0.04, -0.16],
       scale: artworkWidthCmToScale(12, backSurface),
     });
-    const specification = buildProductionSpecification(createInput([frontLayer, backLayer]));
+    const specification = buildProductionSpecification(
+      createInput([frontLayer, backLayer]),
+    );
 
     expect(specification.surfaces[0].layers[0].placement.centerXcm).toBeCloseTo(5, 2);
     expect(specification.surfaces[1].layers[0].placement.centerXcm).toBeCloseTo(-5, 2);
@@ -153,7 +162,8 @@ describe('local production exports', () => {
   it('creates stable readable file names without exposing object URLs', () => {
     expect(getProductionExportFileNames('draft-1234567890', 'Launch Shirts / Baghdad')).toEqual({
       proof: 'bgd-ink-launch-shirts-baghdad-draft-1234567890-proof.png',
-      specification: 'bgd-ink-launch-shirts-baghdad-draft-1234567890-specification.json',
+      specification:
+        'bgd-ink-launch-shirts-baghdad-draft-1234567890-specification.json',
     });
   });
 });

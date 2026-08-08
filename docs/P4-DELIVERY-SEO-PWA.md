@@ -167,15 +167,15 @@ brand, architecture, asset, storefront, localization, responsive, delivery, and 
 
 Current production budgets:
 
-| Metric                               |      Current |     Limit |
-| ------------------------------------ | -----------: | --------: |
-| Initial JavaScript, gzip             |    74.81 KiB |    90 KiB |
-| Initial CSS, gzip                    |    15.97 KiB |    16 KiB |
-| Largest async JavaScript chunk, gzip |   168.08 KiB |   200 KiB |
-| Largest JavaScript chunk, raw        |   651.42 KiB |   725 KiB |
-| Total JavaScript, gzip               |   381.03 KiB |   390 KiB |
-| Total JavaScript, raw                | 1,322.97 KiB | 1,350 KiB |
-| Total CSS, gzip                      |    15.97 KiB |    17 KiB |
+| Metric | Current | Limit |
+| --- | ---: | ---: |
+| Initial JavaScript, gzip | 74.81 KiB | 90 KiB |
+| Initial CSS, gzip | 15.97 KiB | 16 KiB |
+| Largest async JavaScript chunk, gzip | 168.08 KiB | 200 KiB |
+| Largest JavaScript chunk, raw | 651.42 KiB | 725 KiB |
+| Total JavaScript, gzip | 381.03 KiB | 390 KiB |
+| Total JavaScript, raw | 1,322.97 KiB | 1,350 KiB |
+| Total CSS, gzip | 15.97 KiB | 17 KiB |
 
 No performance budget was raised for P4.
 

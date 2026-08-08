@@ -124,7 +124,11 @@ export const Scene: React.FC<SceneProps> = ({
 }) => {
   const isDark = theme === 'dark';
   const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
-  const frameLoop = !isPageVisible ? 'never' : renderingProfile.idleAnimation ? 'always' : 'demand';
+  const frameLoop = !isPageVisible
+    ? 'never'
+    : renderingProfile.idleAnimation
+      ? 'always'
+      : 'demand';
 
   const stopDecalInteraction = () => {
     setDraggingDecal(false);
@@ -147,7 +151,10 @@ export const Scene: React.FC<SceneProps> = ({
       }}
       onPointerMissed={stopDecalInteraction}
     >
-      <WebGLContextMonitor onContextLost={onContextLost} onContextRestored={onContextRestored} />
+      <WebGLContextMonitor
+        onContextLost={onContextLost}
+        onContextRestored={onContextRestored}
+      />
       <CameraRig surface={selectedSurface} />
 
       <ambientLight intensity={isDark ? 0.7 : 1.1} />
@@ -167,7 +174,10 @@ export const Scene: React.FC<SceneProps> = ({
         <directionalLight intensity={0.65} position={[-4, 2, -3]} />
       )}
 
-      <ModelErrorBoundary fallback={<ProceduralFallback color={color} />} onError={onModelError}>
+      <ModelErrorBoundary
+        fallback={<ProceduralFallback color={color} />}
+        onError={onModelError}
+      >
         <ShirtModel
           modelConfig={modelConfig}
           selectedSurfaceId={selectedSurfaceId}

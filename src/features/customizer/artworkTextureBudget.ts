@@ -6,7 +6,9 @@ export interface ArtworkTextureDimensions {
   height: number;
 }
 
-export const getArtworkTextureDimensionLimit = (quality: RenderingQuality): number => {
+export const getArtworkTextureDimensionLimit = (
+  quality: RenderingQuality,
+): number => {
   if (quality === 'high') return assetBudgets.artworkTextures.highMaximumDimension;
   if (quality === 'balanced') {
     return assetBudgets.artworkTextures.balancedMaximumDimension;

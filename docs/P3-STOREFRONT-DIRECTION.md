@@ -157,15 +157,15 @@ The preload side effect was removed from the lightweight model configuration mod
 
 The editorial storefront, guide, draft-preparation view, receipt, and RTL foundation remain within the reviewed limits:
 
-| Metric                               |      Current |     Limit |
-| ------------------------------------ | -----------: | --------: |
-| Initial JavaScript, gzip             |    97.56 KiB |   140 KiB |
-| Initial CSS, gzip                    |    15.48 KiB |    16 KiB |
-| Largest async JavaScript chunk, gzip |   168.08 KiB |   230 KiB |
-| Largest JavaScript chunk, raw        |   651.42 KiB |   800 KiB |
-| Total JavaScript, gzip               |   400.60 KiB |   410 KiB |
-| Total JavaScript, raw                | 1,365.58 KiB | 1,400 KiB |
-| Total CSS, gzip                      |    15.48 KiB |  16.5 KiB |
+| Metric | Current | Limit |
+| --- | ---: | ---: |
+| Initial JavaScript, gzip | 97.56 KiB | 140 KiB |
+| Initial CSS, gzip | 15.48 KiB | 16 KiB |
+| Largest async JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
+| Largest JavaScript chunk, raw | 651.42 KiB | 800 KiB |
+| Total JavaScript, gzip | 400.60 KiB | 410 KiB |
+| Total JavaScript, raw | 1,365.58 KiB | 1,400 KiB |
+| Total CSS, gzip | 15.48 KiB | 16.5 KiB |
 
 No performance budget was raised for the Iraqi-Arabic and RTL work.
 

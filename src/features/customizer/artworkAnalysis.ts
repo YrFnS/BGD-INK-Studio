@@ -5,7 +5,13 @@ const CM_PER_INCH = 2.54;
 const TRANSPARENT_ALPHA_THRESHOLD = 250;
 const CONTENT_ALPHA_THRESHOLD = 8;
 
-export type ArtworkDpiLevel = 'unknown' | 'excellent' | 'good' | 'acceptable' | 'low' | 'very-low';
+export type ArtworkDpiLevel =
+  | 'unknown'
+  | 'excellent'
+  | 'good'
+  | 'acceptable'
+  | 'low'
+  | 'very-low';
 
 export type ArtworkQualityWarning =
   | 'very-low-resolution'
@@ -76,7 +82,8 @@ export const analyzeArtworkPixels = ({
     }
   }
 
-  const contentBoundsArea = contentPixels > 0 ? (maxX - minX + 1) * (maxY - minY + 1) : 0;
+  const contentBoundsArea =
+    contentPixels > 0 ? (maxX - minX + 1) * (maxY - minY + 1) : 0;
 
   return {
     pixelWidth,
@@ -143,7 +150,9 @@ const readPngDimensions = (view: DataView): ArtworkDimensions | null => {
 };
 
 const isJpegStartOfFrameMarker = (marker: number): boolean =>
-  [0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf].includes(marker);
+  [0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf].includes(
+    marker,
+  );
 
 const readJpegDimensions = (view: DataView): ArtworkDimensions | null => {
   if (view.byteLength < 4 || view.getUint16(0, false) !== 0xffd8) return null;

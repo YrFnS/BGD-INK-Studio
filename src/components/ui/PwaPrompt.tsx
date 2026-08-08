@@ -22,9 +22,8 @@ const INSTALL_DISMISSED_KEY = 'bgd-ink-install-dismissed';
 export const PwaPrompt: React.FC = () => {
   const { language } = useAppContext();
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [updateRegistration, setUpdateRegistration] = useState<ServiceWorkerRegistration | null>(
-    null,
-  );
+  const [updateRegistration, setUpdateRegistration] =
+    useState<ServiceWorkerRegistration | null>(null);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const [offlineNoticeDismissed, setOfflineNoticeDismissed] = useState(false);
 

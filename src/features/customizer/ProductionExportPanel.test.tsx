@@ -4,7 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '@/contexts/AppContext';
 import { ProductionExportPanel } from './ProductionExportPanel';
 
-const renderPanel = (onDownloadProof = vi.fn(), onDownloadSpecification = vi.fn()) =>
+const renderPanel = (
+  onDownloadProof = vi.fn(),
+  onDownloadSpecification = vi.fn(),
+) =>
   render(
     <AppProvider>
       <ProductionExportPanel
@@ -44,8 +47,6 @@ describe('local handoff export panel', () => {
     expect(screen.getByText('على هذا الجهاز')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'نزّل إثبات PNG' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'نزّل مواصفات JSON' })).toBeInTheDocument();
-    expect(screen.getAllByText(/PNG|JSON/).some((node) => node.getAttribute('dir') === 'ltr')).toBe(
-      true,
-    );
+    expect(screen.getAllByText(/PNG|JSON/).some((node) => node.getAttribute('dir') === 'ltr')).toBe(true);
   });
 });

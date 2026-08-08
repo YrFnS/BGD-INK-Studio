@@ -215,7 +215,8 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'common.price': 'د.ع',
     'common.scroll': 'تصفّح',
     'success.title': 'انحفظت مسودة التصميم',
-    'success.message': 'المسودة محفوظة على هذا الجهاز فقط. ما انرسلت للستوديو وما تعتبر طلب مؤكد.',
+    'success.message':
+      'المسودة محفوظة على هذا الجهاز فقط. ما انرسلت للستوديو وما تعتبر طلب مؤكد.',
     'success.orderId': 'رقم المسودة',
     'success.whatsapp': 'دز المسودة على واتساب',
     'success.home': 'العودة للرئيسية',
@@ -244,6 +245,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'home.quality.title': 'قيس قبل الإنتاج',
     'home.quality.desc':
       'المحرر يعرض قياسات التخطيط وإرشادات الجودة، ويوضح بصراحة شنو بعده يحتاج تأكيد على القطعة الحقيقية.',
-    'home.marquee': 'موديلات معتمدة • مسودات محلية • قياسات واضحة • ملفات PNG + JSON • ',
+    'home.marquee':
+      'موديلات معتمدة • مسودات محلية • قياسات واضحة • ملفات PNG + JSON • ',
   },
 };

@@ -5,7 +5,9 @@ import {
   type RenderingCapabilities,
 } from './renderingCapabilities';
 
-const capabilities = (overrides: Partial<RenderingCapabilities> = {}): RenderingCapabilities => ({
+const capabilities = (
+  overrides: Partial<RenderingCapabilities> = {},
+): RenderingCapabilities => ({
   devicePixelRatio: 2,
   hardwareConcurrency: 8,
   deviceMemoryGb: 8,

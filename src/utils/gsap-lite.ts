@@ -1,4 +1,10 @@
-type AnimationTarget = string | Element | ArrayLike<Element> | Iterable<Element> | null | undefined;
+type AnimationTarget =
+  | string
+  | Element
+  | ArrayLike<Element>
+  | Iterable<Element>
+  | null
+  | undefined;
 
 type ScopeTarget = Element | { current: Element | null } | null | undefined;
 
@@ -344,10 +350,7 @@ class LiteTimeline implements TimelineLike {
     const stagger = Math.max(0, vars.stagger ?? 0);
     const duration = Math.max(0, vars.duration ?? DEFAULT_DURATION);
     const delay = Math.max(0, vars.delay ?? 0);
-    this.cursor = Math.max(
-      this.cursor,
-      start + delay + duration + stagger * (Math.max(1, count) - 1),
-    );
+    this.cursor = Math.max(this.cursor, start + delay + duration + stagger * (Math.max(1, count) - 1));
   }
 
   private add(
@@ -358,12 +361,7 @@ class LiteTimeline implements TimelineLike {
   ): this {
     const merged = { ...this.defaults, ...vars };
     const start = parseTimelinePosition(position, this.cursor);
-    const count = animateTargets(
-      target,
-      { ...merged, delay: 0 },
-      direction,
-      start + (merged.delay ?? 0),
-    );
+    const count = animateTargets(target, { ...merged, delay: 0 }, direction, start + (merged.delay ?? 0));
     this.measureEnd(start, merged, count);
     return this;
   }

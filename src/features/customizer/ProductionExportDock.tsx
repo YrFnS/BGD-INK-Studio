@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/contexts/ToastContext';
-import { getReadyProductModelConfig, type ReadyProductModelConfig } from '@/data/assets3d';
+import {
+  getReadyProductModelConfig,
+  type ReadyProductModelConfig,
+} from '@/data/assets3d';
 import { platformApi } from '@/services/api';
 import {
   loadDesignDraft,
@@ -143,14 +146,14 @@ export const ProductionExportDock: React.FC<ProductionExportDockProps> = ({ draf
         showToast(copy.successProof, 'success');
       } else {
         const specification = buildProductionSpecification(input);
-        downloadBlob(createProductionSpecificationBlob(specification), fileNames.specification);
+        downloadBlob(
+          createProductionSpecificationBlob(specification),
+          fileNames.specification,
+        );
         showToast(copy.successSpecification, 'success');
       }
     } catch (error: unknown) {
-      showToast(
-        error instanceof Error && error.message === 'DRAFT_NOT_FOUND' ? copy.missing : copy.failed,
-        'error',
-      );
+      showToast(error instanceof Error && error.message === 'DRAFT_NOT_FOUND' ? copy.missing : copy.failed, 'error');
     } finally {
       if (draft) releaseDraftObjectUrls(draft);
       setIsExporting(false);

@@ -142,15 +142,15 @@ The complete branch gate contains 66 unit/component/accessibility tests across 2
 
 ## Current measured cost
 
-| Metric                               |      Current |     Limit |
-| ------------------------------------ | -----------: | --------: |
-| Initial JavaScript, gzip             |    97.56 KiB |   140 KiB |
-| Initial CSS, gzip                    |    15.65 KiB |    16 KiB |
-| Largest async JavaScript chunk, gzip |   168.08 KiB |   230 KiB |
-| Largest JavaScript chunk, raw        |   651.42 KiB |   800 KiB |
-| Total JavaScript, gzip               |   403.79 KiB |   410 KiB |
-| Total JavaScript, raw                | 1,376.40 KiB | 1,400 KiB |
-| Total CSS, gzip                      |    15.65 KiB |    17 KiB |
+| Metric | Current | Limit |
+| --- | ---: | ---: |
+| Initial JavaScript, gzip | 97.56 KiB | 140 KiB |
+| Initial CSS, gzip | 15.65 KiB | 16 KiB |
+| Largest async JavaScript chunk, gzip | 168.08 KiB | 230 KiB |
+| Largest JavaScript chunk, raw | 651.42 KiB | 800 KiB |
+| Total JavaScript, gzip | 403.79 KiB | 410 KiB |
+| Total JavaScript, raw | 1,376.40 KiB | 1,400 KiB |
+| Total CSS, gzip | 15.65 KiB | 17 KiB |
 
 No reviewed performance limit was raised for this slice. The remaining JavaScript headroom is narrow and future work should prefer simplification or lazy loading.
 

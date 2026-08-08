@@ -12,9 +12,7 @@ if (!classicProduct) throw new Error('Classic T-shirt test product is missing.')
 const quantity = 4;
 const formatPrice = (value: number): string => new Intl.NumberFormat('en-US').format(value);
 
-test('recovers artwork, quantity, and draft-preparation fields across refreshes', async ({
-  page,
-}) => {
+test('recovers artwork, quantity, and draft-preparation fields across refreshes', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/catalog');
 

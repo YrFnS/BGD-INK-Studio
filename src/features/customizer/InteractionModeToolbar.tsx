@@ -1,7 +1,11 @@
 import React from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import type { CustomizerInteractionMode } from './interactionGestures';
-import type { PreviewMode, RenderingQuality, WebGLSupport } from './renderingCapabilities';
+import type {
+  PreviewMode,
+  RenderingQuality,
+  WebGLSupport,
+} from './renderingCapabilities';
 
 interface InteractionModeToolbarProps {
   mode: CustomizerInteractionMode;
@@ -37,7 +41,8 @@ export const InteractionModeToolbar: React.FC<InteractionModeToolbarProps> = ({
           noLayer: 'اختار طبقة ظاهرة حتى تگدر تحركها أو تغيّر حجمها.',
           viewHelp: 'اسحب حتى تدوّر القطعة، وقرّب أو بعّد بإصبعين.',
           moveHelp: 'اسحب بإصبع واحد حتى تحرّك التصميم داخل حدود الطباعة.',
-          transformHelp: 'اسحب أفقياً للتدوير وعمودياً لتغيير الحجم، أو استخدم إصبعين.',
+          transformHelp:
+            'اسحب أفقياً للتدوير وعمودياً لتغيير الحجم، أو استخدم إصبعين.',
           quality: 'جودة العرض',
           high: 'عالية',
           balanced: 'متوازنة',

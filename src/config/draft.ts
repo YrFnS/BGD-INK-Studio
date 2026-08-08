@@ -4,7 +4,10 @@ export const MAX_DRAFT_QUANTITY = 50;
 export const normalizeDraftQuantity = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return MIN_DRAFT_QUANTITY;
 
-  return Math.min(MAX_DRAFT_QUANTITY, Math.max(MIN_DRAFT_QUANTITY, Math.round(value)));
+  return Math.min(
+    MAX_DRAFT_QUANTITY,
+    Math.max(MIN_DRAFT_QUANTITY, Math.round(value)),
+  );
 };
 
 export const calculateLocalDraftEstimate = (

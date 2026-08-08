@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { BAGHDAD_AREA_OPTIONS, checkoutSchema, getBaghdadAreaLabel } from './validation';
+import {
+  BAGHDAD_AREA_OPTIONS,
+  checkoutSchema,
+  getBaghdadAreaLabel,
+} from './validation';
 
 describe('draft-preparation validation', () => {
   it('normalizes a valid Iraqi contact form', () => {
