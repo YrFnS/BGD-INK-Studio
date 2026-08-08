@@ -11,9 +11,17 @@ const renderPrompt = () =>
     </AppProvider>,
   );
 
+const setOnlineState = (value: boolean) => {
+  Object.defineProperty(window.navigator, 'onLine', {
+    configurable: true,
+    value,
+  });
+};
+
 beforeEach(() => {
   window.localStorage.clear();
   window.sessionStorage.clear();
+  setOnlineState(true);
 });
 
 describe('PWA prompt', () => {
@@ -55,5 +63,18 @@ describe('PWA prompt', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Update now' }));
 
     expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+  });
+
+  it('explains the limits of cached offline access without promising full availability', async () => {
+    renderPrompt();
+    setOnlineState(false);
+    window.dispatchEvent(new Event('offline'));
+
+    expect(await screen.findByRole('heading', { name: 'You are offline.' })).toBeVisible();
+    expect(screen.getByText(/Previously opened screens and files may work/)).toBeVisible();
+    expect(screen.getByText(/New or uncached content still needs a connection/)).toBeVisible();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
+    expect(screen.queryByRole('heading', { name: 'You are offline.' })).not.toBeInTheDocument();
   });
 });
