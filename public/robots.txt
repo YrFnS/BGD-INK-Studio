@@ -1,0 +1,3 @@
+# Preview-safe default. The production build replaces this file when a verified public URL is available.
+User-agent: *
+Disallow: /

@@ -1,5 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { registerServiceWorker } from './pwa/registerServiceWorker';
 import { installAnchorNavigation } from './utils/anchorNavigation';
 import { App } from './App';
 import './styles.css';
@@ -11,6 +12,7 @@ if (!rootElement) {
 }
 
 installAnchorNavigation();
+registerServiceWorker();
 
 createRoot(rootElement).render(
   <React.StrictMode>

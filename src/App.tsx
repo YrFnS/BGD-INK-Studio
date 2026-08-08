@@ -5,6 +5,7 @@ import { PageTransition } from '@/components/layout/PageTransition';
 import { Cursor } from '@/components/ui/Cursor';
 import { Noise } from '@/components/ui/Noise';
 import { Preloader } from '@/components/ui/Preloader';
+import { PwaPrompt } from '@/components/ui/PwaPrompt';
 import { PLATFORM_STATUS, getPlatformText } from '@/config/platform';
 import { AppProvider, useAppContext } from '@/contexts/AppContext';
 import { ToastProvider, useToast } from '@/contexts/ToastContext';
@@ -229,6 +230,7 @@ const AppContent = () => {
       <Preloader />
       <Noise />
       <Cursor />
+      <PwaPrompt />
 
       <Header currentView={view} onNavigate={handleHeaderNavigation} />
 
