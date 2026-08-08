@@ -51,8 +51,14 @@ test('installs owned assets and reopens visited public routes from the productio
 
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'SELECT A VERIFIED CANVAS' })).toBeVisible();
+
+  // Chromium's DevTools offline emulation does not consistently dispatch the
+  // standard browser event in headless mode, so emit it while the context is
+  // still genuinely offline to validate the customer notice deterministically.
+  await page.evaluate(() => window.dispatchEvent(new Event('offline')));
   await expect(page.getByRole('heading', { name: 'You are offline.' })).toBeVisible();
   await expect(page.getByText(/New or uncached content still needs a connection/)).toBeVisible();
 
   await context.setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
 });
