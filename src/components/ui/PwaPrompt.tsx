@@ -117,28 +117,26 @@ export const PwaPrompt: React.FC = () => {
 
   return (
     <aside
-      className="fixed inset-x-3 z-[90] mx-auto max-w-xl rounded-[1.5rem] border border-black/10 bg-[#f4f1ea]/95 p-4 text-[#111111] shadow-[0_24px_80px_rgba(0,0,0,.24)] backdrop-blur-xl dark:border-white/10 dark:bg-[#111111]/95 dark:text-[#f4f1ea] sm:inset-x-6 sm:p-5"
+      className="fixed inset-x-3 z-50 mx-auto max-w-lg rounded-3xl border border-black/10 bg-paper p-4 text-ink shadow-2xl dark:border-white/10 dark:bg-surface dark:text-primary sm:inset-x-6 sm:p-5"
       style={{ bottom: 'max(0.75rem, calc(0.5rem + var(--safe-area-bottom)))' }}
       role="status"
       aria-live="polite"
     >
       <div className="flex items-start gap-4">
         <span
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#111111] font-display text-[11px] font-black text-white dark:bg-[#f4f1ea] dark:text-black"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink font-display text-xs font-black text-white dark:bg-paper dark:text-black"
           dir="ltr"
           aria-hidden="true"
         >
           B/I
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-accent">
-            {copy.eyebrow}
-          </p>
-          <h2 className="mt-1 text-lg font-black tracking-[-0.025em]">{copy.title}</h2>
-          <p className="mt-2 text-sm leading-6 text-black/58 dark:text-white/52" dir="auto">
+          <p className="text-xs font-black uppercase tracking-widest text-accent">{copy.eyebrow}</p>
+          <h2 className="mt-1 text-lg font-black">{copy.title}</h2>
+          <p className="mt-2 text-sm leading-6 text-black/60 dark:text-white/60" dir="auto">
             {copy.description}
           </p>
-          <p className="mt-2 text-[10px] font-semibold text-black/38 dark:text-white/32">
+          <p className="mt-2 text-xs font-semibold text-black/40 dark:text-white/40">
             <bdi dir="ltr">{BRAND.productName}</bdi>
           </p>
         </div>
@@ -148,14 +146,14 @@ export const PwaPrompt: React.FC = () => {
         <button
           type="button"
           onClick={handleDismiss}
-          className="min-h-11 rounded-full border border-black/12 px-5 text-xs font-black transition-colors hover:border-black/30 hover:bg-white dark:border-white/12 dark:hover:border-white/30 dark:hover:bg-white/[0.05]"
+          className="min-h-11 rounded-full border border-black/10 px-5 text-xs font-black transition-colors hover:border-black/30 hover:bg-white dark:border-white/10 dark:hover:border-white/30 dark:hover:bg-white/5"
         >
           {copy.dismiss}
         </button>
         <button
           type="button"
           onClick={() => void handlePrimaryAction()}
-          className="min-h-11 rounded-full bg-accent px-5 text-xs font-black text-white shadow-[0_12px_30px_rgba(225,59,45,.22)] transition-transform hover:-translate-y-0.5"
+          className="min-h-11 rounded-full bg-accent px-5 text-xs font-black text-white transition-transform hover:-translate-y-0.5"
         >
           {copy.action}
         </button>
