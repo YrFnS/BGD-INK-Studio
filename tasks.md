@@ -2,36 +2,44 @@
 
 ## Project objective
 
-Build a high-quality bilingual custom-printing experience for Baghdad with an accurate 3D editor, strong local draft recovery, and a polished customer journey.
+Build a high-quality bilingual custom-printing experience for Baghdad with an accurate local 3D editor, strong same-device draft recovery, a premium storefront, and trustworthy frontend delivery.
 
-## Current scope decision — frontend and local-only
+## Active scope decision — frontend and browser-local
 
-Backend, production database, and remote file storage work are paused until explicitly reopened.
+Backend, production database, account, and remote-storage work remain paused until explicitly reopened.
 
-For the current roadmap:
+For the active roadmap:
 
-- The application remains a frontend-only React/Vite project.
-- Products continue to come from local typed configuration.
+- The application remains a React/Vite frontend.
+- Products come from typed local configuration.
 - Designs and original artwork remain in browser IndexedDB on the current device.
-- Prepared design receipts remain local drafts; they are not accepted as real shop orders.
-- No account system, staff portal, production API, database, inventory service, or object-storage integration will be built.
-- P2 and P3 focus on the 3D customizer, customer experience, accessibility, mobile behavior, visual quality, and local exports.
+- Prepared receipts remain local drafts; they are not real shop orders.
+- No authoritative inventory, pricing, payment, delivery, or fulfillment system is implied.
+- Public SEO and PWA behavior remain honest about these boundaries.
 
-The paused infrastructure work is listed near the end of this file so it does not block the active frontend roadmap.
+## Branch stack
+
+```text
+main
+└── agent/bgd-ink-p0-foundation
+    └── agent/bgd-ink-p2-models-print-areas
+        └── agent/bgd-ink-p3-premium-storefront
+            └── agent/bgd-ink-p4-delivery-seo-pwa
+```
 
 ## P0 — Safe foundation and rebrand — COMPLETE
 
 - [x] Create `agent/bgd-ink-p0-foundation` from `main`.
 - [x] Introduce one centralized BGD/INK brand configuration.
 - [x] Replace customer-facing ASHUS and اشوز references with brand tokens.
-- [x] Rename package, metadata, manifest, document title, header, footer, preloader, draft prefix, and storage namespace.
-- [x] Preserve legacy `ashus_*` browser data through a non-destructive migration.
+- [x] Rename package, metadata, manifest, title, header, footer, preloader, draft prefix, and storage namespace.
+- [x] Preserve legacy `ashus_*` browser data through non-destructive migration.
 - [x] Remove browser-exposed Gemini/API-key configuration.
 - [x] Remove the hardcoded client-side admin PIN and public admin entry.
-- [x] Label browser persistence and prepared design receipts explicitly as local prototype drafts.
-- [x] Keep typed local product, artwork, draft, and submission service boundaries.
-- [x] Remove misleading service-worker and offline-mode claims.
-- [x] Replace the false completed checklist with the maintained P0-P4 roadmap.
+- [x] Label browser persistence and receipts explicitly as local prototype drafts.
+- [x] Keep typed local product, artwork, draft, and submission boundaries.
+- [x] Remove misleading service-worker and offline claims from the unsafe prototype.
+- [x] Replace the false completed checklist with this maintained roadmap.
 - [x] Enforce the brand source of truth in CI.
 
 ## P1 — Engineering foundation — COMPLETE
@@ -39,170 +47,187 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Compile Tailwind locally and move global styles out of `index.html`.
 - [x] Remove the import map and runtime Tailwind CDN.
 - [x] Move application source under `src/`.
-- [x] Configure the `@/` module alias and enforce architectural import boundaries.
+- [x] Configure the `@/` alias and enforce architectural import boundaries.
 - [x] Enable strict TypeScript.
-- [x] Add warning-free ESLint and Prettier.
+- [x] Add zero-warning ESLint and Prettier.
 - [x] Add environment and runtime validation.
-- [x] Add unit, component, failure-state, accessibility, Arabic RTL, and mobile interaction tests.
-- [x] Add Playwright customer recovery and mobile navigation journeys.
-- [x] Add GitHub Actions for locked install, typecheck, lint, tests, build, budgets, and browser journeys.
+- [x] Add unit, component, failure-state, accessibility, Arabic RTL, and mobile tests.
+- [x] Add Playwright recovery and mobile navigation journeys.
+- [x] Add GitHub Actions for locked install, typecheck, lint, tests, build, and budgets.
 - [x] Add real routes for catalog, designs, editor, draft preparation, and local receipt.
-- [x] Add recoverable IndexedDB drafts, original artwork blobs, autosave, and draft-preparation recovery.
-- [x] Add the My Designs reopen, rename, duplicate, and delete workspace.
-- [x] Replace AI Studio documentation with setup, architecture, deployment, safety, and troubleshooting guidance.
-- [x] Pin Node.js and npm, commit the lockfile, use cached `npm ci`, and cancel superseded CI runs.
-- [x] Split the 3D dependency graph into lazy vendor chunks and enforce tighter production bundle budgets.
+- [x] Add recoverable IndexedDB drafts, original artwork blobs, autosave, and preparation recovery.
+- [x] Add My Designs reopen, rename, duplicate, and delete actions.
+- [x] Replace AI Studio documentation with setup, architecture, safety, deployment, and troubleshooting guidance.
+- [x] Pin Node.js and npm, commit the lockfile, cache `npm ci`, and cancel superseded runs.
+- [x] Split the 3D dependency graph into lazy chunks and enforce production budgets.
 
-## P2 — Production-quality local customizer — IN PROGRESS
+## P2 — Production-quality local customizer — ENGINEERING COMPLETE; PHYSICAL INPUTS PENDING
 
 ### Models and physical surfaces
 
 - [ ] Use a genuine optimized 3D model for every locally configured product.
 - [x] Stop substituting the T-shirt GLB for products without matching geometry.
 - [x] Define initial front and back physical print areas for the Classic T-shirt.
-- [x] Add Classic T-shirt front/back surface selection and surface-specific camera views.
-- [x] Constrain artwork movement and scale to the configured safe print boundary.
+- [x] Add Classic T-shirt front/back selection and surface-specific cameras.
+- [x] Constrain movement and scale to the configured safe boundary.
 - [ ] Confirm Classic T-shirt measurements against the exact garment and printing process.
 - [ ] Add genuine oversized T-shirt, hoodie, and vest models and calibrate their surfaces.
-- [ ] Add sleeve and other supported surfaces where genuine model geometry permits them.
-- [ ] Add explicit seam and unsafe-placement warnings tied to calibrated garment geometry.
+- [ ] Add sleeve and other supported surfaces where genuine geometry permits them.
+- [ ] Add seam and unsafe-placement warnings tied to calibrated geometry.
 
 ### Editing and local persistence
 
-- [x] Add bounded undo and redo for color, size, layer operations, placement, scale, and rotation.
-- [x] Add layer rename, duplicate, visibility, ordering, selection, and deletion controls.
-- [x] Preserve layer names, visibility, order, surfaces, quality metadata, and retained artwork assets in IndexedDB.
-- [x] Add keyboard undo/redo shortcuts and gesture-aware history grouping.
-- [x] Keep deletion non-destructive during the editing session so undo can restore the original artwork.
+- [x] Add bounded undo and redo for colour, size, layers, placement, scale, and rotation.
+- [x] Add layer rename, duplicate, visibility, ordering, selection, and deletion.
+- [x] Preserve layer metadata and retained artwork assets in IndexedDB.
+- [x] Add keyboard history shortcuts and gesture-aware history grouping.
+- [x] Keep deletion non-destructive during editing so undo can restore artwork.
 
 ### Artwork dimensions and quality
 
-- [x] Preserve source aspect ratio in the 3D and 2D previews.
-- [x] Track precise physical artwork width and height in centimeters.
-- [x] Read source pixel dimensions for PNG, JPEG, and WebP artwork locally.
-- [x] Estimate effective print DPI from source pixels and selected physical dimensions.
-- [x] Detect transparency, transparent padding, extreme aspect ratios, low resolution, and near-edge placement.
-- [x] Add resilient image decoding with browser decoders and PNG/JPEG/WebP header fallbacks.
-- [x] Keep the original IndexedDB artwork blob separate from temporary preview URLs and Three.js textures.
+- [x] Preserve source aspect ratio in 3D and 2D previews.
+- [x] Track physical width and height in centimetres.
+- [x] Read source dimensions for PNG, JPEG, and WebP locally.
+- [x] Estimate effective print DPI.
+- [x] Detect transparency, padding, extreme ratios, low resolution, and edge proximity.
+- [x] Add resilient browser decoding and format-header fallbacks.
+- [x] Keep original IndexedDB artwork separate from previews and exports.
 
 ### Mobile interaction and rendering resilience
 
-- [x] Separate garment camera controls from artwork movement and transformation.
-- [x] Add explicit View Garment, Move Design, and Resize/Rotate interaction modes.
-- [x] Add one-pointer move and transform gestures plus two-pointer pinch-and-twist transforms.
-- [x] Group pointer gestures into single undoable history actions.
-- [x] Select adaptive high, balanced, or low-power rendering profiles from device capabilities.
-- [x] Adapt DPR, antialiasing, shadows, shadow resolution, texture anisotropy, and idle animation.
-- [x] Pause rendering while the page is hidden and use demand rendering on constrained devices.
-- [x] Detect WebGL support and handle context loss without losing the design draft.
-- [x] Add a retryable, browser-local 2D preview when WebGL or the garment model cannot render.
+- [x] Separate camera controls from artwork controls.
+- [x] Add View, Move, and Resize/Rotate modes.
+- [x] Add one-pointer and pinch/twist gestures.
+- [x] Group gestures into single history actions.
+- [x] Select adaptive rendering profiles from device capabilities.
+- [x] Adapt DPR, antialiasing, shadows, textures, and idle animation.
+- [x] Pause hidden-page rendering and use demand rendering on constrained devices.
+- [x] Detect WebGL support and handle context loss without losing the draft.
+- [x] Add a retryable local 2D fallback.
 
-### Local output and asset completion
+### Local output and assets
 
-- [x] Generate a downloadable multi-surface PNG proof for every configured print surface.
-- [x] Generate a machine-readable local production specification with centimeter placement and quality data.
-- [x] Keep generated proof assets separate from the original artwork blob and omit temporary preview URLs from specifications.
-- [x] Cap derived Three.js artwork textures by rendering profile while preserving the original IndexedDB artwork.
-- [x] Audit every current GLB in CI for file size, triangles, meshes, materials, embedded texture dimensions, and embedded texture bytes.
-- [x] Establish measured GLB and artwork-texture budgets from the current Classic T-shirt baseline.
-- [ ] Compress and re-audit the approved final garment GLBs and their embedded textures after genuine product assets are available.
+- [x] Generate a downloadable multi-surface PNG proof.
+- [x] Generate a machine-readable JSON specification with centimetre placement and quality data.
+- [x] Keep generated files separate from original artwork and omit temporary preview URLs.
+- [x] Cap derived preview textures by rendering profile.
+- [x] Audit current GLBs for file size, geometry, materials, and textures.
+- [x] Establish measured GLB and artwork-texture budgets.
+- [ ] Compress and re-audit approved final garment assets after genuine models are available.
 
-## P3 — Premium storefront and customer journey — IN PROGRESS
+## P3 — Premium storefront and customer journey — BROWSER IMPLEMENTATION COMPLETE; BUSINESS INPUTS PENDING
 
-### Identity, visual assets, and trust
+### Identity, assets, and trust
 
-- [x] Create `agent/bgd-ink-p3-premium-storefront` from the complete P2 branch.
-- [x] Establish the editorial print-lab direction with paper, ink, signal-color, measurement-grid, and production-annotation language.
-- [x] Add an owned vector garment library for all four locally configured catalog products.
-- [x] Replace customer-facing stock photography with owned local assets.
-- [x] Replace emoji process graphics with an owned SVG icon system.
-- [x] Remove fabricated-looking anonymous testimonials instead of presenting them as customer proof.
-- [x] Remove unsupported material, printing-method, wash-performance, superlative, and delivery claims.
-- [x] Add a permanent CI trust gate for stock imagery, fabricated reviews, emoji icons, and unsupported promises.
-- [x] Add a verified-versus-pending information system so unconfirmed prices, timing, measurements, and business details are visibly separated from implemented editor capabilities.
+- [x] Create `agent/bgd-ink-p3-premium-storefront` from P2.
+- [x] Establish the editorial print-lab visual direction.
+- [x] Add owned vector garment artwork for all configured products.
+- [x] Replace customer-facing stock imagery and emoji graphics.
+- [x] Remove fabricated-looking testimonials and unsupported promises.
+- [x] Add permanent storefront trust validation.
+- [x] Separate verified capabilities from pending business information.
 - [ ] Add approved real product photography.
 - [ ] Add approved completed-customer-work photography.
-- [ ] Finish the complete BGD/INK identity and owned campaign asset library.
+- [ ] Finish the wider campaign asset library after photography and channels are approved.
 
-### Premium storefront and catalog
+### Storefront and catalog
 
-- [x] Rebuild the homepage around the real editor, local-draft, quality-analysis, and export capabilities.
-- [x] Add a premium model-aware studio workbench visual without loading Three.js on the homepage.
-- [x] Rebuild the catalog hierarchy around model readiness, availability, starting price, configured colors, and editor sizes.
-- [x] Keep unfinished products visible while clearly locking unavailable customization.
-- [x] Add explicit local-price and no-real-order context.
-- [x] Redesign the desktop header, RTL-aware mobile navigation, prototype notice, and footer.
-- [x] Migrate legacy stored product records to owned canonical imagery while preserving local price, color, and stock values.
-- [x] Add the `/guide` route with measurement instructions, method education, draft-preparation guidance, policies, and FAQs.
-- [x] Explain that exact size charts, production timing, and price quotations remain pending rather than inventing values.
-- [x] Add reference-only DTF, screen-printing, and embroidery explanations without claiming current availability.
-- [x] Add a mobile-friendly Guide section navigator and stable anchored sections.
-- [ ] Confirm final price ranges with the business.
-- [ ] Add confirmed production times.
-- [ ] Add approved product-specific size guides.
-- [ ] Add confirmed printing-method explanations.
+- [x] Rebuild the homepage around real editor and local-draft capabilities.
+- [x] Add a lightweight model-aware workbench without initial Three.js loading.
+- [x] Rebuild the catalog around model readiness, local price, colours, and sizes.
+- [x] Keep unfinished products visible but honestly locked.
+- [x] Add local-price and no-real-order context.
+- [x] Redesign desktop and mobile navigation, notices, and footer.
+- [x] Migrate legacy product records to owned imagery.
+- [x] Add `/guide` with measurement, method, policy, and FAQ guidance.
+- [x] Keep unverified size, time, price, and method information visibly pending.
+- [x] Add reference-only method education without claiming availability.
+- [x] Add stable, mobile-friendly Guide section navigation.
+- [ ] Confirm price ranges, production times, size guides, and available methods.
 
-### Customer journey and business information
+### Customer journey and localization
 
-- [x] Add prototype-specific local-data, artwork-rights, colour-preview, calibration, and no-commerce policies.
-- [x] Add an honest bilingual FAQ covering orders, local storage, file formats, sizes, mobile editing, and pending contact channels.
-- [x] Add an Iraqi-Arabic first pass for the guide, navigation labels, and mobile accessibility names.
-- [x] Add unit accessibility coverage and a real English/Arabic Chromium guide journey.
-- [x] Add recoverable local quantity preparation alongside the existing size/color variant selection, including a local estimate and explicit no-stock/no-quote wording.
-- [x] Serialize contact and quantity autosaves so rapid local preparation changes cannot overwrite one another.
-- [x] Finish touch-first draft-preparation and receipt polish with a local receipt, draft-ID copy, prepared variant, quantity, estimate, and direct My Designs/new-draft actions.
-- [x] Persist the English/Iraqi-Arabic preference across refreshes and keep document `lang`, `dir`, and `data-language` synchronized.
-- [x] Complete the Iraqi-Arabic editorial pass for the homepage, catalog, global notices, footer, My Designs, and local receipt.
-- [x] Keep phone fields, number inputs, prices, sizes, draft IDs, file formats, and collection codes readable inside RTL layouts.
-- [x] Replace misleading submitted/sent workspace status with truthful prepared-locally status and expose each saved draft's quantity.
-- [x] Add a permanent localization/RTL CI gate plus mobile Chromium coverage for persisted Arabic, RTL navigation, and horizontal-overflow prevention.
-- [x] Complete the Iraqi-Arabic terminology and dense RTL review for customizer controls, interaction modes, artwork quality, 2D recovery, and local handoff tools.
-- [x] Keep range controls, centimeters, pixels, DPI, degrees, 2D/3D labels, layer positions, and mixed-direction names stable inside the RTL editor.
-- [x] Keep the retry action outside image semantics in the safe 2D fallback and cover the recovery surface with accessibility tests.
-- [x] Add a GPU-portable Pixel 5 Arabic customizer journey covering upload, quality guidance, 2D recovery, handoff tools, and horizontal-overflow prevention.
-- [x] Complete the long-form Studio Guide Iraqi-Arabic editorial review without upgrading unverified business claims.
-- [x] Complete the contextual RTL review for the Guide's dense cards, FAQs, method references, technical indices, and section navigation.
-- [x] Localize Baghdad area labels while preserving stable stored values for existing drafts.
-- [x] Add an accessible preparation-validation summary, first-invalid-field focus, draft-load retry, and local-autosave retry.
-- [x] Add a Pixel 5 Iraqi-Arabic preparation journey covering validation, localized areas, receipt creation, My Designs state, and overflow prevention.
+- [x] Add local-data, artwork-rights, colour-preview, calibration, and no-commerce guidance.
+- [x] Add an honest bilingual FAQ.
+- [x] Add recoverable quantity and a clearly labelled local estimate.
+- [x] Serialize contact and quantity autosaves.
+- [x] Add a touch-first preparation flow and receipt.
+- [x] Persist language and synchronize `lang`, `dir`, and `data-language`.
+- [x] Complete Iraqi-Arabic editorial and contextual RTL review.
+- [x] Keep technical values stable inside RTL layouts.
+- [x] Replace submitted/sent wording with prepared-locally wording.
+- [x] Add permanent localization and RTL validation.
+- [x] Localize Baghdad area labels while retaining stable stored values.
+- [x] Add accessible validation, load retry, and autosave retry.
 - [ ] Add official contact information after verification.
-- [ ] Add approved business policies, care guidance, and returns information.
-- [ ] Link future reviews to verifiable customer work or keep the review section absent.
+- [ ] Add approved privacy, return, care, and fulfillment policies.
+- [ ] Add reviews only when tied to verifiable work.
 
 ### Performance and responsive finalization
 
-- [x] Replace the shipped GSAP runtime with a tested, repository-specific Web Animations compatibility layer.
-- [x] Preserve existing page, toast, cursor, magnetic, catalog, preparation, receipt, and editor motion behavior without shipping the full GSAP runtime.
-- [x] Reduce initial JavaScript from 97.56 KiB to 71.07 KiB gzip and total JavaScript from 403.79 KiB to 377.29 KiB gzip.
-- [x] Tighten JavaScript and CSS performance budgets after the measured reduction.
-- [x] Add display-cutout safe areas, dynamic viewport height, software-keyboard resizing, contained mobile-menu scrolling, and short-landscape handling.
-- [x] Add application-wide, reduced-motion-aware same-page section scrolling with synchronized URL hashes.
-- [x] Add a permanent responsive-shell source gate.
-- [x] Add iPhone portrait/short-landscape/restored-portrait and iPad Arabic orientation-sized browser journeys.
-- [x] Expand the complete gate to 71 unit/component/accessibility tests across 26 files and 11 Chromium journeys.
-- [ ] Validate the complete journey on representative physical Android phones, iPhones, and tablets.
+- [x] Replace the shipped GSAP runtime with a focused Web Animations adapter.
+- [x] Preserve existing motion behavior with regression tests.
+- [x] Reduce and re-budget initial and total JavaScript.
+- [x] Add safe areas, dynamic viewport height, keyboard resizing, and short-landscape handling.
+- [x] Add reliable reduced-motion-aware same-page navigation.
+- [x] Add a permanent responsive-shell gate.
+- [x] Add Pixel 5, iPhone 13, and iPad Mini-sized browser journeys.
+- [ ] Validate on representative physical Android, iPhone, and tablet hardware.
 
-## P4 — Frontend delivery, PWA, SEO, and growth
+## P4 — Frontend delivery, SEO, PWA, and handoff — CODE FOUNDATION COMPLETE
 
-- [ ] Add a clear WhatsApp handoff for locally prepared design drafts without treating WhatsApp as a database.
-- [ ] Add owned PWA icons and reliable Workbox caching with upgrade handling.
-- [ ] Add structured product data, canonical URLs, social cards, sitemap, and robots controls.
-- [ ] Add consent-aware analytics and client-side error monitoring.
-- [ ] Add frontend campaign, coupon, bulk-design, and repeat-design experiences using local configuration where appropriate.
+### Public delivery and search
+
+- [x] Create `agent/bgd-ink-p4-delivery-seo-pwa` from P3.
+- [x] Keep preview and unknown-domain builds non-indexable by default.
+- [x] Add optional production canonical URLs behind verified environment configuration.
+- [x] Add Open Graph and Twitter metadata with owned social artwork.
+- [x] Add honest organization, website, application, collection, and product structured data.
+- [x] Generate sitemap and robots output for verified indexable production builds.
+- [x] Exclude My Designs, editor, preparation, and receipt routes from indexing.
+- [x] Add permanent delivery-output validation.
+- [ ] Configure the verified production domain when selected.
+
+### Installable and cached application shell
+
+- [x] Add owned favicon, Apple touch, standard, and maskable icons.
+- [x] Add an owned install manifest with Catalog and Guide shortcuts.
+- [x] Register the service worker only in production and a secure context or localhost.
+- [x] Add versioned shell and same-origin static-asset caching.
+- [x] Add network-first navigation with cached-shell fallback.
+- [x] Require explicit confirmation before activating a waiting update.
+- [x] Add bilingual install, update, and honest offline notices.
+- [x] Add source and generated-output PWA validation.
+- [x] Add a production-only Chromium journey proving offline reopening of visited public routes.
+
+### Communication and external services
+
+- [x] Add a conditional WhatsApp draft handoff without treating WhatsApp as a database.
+- [ ] Configure the official WhatsApp number after verification.
+- [ ] Select an analytics provider and approve consent/privacy wording before enabling tracking.
+- [ ] Select an error-monitoring provider and approve data-retention rules.
+- [ ] Define campaign, coupon, bulk-order, and repeat-order rules before building customer-facing offers.
 - [x] Enforce production performance budgets.
 
-## Paused infrastructure — not part of the active roadmap
+## Paused infrastructure — outside the active roadmap
 
-The following will remain untouched until backend, database, and storage work is explicitly reopened:
+The following remain untouched until backend, database, and storage work is explicitly reopened:
 
-- Selecting or implementing a production backend.
-- Creating a production database for products, customers, inventory, pricing, or orders.
-- Building account synchronization or cross-device recovery.
-- Uploading artwork to remote object storage.
-- Building authenticated staff or administration operations.
-- Accepting, tracking, approving, or fulfilling real production orders.
-- Authoritative stock reservations, delivery tracking, production queues, or work orders.
+- Production backend selection or implementation
+- Product, customer, inventory, pricing, or order database
+- Account synchronization or cross-device recovery
+- Remote artwork storage
+- Authenticated staff operations
+- Real order acceptance, approval, tracking, or fulfillment
+- Authoritative stock reservation, delivery tracking, production queues, or work orders
 
-## Definition of done
+## Current definition of done
 
-A phase is complete only when its behavior, failure states, tests, documentation, dependency lock, architecture checks, performance budgets, and deployment checks all pass. Visual completion alone is not completion.
+The responsible code-only frontend scope is complete when:
+
+- Every implemented behavior has failure-state handling.
+- Tests, documentation, dependency locking, architecture checks, and budgets pass.
+- Preview and production delivery behavior remain honest.
+- Unverified business, physical, privacy, and contact information is not invented.
+
+That condition is now satisfied. Remaining checklist items require approved physical assets, business information, providers, hardware, deployment domain, or an explicit decision to reopen backend infrastructure.
