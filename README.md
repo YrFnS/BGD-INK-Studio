@@ -279,7 +279,7 @@ Current validated coverage:
 | `/checkout/:draftId` | Recoverable local draft preparation           | Private/noindex   |
 | `/draft/:draftId`    | Local draft receipt                           | Private/noindex   |
 
-Browser Back/Forward navigation is supported. Netlify direct-route fallback is provided through `public/_redirects`.
+Browser Back/Forward navigation is supported. Direct-route fallbacks are provided through `public/_redirects` for Netlify and `vercel.json` for Vercel.
 
 ## Local draft model
 

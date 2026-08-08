@@ -6,6 +6,15 @@ const root = process.cwd();
 const dist = path.join(root, 'dist');
 const failures = [];
 
+const readJson = async (filePath) => {
+  try {
+    return JSON.parse(await readFile(filePath, 'utf8'));
+  } catch {
+    failures.push(`${path.relative(root, filePath)} is not valid JSON`);
+    return {};
+  }
+};
+
 const requirePattern = (source, pattern, message) => {
   if (!pattern.test(source)) failures.push(message);
 };
@@ -21,8 +30,43 @@ const requireFile = async (relativePath) => {
 const index = await readFile(path.join(dist, 'index.html'), 'utf8');
 const robots = await readFile(path.join(dist, 'robots.txt'), 'utf8');
 const serviceWorker = await readFile(path.join(dist, 'sw.js'), 'utf8');
-const manifest = JSON.parse(await readFile(path.join(dist, 'manifest.webmanifest'), 'utf8'));
+const manifest = await readJson(path.join(dist, 'manifest.webmanifest'));
+const vercel = await readJson(path.join(root, 'vercel.json'));
 const indexable = /name="bgd:indexing" content="indexable"/.test(index);
+const vercelHeaders = (source) =>
+  Object.fromEntries(
+    (vercel.headers?.find((entry) => entry.source === source)?.headers ?? []).map(
+      ({ key, value }) => [key, value],
+    ),
+  );
+
+if (
+  !vercel.rewrites?.some(
+    ({ source, destination }) => source === '/(.*)' && destination === '/index.html',
+  )
+) {
+  failures.push('vercel.json must preserve the single-page application route fallback');
+}
+
+for (const [source, key, value] of [
+  ['/assets/(.*)', 'Cache-Control', 'public, max-age=31536000, immutable'],
+  ['/sw.js', 'Cache-Control', 'no-cache, no-store, must-revalidate'],
+  ['/sw.js', 'Service-Worker-Allowed', '/'],
+  ['/manifest.webmanifest', 'Content-Type', 'application/manifest+json; charset=utf-8'],
+  ['/(.*)', 'Cross-Origin-Opener-Policy', 'same-origin'],
+  ['/(.*)', 'Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()'],
+  ['/(.*)', 'Referrer-Policy', 'strict-origin-when-cross-origin'],
+  ['/(.*)', 'X-Content-Type-Options', 'nosniff'],
+  ['/(.*)', 'X-Frame-Options', 'DENY'],
+]) {
+  if (vercelHeaders(source)[key] !== value) {
+    failures.push(`vercel.json must set ${key} on ${source}`);
+  }
+}
+
+if (!vercelHeaders('/(.*)')['Content-Security-Policy']?.includes("default-src 'self'")) {
+  failures.push('vercel.json must preserve the restrictive Content Security Policy');
+}
 
 requirePattern(
   index,
