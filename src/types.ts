@@ -1,5 +1,7 @@
 export type Language = 'en' | 'ar';
 export type Theme = 'light' | 'dark';
+export type PrintSurfaceId = 'front' | 'back' | 'left-sleeve' | 'right-sleeve';
+export const DEFAULT_PRINT_SURFACE_ID: PrintSurfaceId = 'front';
 
 export enum ProductType {
   TSHIRT = 'T-Shirt',
@@ -25,16 +27,34 @@ export interface Product {
   inStock: boolean;
 }
 
+export interface ArtworkSourceMetadata {
+  pixelWidth: number;
+  pixelHeight: number;
+  aspectRatio: number;
+  hasTransparency: boolean;
+  transparentPixelRatio: number;
+  transparentPaddingRatio: number;
+}
+
 export interface DecalLayer {
   id: string;
+  name: string;
+  visible: boolean;
   url: string;
   assetId?: string;
   fileName?: string;
   mimeType?: string;
+  surfaceId: PrintSurfaceId;
   position: [number, number, number];
   rotation: [number, number, number];
   userRotation: number;
   scale: number;
+  pixelWidth?: number;
+  pixelHeight?: number;
+  aspectRatio?: number;
+  hasTransparency?: boolean;
+  transparentPixelRatio?: number;
+  transparentPaddingRatio?: number;
 }
 
 export interface CustomizationState {

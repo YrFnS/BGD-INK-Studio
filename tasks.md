@@ -53,21 +53,59 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [x] Pin Node.js and npm, commit the lockfile, use cached `npm ci`, and cancel superseded CI runs.
 - [x] Split the 3D dependency graph into lazy vendor chunks and enforce tighter production bundle budgets.
 
-## P2 — Production-quality local customizer
+## P2 — Production-quality local customizer — IN PROGRESS
+
+### Models and physical surfaces
 
 - [ ] Use a genuine optimized 3D model for every locally configured product.
-- [ ] Define front, back, sleeve, and other physical print areas in centimeters.
-- [ ] Add front, back, and sleeve surface selection.
-- [ ] Constrain artwork to printable surfaces and warn about seams or unsafe placement.
-- [ ] Add undo and redo.
-- [ ] Add layer duplicate, visibility, ordering, and rename controls.
-- [ ] Add precise physical dimensions.
-- [ ] Add image-resolution, transparency, aspect-ratio, and estimated-DPI checks.
-- [ ] Distinguish mobile camera gestures from artwork movement.
-- [ ] Add adaptive render quality, WebGL fallback, and context recovery.
-- [ ] Generate a downloadable 2D proof and machine-readable local production specification.
-- [ ] Keep the original IndexedDB artwork blob separate from preview textures and generated exports.
-- [ ] Optimize GLB assets and preview textures with measured limits.
+- [x] Stop substituting the T-shirt GLB for products without matching geometry.
+- [x] Define initial front and back physical print areas for the Classic T-shirt.
+- [x] Add Classic T-shirt front/back surface selection and surface-specific camera views.
+- [x] Constrain artwork movement and scale to the configured safe print boundary.
+- [ ] Confirm Classic T-shirt measurements against the exact garment and printing process.
+- [ ] Add genuine oversized T-shirt, hoodie, and vest models and calibrate their surfaces.
+- [ ] Add sleeve and other supported surfaces where genuine model geometry permits them.
+- [ ] Add explicit seam and unsafe-placement warnings tied to calibrated garment geometry.
+
+### Editing and local persistence
+
+- [x] Add bounded undo and redo for color, size, layer operations, placement, scale, and rotation.
+- [x] Add layer rename, duplicate, visibility, ordering, selection, and deletion controls.
+- [x] Preserve layer names, visibility, order, surfaces, quality metadata, and retained artwork assets in IndexedDB.
+- [x] Add keyboard undo/redo shortcuts and gesture-aware history grouping.
+- [x] Keep deletion non-destructive during the editing session so undo can restore the original artwork.
+
+### Artwork dimensions and quality
+
+- [x] Preserve source aspect ratio in the 3D and 2D previews.
+- [x] Track precise physical artwork width and height in centimeters.
+- [x] Read source pixel dimensions for PNG, JPEG, and WebP artwork locally.
+- [x] Estimate effective print DPI from source pixels and selected physical dimensions.
+- [x] Detect transparency, transparent padding, extreme aspect ratios, low resolution, and near-edge placement.
+- [x] Add resilient image decoding with browser decoders and PNG/JPEG/WebP header fallbacks.
+- [x] Keep the original IndexedDB artwork blob separate from temporary preview URLs and Three.js textures.
+
+### Mobile interaction and rendering resilience
+
+- [x] Separate garment camera controls from artwork movement and transformation.
+- [x] Add explicit View Garment, Move Design, and Resize/Rotate interaction modes.
+- [x] Add one-pointer move and transform gestures plus two-pointer pinch-and-twist transforms.
+- [x] Group pointer gestures into single undoable history actions.
+- [x] Select adaptive high, balanced, or low-power rendering profiles from device capabilities.
+- [x] Adapt DPR, antialiasing, shadows, shadow resolution, texture anisotropy, and idle animation.
+- [x] Pause rendering while the page is hidden and use demand rendering on constrained devices.
+- [x] Detect WebGL support and handle context loss without losing the design draft.
+- [x] Add a retryable, browser-local 2D preview when WebGL or the garment model cannot render.
+
+### Local output and asset completion
+
+- [x] Generate a downloadable multi-surface PNG proof for every configured print surface.
+- [x] Generate a machine-readable local production specification with centimeter placement and quality data.
+- [x] Keep generated proof assets separate from the original artwork blob and omit temporary preview URLs from specifications.
+- [x] Cap derived Three.js artwork textures by rendering profile while preserving the original IndexedDB artwork.
+- [x] Audit every current GLB in CI for file size, triangles, meshes, materials, embedded texture dimensions, and embedded texture bytes.
+- [x] Establish measured GLB and artwork-texture budgets from the current Classic T-shirt baseline.
+- [ ] Compress and re-audit the approved final garment GLBs and their embedded textures after genuine product assets are available.
 
 ## P3 — Premium storefront and customer journey
 
@@ -79,7 +117,7 @@ The paused infrastructure work is listed near the end of this file so it does no
 - [ ] Complete the Iraqi Arabic and RTL content review.
 - [ ] Add real contact information, policies, care guidance, and frequently asked questions.
 - [ ] Keep motion intentional, accessible, and restrained.
-- [ ] Finish a touch-first mobile customizer and draft-checkout experience.
+- [ ] Finish a touch-first mobile customizer and draft-checkout experience across representative real devices.
 - [ ] Link reviews to verifiable customer work or remove them.
 
 ## P4 — Frontend delivery, PWA, SEO, and growth

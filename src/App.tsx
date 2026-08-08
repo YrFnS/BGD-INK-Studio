@@ -23,6 +23,11 @@ const Designs = React.lazy(() =>
 const Customizer = React.lazy(() =>
   import('@/features/customizer/Customizer').then((module) => ({ default: module.Customizer })),
 );
+const ProductionExportDock = React.lazy(() =>
+  import('@/features/customizer/ProductionExportDock').then((module) => ({
+    default: module.ProductionExportDock,
+  })),
+);
 const Checkout = React.lazy(() =>
   import('@/features/checkout/Checkout').then((module) => ({ default: module.Checkout })),
 );
@@ -163,11 +168,14 @@ const AppContent = () => {
         );
       case 'CUSTOMIZER':
         return (
-          <Customizer
-            draftId={route.draftId}
-            onCheckout={(draftId) => navigate(routes.checkout(draftId))}
-            onMissingDraft={() => navigate(routes.designs(), { replace: true })}
-          />
+          <>
+            <Customizer
+              draftId={route.draftId}
+              onCheckout={(draftId) => navigate(routes.checkout(draftId))}
+              onMissingDraft={() => navigate(routes.designs(), { replace: true })}
+            />
+            <ProductionExportDock draftId={route.draftId} />
+          </>
         );
       case 'CHECKOUT':
         return (

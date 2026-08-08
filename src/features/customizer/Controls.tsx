@@ -1,7 +1,9 @@
 import React, { useRef } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
+import type { PrintSurfaceDefinition } from '@/data/assets3d';
 import { DraftSaveStatus } from '@/services/drafts';
-import { DecalLayer, Product, Size } from '@/types';
+import { DecalLayer, PrintSurfaceId, Product, Size } from '@/types';
+import { getSurfaceScaleLimits, scaleToArtworkWidthCm } from './printArea';
 
 interface ControlsProps {
   product: Product;
@@ -9,12 +11,25 @@ interface ControlsProps {
   onColorChange: (color: string) => void;
   selectedSize: Size;
   onSizeChange: (size: Size) => void;
+  surfaces: readonly PrintSurfaceDefinition[];
+  selectedSurfaceId: PrintSurfaceId;
+  onSurfaceChange: (surfaceId: PrintSurfaceId) => void;
   decals: DecalLayer[];
   activeDecalId: string | null;
   onSetActiveDecal: (id: string) => void;
   onUpload: (event: React.ChangeEvent<HTMLInputElement>) => void | Promise<void>;
   onRemoveDecal: (id: string) => void;
   onUpdateDecal: (id: string, updates: Partial<DecalLayer>) => void;
+  onRenameDecal: (id: string, name: string) => void;
+  onDuplicateDecal: (id: string) => void;
+  onToggleDecalVisibility: (id: string) => void;
+  onMoveDecal: (id: string, direction: 'forward' | 'backward') => void;
+  onBeginTransform: () => void;
+  onEndTransform: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
   notes: string;
   onNotesChange: (notes: string) => void;
   saveStatus: DraftSaveStatus;
@@ -22,18 +37,36 @@ interface ControlsProps {
   onCheckout: () => void | Promise<void>;
 }
 
+const isTransformKey = (key: string): boolean =>
+  ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(
+    key,
+  );
+
 export const Controls: React.FC<ControlsProps> = ({
   product,
   selectedColor,
   onColorChange,
   selectedSize,
   onSizeChange,
+  surfaces,
+  selectedSurfaceId,
+  onSurfaceChange,
   decals,
   activeDecalId,
   onSetActiveDecal,
   onUpload,
   onRemoveDecal,
   onUpdateDecal,
+  onRenameDecal,
+  onDuplicateDecal,
+  onToggleDecalVisibility,
+  onMoveDecal,
+  onBeginTransform,
+  onEndTransform,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
   notes,
   onNotesChange,
   saveStatus,
@@ -49,15 +82,39 @@ export const Controls: React.FC<ControlsProps> = ({
 
   const sizes = Object.values(Size);
   const activeDecal = decals.find((decal) => decal.id === activeDecalId);
-  const uploadText = language === 'ar' ? 'إضافة طبقة' : 'Add layer';
-  const uploadingText = language === 'ar' ? 'جاري حفظ الصورة…' : 'Saving artwork…';
-  const selectedLayerText = language === 'ar' ? 'الطبقة المحددة' : 'Selected layer';
-  const layerSizeText = language === 'ar' ? 'الحجم' : 'Size';
-  const rotationText = language === 'ar' ? 'الدوران' : 'Rotation';
-  const dragHelpText =
-    language === 'ar'
-      ? 'اسحب التصميم على القطعة، واستخدم المؤشرات لتغيير الحجم والدوران.'
-      : 'Drag the artwork on the garment, then use the sliders to resize or rotate it.';
+  const activeDecalIndex = activeDecal
+    ? decals.findIndex((decal) => decal.id === activeDecal.id)
+    : -1;
+  const selectedSurface =
+    surfaces.find((surface) => surface.id === selectedSurfaceId) ?? surfaces[0];
+  const activeSurface = activeDecal
+    ? (surfaces.find((surface) => surface.id === activeDecal.surfaceId) ?? selectedSurface)
+    : selectedSurface;
+  const activeScaleLimits = activeSurface ? getSurfaceScaleLimits(activeSurface) : null;
+  const activeArtworkWidthCm =
+    activeDecal && activeSurface
+      ? scaleToArtworkWidthCm(activeDecal.scale, activeSurface)
+      : null;
+
+  const copy = {
+    upload: language === 'ar' ? 'إضافة طبقة' : 'Add layer',
+    uploading: language === 'ar' ? 'جاري حفظ الصورة…' : 'Saving artwork…',
+    selectedLayer: language === 'ar' ? 'الطبقة المحددة' : 'Selected layer',
+    layerName: language === 'ar' ? 'اسم الطبقة' : 'Layer name',
+    rotation: language === 'ar' ? 'الدوران' : 'Rotation',
+    undo: language === 'ar' ? 'تراجع' : 'Undo',
+    redo: language === 'ar' ? 'إعادة' : 'Redo',
+    duplicate: language === 'ar' ? 'نسخ' : 'Duplicate',
+    hide: language === 'ar' ? 'إخفاء' : 'Hide',
+    show: language === 'ar' ? 'إظهار' : 'Show',
+    forward: language === 'ar' ? 'للأمام' : 'Bring forward',
+    backward: language === 'ar' ? 'للخلف' : 'Send backward',
+    hidden: language === 'ar' ? 'مخفية' : 'Hidden',
+    dragHelp:
+      language === 'ar'
+        ? 'اسحب التصميم داخل حدود مساحة الطباعة. كل حركة وحجم ودوران يمكن التراجع عنها.'
+        : 'Drag inside the print boundary. Placement, size, and rotation can all be undone.',
+  };
 
   const saveStatusText: Record<DraftSaveStatus, string> = {
     saved: language === 'ar' ? 'محفوظ على هذا الجهاز' : 'Saved on this device',
@@ -66,9 +123,38 @@ export const Controls: React.FC<ControlsProps> = ({
     error: language === 'ar' ? 'تعذر حفظ المسودة' : 'Draft could not be saved',
   };
 
+  const beginKeyboardTransform = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (isTransformKey(event.key)) onBeginTransform();
+  };
+
+  const endKeyboardTransform = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (isTransformKey(event.key)) onEndTransform();
+  };
+
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
       <div className="no-scrollbar flex-grow space-y-8 overflow-y-auto p-6">
+        <div className="flex items-center gap-2" role="toolbar" aria-label={language === 'ar' ? 'سجل التعديلات' : 'Edit history'}>
+          <button
+            type="button"
+            onClick={onUndo}
+            disabled={!canUndo}
+            className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold transition-colors hover:border-black disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-white"
+            aria-label={`${copy.undo} (Ctrl+Z)`}
+          >
+            ↶ {copy.undo}
+          </button>
+          <button
+            type="button"
+            onClick={onRedo}
+            disabled={!canRedo}
+            className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold transition-colors hover:border-black disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-white"
+            aria-label={`${copy.redo} (Ctrl+Shift+Z)`}
+          >
+            ↷ {copy.redo}
+          </button>
+        </div>
+
         <fieldset>
           <legend className="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
             {t('customizer.color')}
@@ -139,6 +225,32 @@ export const Controls: React.FC<ControlsProps> = ({
           </div>
         </fieldset>
 
+        <fieldset>
+          <legend className="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            {t('customizer.surface')}
+          </legend>
+          <div className="grid grid-cols-2 gap-2">
+            {surfaces.map((surface) => (
+              <button
+                type="button"
+                key={surface.id}
+                onClick={() => onSurfaceChange(surface.id)}
+                aria-pressed={selectedSurfaceId === surface.id}
+                className={`rounded-xl border p-3 text-start transition-all ${
+                  selectedSurfaceId === surface.id
+                    ? 'border-accent bg-accent/10 text-accent shadow-sm'
+                    : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-300'
+                }`}
+              >
+                <span className="block text-sm font-bold">{t(surface.labelKey)}</span>
+                <span className="mt-1 block font-mono text-[10px] opacity-70">
+                  {surface.physicalWidthCm} × {surface.physicalHeightCm} cm
+                </span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
         <section aria-labelledby="artwork-layers-label">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h3
@@ -160,7 +272,7 @@ export const Controls: React.FC<ControlsProps> = ({
               disabled={isUploading}
               className="rounded-full bg-black px-3 py-1 text-xs font-bold text-white transition-opacity hover:opacity-80 disabled:cursor-wait disabled:opacity-60 dark:bg-white dark:text-black"
             >
-              {isUploading ? uploadingText : `+ ${uploadText}`}
+              {isUploading ? copy.uploading : `+ ${copy.upload}`}
             </button>
           </div>
 
@@ -172,8 +284,13 @@ export const Controls: React.FC<ControlsProps> = ({
               className="group flex h-24 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-accent disabled:cursor-wait dark:border-zinc-700 dark:bg-zinc-900/50 dark:hover:border-accent"
             >
               <span className="text-sm font-medium text-gray-500 group-hover:text-accent">
-                {isUploading ? uploadingText : t('customizer.upload')}
+                {isUploading ? copy.uploading : t('customizer.upload')}
               </span>
+              {selectedSurface && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  {t(selectedSurface.labelKey)}
+                </span>
+              )}
             </button>
           ) : (
             <div className="space-y-4">
@@ -181,37 +298,55 @@ export const Controls: React.FC<ControlsProps> = ({
                 className="no-scrollbar flex gap-2 overflow-x-auto pb-2"
                 aria-label={t('customizer.upload')}
               >
-                {decals.map((layer, index) => (
-                  <button
-                    type="button"
-                    key={layer.id}
-                    onClick={() => onSetActiveDecal(layer.id)}
-                    aria-label={`${selectedLayerText} ${index + 1}`}
-                    aria-pressed={activeDecalId === layer.id}
-                    className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
-                      activeDecalId === layer.id
-                        ? 'border-accent ring-2 ring-accent/20'
-                        : 'border-gray-200 opacity-70 hover:opacity-100 dark:border-zinc-700'
-                    }`}
-                  >
-                    <img
-                      src={layer.url}
-                      alt={layer.fileName ?? `${selectedLayerText} ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
-                    {activeDecalId === layer.id && (
-                      <span className="pointer-events-none absolute inset-0 bg-accent/10" />
-                    )}
-                  </button>
-                ))}
+                {decals.map((layer, index) => {
+                  const layerSurface = surfaces.find((surface) => surface.id === layer.surfaceId);
+                  return (
+                    <button
+                      type="button"
+                      key={layer.id}
+                      onClick={() => onSetActiveDecal(layer.id)}
+                      aria-label={`${copy.selectedLayer} ${index + 1}`}
+                      aria-pressed={activeDecalId === layer.id}
+                      className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                        activeDecalId === layer.id
+                          ? 'border-accent ring-2 ring-accent/20'
+                          : 'border-gray-200 opacity-70 hover:opacity-100 dark:border-zinc-700'
+                      } ${layer.visible ? '' : 'opacity-40 grayscale'}`}
+                    >
+                      <img
+                        src={layer.url}
+                        alt={layer.name}
+                        className="h-full w-full object-cover"
+                      />
+                      {layerSurface && (
+                        <span className="pointer-events-none absolute inset-x-1 bottom-1 truncate rounded bg-black/75 px-1 py-0.5 text-[8px] font-bold uppercase text-white">
+                          {t(layerSurface.labelKey)}
+                        </span>
+                      )}
+                      {!layer.visible && (
+                        <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/50 text-[9px] font-bold uppercase text-white">
+                          {copy.hidden}
+                        </span>
+                      )}
+                      {activeDecalId === layer.id && (
+                        <span className="pointer-events-none absolute inset-0 bg-accent/10" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
-              {activeDecal && (
+              {activeDecal && activeSurface && activeScaleLimits && (
                 <div className="animate-fade-in space-y-4 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-800/50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase text-gray-500">
-                      {selectedLayerText}
-                    </span>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <span className="block text-xs font-bold uppercase text-gray-500">
+                        {copy.selectedLayer}
+                      </span>
+                      <span className="mt-1 block text-[10px] font-medium text-gray-400">
+                        {t(activeSurface.labelKey)} · {activeDecalIndex + 1}/{decals.length}
+                      </span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => onRemoveDecal(activeDecal.id)}
@@ -222,24 +357,84 @@ export const Controls: React.FC<ControlsProps> = ({
                   </div>
 
                   <div>
+                    <label
+                      htmlFor={`layer-name-${activeDecal.id}`}
+                      className="mb-1 block text-[10px] font-bold uppercase text-gray-400"
+                    >
+                      {copy.layerName}
+                    </label>
+                    <input
+                      key={activeDecal.id}
+                      id={`layer-name-${activeDecal.id}`}
+                      type="text"
+                      defaultValue={activeDecal.name}
+                      maxLength={60}
+                      onBlur={(event) => onRenameDecal(activeDecal.id, event.currentTarget.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') event.currentTarget.blur();
+                      }}
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 dark:border-zinc-700 dark:bg-zinc-900"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onToggleDecalVisibility(activeDecal.id)}
+                      className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs font-bold hover:border-black dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-white"
+                    >
+                      {activeDecal.visible ? copy.hide : copy.show}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDuplicateDecal(activeDecal.id)}
+                      className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs font-bold hover:border-black dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-white"
+                    >
+                      {copy.duplicate}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onMoveDecal(activeDecal.id, 'backward')}
+                      disabled={activeDecalIndex <= 0}
+                      className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs font-bold hover:border-black disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-white"
+                    >
+                      ↓ {copy.backward}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onMoveDecal(activeDecal.id, 'forward')}
+                      disabled={activeDecalIndex >= decals.length - 1}
+                      className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs font-bold hover:border-black disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-white"
+                    >
+                      ↑ {copy.forward}
+                    </button>
+                  </div>
+
+                  <div>
                     <div className="mb-1 flex items-center justify-between">
                       <label
                         htmlFor={`layer-size-${activeDecal.id}`}
                         className="text-[10px] font-bold uppercase text-gray-400"
                       >
-                        {layerSizeText}
+                        {t('customizer.artworkWidth')}
                       </label>
                       <span className="font-mono text-[10px] text-gray-400">
-                        {Math.round(activeDecal.scale * 100)}%
+                        {activeArtworkWidthCm?.toFixed(1)} cm
                       </span>
                     </div>
                     <input
                       id={`layer-size-${activeDecal.id}`}
                       type="range"
-                      min="0.05"
-                      max="0.4"
-                      step="0.01"
+                      min={activeScaleLimits.minimum}
+                      max={activeScaleLimits.maximum}
+                      step="0.005"
                       value={activeDecal.scale}
+                      onPointerDown={() => onBeginTransform()}
+                      onPointerUp={() => onEndTransform()}
+                      onPointerCancel={() => onEndTransform()}
+                      onKeyDown={beginKeyboardTransform}
+                      onKeyUp={endKeyboardTransform}
+                      onBlur={() => onEndTransform()}
                       onChange={(event) =>
                         onUpdateDecal(activeDecal.id, {
                           scale: Number.parseFloat(event.target.value),
@@ -255,7 +450,7 @@ export const Controls: React.FC<ControlsProps> = ({
                         htmlFor={`layer-rotation-${activeDecal.id}`}
                         className="text-[10px] font-bold uppercase text-gray-400"
                       >
-                        {rotationText}
+                        {copy.rotation}
                       </label>
                       <span className="font-mono text-[10px] text-gray-400">
                         {Math.round(activeDecal.userRotation * (180 / Math.PI))}°
@@ -268,6 +463,12 @@ export const Controls: React.FC<ControlsProps> = ({
                       max={Math.PI * 2}
                       step="0.1"
                       value={activeDecal.userRotation}
+                      onPointerDown={() => onBeginTransform()}
+                      onPointerUp={() => onEndTransform()}
+                      onPointerCancel={() => onEndTransform()}
+                      onKeyDown={beginKeyboardTransform}
+                      onKeyUp={endKeyboardTransform}
+                      onBlur={() => onEndTransform()}
                       onChange={(event) =>
                         onUpdateDecal(activeDecal.id, {
                           userRotation: Number.parseFloat(event.target.value),
@@ -277,7 +478,7 @@ export const Controls: React.FC<ControlsProps> = ({
                     />
                   </div>
 
-                  <p className="mt-2 text-[10px] italic text-gray-400">{dragHelpText}</p>
+                  <p className="mt-2 text-[10px] italic text-gray-400">{copy.dragHelp}</p>
                 </div>
               )}
             </div>
@@ -285,10 +486,14 @@ export const Controls: React.FC<ControlsProps> = ({
         </section>
 
         <div>
-          <label className="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+          <label
+            htmlFor="customizer-notes"
+            className="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+          >
             {t('customizer.notes')}
           </label>
           <textarea
+            id="customizer-notes"
             value={notes}
             onChange={(event) => onNotesChange(event.target.value)}
             placeholder={t('customizer.notesPlaceholder')}

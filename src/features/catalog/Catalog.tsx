@@ -2,6 +2,7 @@ import gsap from 'gsap';
 import React, { useEffect, useRef, useState } from 'react';
 import { ImageReveal } from '@/components/ui/ImageReveal';
 import { useAppContext } from '@/contexts/AppContext';
+import { isProductCustomizerReady } from '@/data/assets3d';
 import { useSEO } from '@/hooks/useSEO';
 import { isAbortError, platformApi, type CatalogApi } from '@/services/api';
 import { Product } from '@/types';
@@ -96,21 +97,23 @@ export const Catalog: React.FC<CatalogProps> = ({
   return (
     <div
       ref={containerRef}
-      className="min-h-screen pt-24 md:pt-32 pb-20 px-4 md:px-8 max-w-7xl mx-auto"
+      className="mx-auto min-h-screen max-w-7xl px-4 pb-20 pt-24 md:px-8 md:pt-32"
     >
-      <div className="mb-12 md:mb-16 text-center md:text-start" ref={titleRef}>
+      <div className="mb-12 text-center md:mb-16 md:text-start" ref={titleRef}>
         <h2
-          className={`text-4xl md:text-6xl font-bold tracking-tighter mb-4 text-black dark:text-white ${language === 'en' ? 'font-display' : ''}`}
+          className={`mb-4 text-4xl font-bold tracking-tighter text-black dark:text-white md:text-6xl ${language === 'en' ? 'font-display' : ''}`}
         >
           {t('catalog.title')}
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 max-w-xl text-lg">{t('catalog.subtitle')}</p>
+        <p className="max-w-xl text-lg text-gray-500 dark:text-gray-400">
+          {t('catalog.subtitle')}
+        </p>
       </div>
 
       {status === 'loading' && (
         <div role="status" aria-live="polite">
           <p className="sr-only">{loadingText}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-4">
             {Array.from({ length: 4 }, (_, index) => (
               <div
                 key={index}
@@ -147,7 +150,7 @@ export const Catalog: React.FC<CatalogProps> = ({
       {status === 'ready' && (
         <div
           ref={gridRef}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"
+          className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-4"
         >
           {products.map((product) => {
             const colorCount =
@@ -155,7 +158,13 @@ export const Catalog: React.FC<CatalogProps> = ({
                 ? `${product.colors.length} لون`
                 : `${product.colors.length} Color${product.colors.length === 1 ? '' : 's'}`;
             const isBusy = busyProductId === product.id;
-            const isDisabled = !product.inStock || isBusy;
+            const isModelReady = isProductCustomizerReady(product.id);
+            const isDisabled = !product.inStock || !isModelReady || isBusy;
+            const unavailableLabel = !product.inStock
+              ? t('catalog.soldOut')
+              : !isModelReady
+                ? t('catalog.modelUnavailable')
+                : null;
 
             return (
               <button
@@ -163,8 +172,12 @@ export const Catalog: React.FC<CatalogProps> = ({
                 key={product.id}
                 disabled={isDisabled}
                 onClick={() => void onSelectProduct(product)}
-                className={`group relative text-start bg-white dark:bg-zinc-900 border ${product.inStock ? 'border-gray-200 dark:border-zinc-800 hover:border-accent dark:hover:border-accent' : 'border-gray-100 dark:border-zinc-800 opacity-70 cursor-not-allowed'} rounded-2xl overflow-hidden transition-all duration-500 flex flex-col hover:shadow-2xl enabled:hover:-translate-y-2 disabled:cursor-wait`}
-                aria-label={`${t(product.name)} — ${formatPrice(product.basePrice)} ${t('common.price')}`}
+                className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white text-start transition-all duration-500 dark:bg-zinc-900 ${
+                  product.inStock && isModelReady
+                    ? 'border-gray-200 hover:-translate-y-2 hover:border-accent hover:shadow-2xl dark:border-zinc-800 dark:hover:border-accent'
+                    : 'cursor-not-allowed border-gray-100 opacity-70 dark:border-zinc-800'
+                } ${isBusy ? 'cursor-wait' : ''}`}
+                aria-label={`${t(product.name)} — ${formatPrice(product.basePrice)} ${t('common.price')}${unavailableLabel ? ` — ${unavailableLabel}` : ''}`}
                 aria-busy={isBusy}
               >
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-gray-100 dark:bg-zinc-800">
@@ -173,44 +186,52 @@ export const Catalog: React.FC<CatalogProps> = ({
                     alt={t(product.name)}
                     containerClassName="w-full h-full"
                     className={
-                      product.inStock
+                      product.inStock && isModelReady
                         ? 'grayscale group-hover:scale-110 group-hover:grayscale-0'
                         : 'grayscale'
                     }
                   />
 
-                  {!product.inStock && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
-                      <span className="bg-red-500 text-white font-bold px-4 py-2 rounded-full uppercase tracking-widest text-sm -rotate-12 border-2 border-white">
-                        {t('catalog.soldOut')}
+                  {unavailableLabel && (
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/55 p-4">
+                      <span className="rounded-full border border-white/40 bg-black/70 px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-white">
+                        {unavailableLabel}
                       </span>
                     </div>
                   )}
 
-                  {product.inStock && (
+                  {product.inStock && isModelReady && (
                     <div
-                      className={`absolute inset-0 bg-black/40 transition-opacity duration-300 flex items-center justify-center p-6 pointer-events-none ${isBusy ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                      className={`pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40 p-6 transition-opacity duration-300 ${isBusy ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                     >
-                      <span className="w-full bg-accent text-white font-bold py-3 rounded-full translate-y-4 group-hover:translate-y-0 transition-transform duration-300 shadow-xl text-center">
+                      <span className="w-full translate-y-4 rounded-full bg-accent py-3 text-center font-bold text-white shadow-xl transition-transform duration-300 group-hover:translate-y-0">
                         {isBusy ? preparingText : t('catalog.startDesign')}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="p-6 flex w-full flex-col flex-grow">
+                <div className="flex w-full flex-grow flex-col p-6">
                   <h3
-                    className={`text-xl font-bold tracking-tight mb-6 ${product.inStock ? 'text-black dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}
+                    className={`mb-6 text-xl font-bold tracking-tight ${
+                      product.inStock && isModelReady
+                        ? 'text-black dark:text-white'
+                        : 'text-gray-400 dark:text-gray-500'
+                    }`}
                   >
                     {t(product.name)}
                   </h3>
 
-                  <div className="mt-auto pt-4 flex justify-between items-center border-t border-gray-100 dark:border-zinc-800">
-                    <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                  <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-4 dark:border-zinc-800">
+                    <span className="font-mono text-sm text-gray-500 dark:text-gray-400">
                       {colorCount}
                     </span>
                     <span
-                      className={`font-bold ${product.inStock ? 'text-black dark:text-white' : 'text-gray-400'}`}
+                      className={`font-bold ${
+                        product.inStock && isModelReady
+                          ? 'text-black dark:text-white'
+                          : 'text-gray-400'
+                      }`}
                     >
                       {formatPrice(product.basePrice)} {t('common.price')}
                     </span>

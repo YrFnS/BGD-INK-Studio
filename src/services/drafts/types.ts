@@ -1,6 +1,6 @@
-import { DecalLayer, OrderDetails, Size } from '@/types';
+import { DecalLayer, OrderDetails, PrintSurfaceId, Size } from '@/types';
 
-export const DESIGN_DRAFT_VERSION = 1 as const;
+export const DESIGN_DRAFT_VERSION = 4 as const;
 
 export interface StoredArtworkAsset {
   id: string;
@@ -14,13 +14,22 @@ export interface StoredArtworkAsset {
 
 export interface StoredDecalLayer {
   id: string;
+  name: string;
+  visible: boolean;
   assetId: string;
   fileName: string;
   mimeType: string;
+  surfaceId: PrintSurfaceId;
   position: [number, number, number];
   rotation: [number, number, number];
   userRotation: number;
   scale: number;
+  pixelWidth?: number;
+  pixelHeight?: number;
+  aspectRatio?: number;
+  hasTransparency?: boolean;
+  transparentPixelRatio?: number;
+  transparentPaddingRatio?: number;
 }
 
 export interface DesignDraftRecord {
@@ -33,6 +42,7 @@ export interface DesignDraftRecord {
   notes: string;
   activeDecalId: string | null;
   decals: StoredDecalLayer[];
+  assetIds: string[];
   checkoutDetails: OrderDetails;
   submittedOrderId: string | null;
   createdAt: string;
