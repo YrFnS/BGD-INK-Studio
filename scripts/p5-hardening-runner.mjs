@@ -18,7 +18,8 @@ if (digest !== '3122cf242b112f8eb0a878a446923e2bc2f2f73e43c910021f889b70dead3968
 
 const script = decodedScript
   .toString('utf8')
-  .replaceAll("    }, [draftId],\n  );", "    },\n    [draftId],\n  );");
+  .replaceAll("    }, [draftId],\n  );", "    },\n    [draftId],\n  );")
+  .replaceAll('services/drafts/persistenceCoordinator', 'persistenceCoordinator');
 
 await writeFile(temporaryScriptPath, script);
 await import(pathToFileURL(temporaryScriptPath).href);
