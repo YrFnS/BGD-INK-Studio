@@ -1,7 +1,7 @@
 import { BRAND } from '@/config/brand';
 import { PLATFORM_STATUS } from '@/config/platform';
-import { Order, PendingOrder } from '@/types';
-import { getProducts, saveOrder } from '@/utils/storage';
+import { PendingOrder } from '@/types';
+import { getProducts } from '@/utils/storage';
 import { PlatformApi, PlatformApiError, SubmitOrderInput } from './types';
 
 const throwIfAborted = (signal?: AbortSignal): void => {
@@ -36,35 +36,18 @@ const createDurablePendingOrder = (pendingOrder: PendingOrder): PendingOrder => 
   }),
 });
 
-const submitLocalDraft = (
-  { designDraftId, pendingOrder, details }: SubmitOrderInput,
-  signal?: AbortSignal,
-) => {
+const submitLocalDraft = ({ pendingOrder }: SubmitOrderInput, signal?: AbortSignal) => {
   throwIfAborted(signal);
 
-  if (!PLATFORM_STATUS.localOrderStorageEnabled) {
+  if (!PLATFORM_STATUS.localDraftPreparationEnabled) {
     throw new PlatformApiError({
       code: 'LOCAL_STORAGE_DISABLED',
-      message: 'Local draft storage is disabled.',
+      message: 'Local draft preparation is disabled.',
     });
   }
 
+  createDurablePendingOrder(pendingOrder);
   const orderId = createDraftId();
-  const draft: Order = {
-    ...createDurablePendingOrder(pendingOrder),
-    ...details,
-    id: orderId,
-    date: new Date().toISOString(),
-    status: 'PENDING',
-    designDraftId,
-  };
-
-  if (!saveOrder(draft)) {
-    throw new PlatformApiError({
-      code: 'LOCAL_DRAFT_SAVE_FAILED',
-      message: 'The draft could not be saved in this browser.',
-    });
-  }
 
   return {
     success: true as const,

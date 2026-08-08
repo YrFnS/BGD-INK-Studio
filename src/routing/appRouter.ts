@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { flushPendingDraftPersistence } from '@/persistenceCoordinator';
 import { ViewState } from '@/types';
 
 export type AppRoute =
@@ -86,6 +87,12 @@ const readCurrentRoute = (): AppRoute => parseAppRoute(window.location.pathname)
 
 export const useAppRouter = () => {
   const [route, setRoute] = useState<AppRoute>(readCurrentRoute);
+  const routeRef = useRef(route);
+  const navigationSequenceRef = useRef(0);
+
+  useEffect(() => {
+    routeRef.current = route;
+  }, [route]);
 
   useEffect(() => {
     const canonicalPath = routeToPath(readCurrentRoute());
@@ -93,8 +100,20 @@ export const useAppRouter = () => {
       window.history.replaceState(null, '', canonicalPath);
     }
 
-    const handlePopState = () => {
-      setRoute(readCurrentRoute());
+    const handlePopState = async () => {
+      const sequence = ++navigationSequenceRef.current;
+      const previousRoute = routeRef.current;
+      const nextRoute = readCurrentRoute();
+      const flushed = await flushPendingDraftPersistence();
+      if (sequence !== navigationSequenceRef.current) return;
+
+      if (!flushed) {
+        window.history.replaceState(null, '', routeToPath(previousRoute));
+        return;
+      }
+
+      routeRef.current = nextRoute;
+      setRoute(nextRoute);
       window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }));
     };
 
@@ -102,7 +121,11 @@ export const useAppRouter = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const navigate = useCallback((nextRoute: AppRoute, options: NavigateOptions = {}) => {
+  const navigate = useCallback(async (nextRoute: AppRoute, options: NavigateOptions = {}) => {
+    const sequence = ++navigationSequenceRef.current;
+    const flushed = await flushPendingDraftPersistence();
+    if (!flushed || sequence !== navigationSequenceRef.current) return false;
+
     const nextPath = routeToPath(nextRoute);
     const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
 
@@ -112,11 +135,14 @@ export const useAppRouter = () => {
       window.history.pushState(null, '', nextPath);
     }
 
+    routeRef.current = nextRoute;
     setRoute(nextRoute);
 
     if (options.scroll !== false) {
       window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }));
     }
+
+    return true;
   }, []);
 
   return {

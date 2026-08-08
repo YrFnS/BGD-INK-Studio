@@ -11,9 +11,9 @@
   --color-paper: #f4f1ea;
   --color-ink: #111111;
 
-  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Syne', ui-sans-serif, system-ui, sans-serif;
-  --font-arabic: 'Cairo', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Arial Black', 'Segoe UI Black', ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: 'Noto Sans Arabic', 'Geeza Pro', Tahoma, Arial, sans-serif;
 
   --animate-fade-in: fade-in 500ms ease-out forwards;
   --animate-slide-up: slide-up 500ms ease-out forwards;

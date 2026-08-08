@@ -3,9 +3,9 @@ import { BRAND, type LocalizedText } from './brand';
 
 export const PLATFORM_STATUS = {
   phase: 'prototype',
-  localOrderStorageEnabled: true,
+  localDraftPreparationEnabled: true,
   adminPortalEnabled: false,
-  pwaEnabled: false,
+  pwaEnabled: true,
   notice: {
     en: 'Preview mode — drafts stay in this browser and are not sent to the studio yet.',
     ar: 'نسخة تجريبية — المسودات تبقى بهذا المتصفح وما تنرسل للستوديو حالياً.',

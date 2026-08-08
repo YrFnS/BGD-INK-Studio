@@ -13,6 +13,7 @@ import { Hero } from '@/features/hero/Hero';
 import { routeToPath, routes, useAppRouter } from '@/routing/appRouter';
 import { SubmitOrderResult } from '@/services/api';
 import { createDesignDraft } from '@/services/drafts';
+import { DRAFT_PERSISTENCE_FAILURE_EVENT } from '@/persistenceCoordinator';
 import { OrderDetails, PendingOrder, Product, ViewState } from '@/types';
 
 const Catalog = React.lazy(() =>
@@ -39,15 +40,16 @@ const Success = React.lazy(() =>
   import('@/features/checkout/Success').then((module) => ({ default: module.Success })),
 );
 
-const LoadingSpinner = () => (
+const LoadingSpinner = ({ language }: { language: 'en' | 'ar' }) => (
   <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-live="polite">
     <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-black dark:border-gray-800 dark:border-t-white" />
-    <span className="sr-only">Loading</span>
+    <span className="sr-only">{language === 'ar' ? 'جاري التحميل' : 'Loading'}</span>
   </div>
 );
 
 interface ErrorBoundaryProps {
   children: ReactNode;
+  language: 'en' | 'ar';
 }
 
 interface ErrorBoundaryState {
@@ -70,14 +72,20 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       return (
         <div className="flex min-h-[50vh] items-center justify-center p-8 text-center">
           <div>
-            <h2 className="mb-3 text-2xl font-bold">Something went wrong</h2>
-            <p className="mb-6 text-gray-500">Refresh the page to restart the studio.</p>
+            <h2 className="mb-3 text-2xl font-bold">
+              {this.props.language === 'ar' ? 'صار خطأ غير متوقع' : 'Something went wrong'}
+            </h2>
+            <p className="mb-6 text-gray-500">
+              {this.props.language === 'ar'
+                ? 'حدّث الصفحة حتى تعيد تشغيل الستوديو.'
+                : 'Refresh the page to restart the studio.'}
+            </p>
             <button
               type="button"
               onClick={() => window.location.reload()}
               className="rounded-full bg-black px-6 py-3 font-bold text-white dark:bg-white dark:text-black"
             >
-              Refresh
+              {this.props.language === 'ar' ? 'تحديث الصفحة' : 'Refresh'}
             </button>
           </div>
         </div>
@@ -101,6 +109,21 @@ const AppContent = () => {
   const [busyProductId, setBusyProductId] = useState<string | null>(null);
   const [lastSubmission, setLastSubmission] = useState<LastSubmission | null>(null);
   const creatingDraftRef = useRef(false);
+
+  React.useEffect(() => {
+    const handlePersistenceFailure = () => {
+      showToast(
+        language === 'ar'
+          ? 'آخر تغييراتك ما انحفظت، لذلك بقينا بنفس الصفحة. حاول مرة ثانية.'
+          : 'Your latest changes could not be saved, so the Studio kept you on this page. Try again.',
+        'error',
+      );
+    };
+
+    window.addEventListener(DRAFT_PERSISTENCE_FAILURE_EVENT, handlePersistenceFailure);
+    return () =>
+      window.removeEventListener(DRAFT_PERSISTENCE_FAILURE_EVENT, handlePersistenceFailure);
+  }, [language, showToast]);
 
   const handleProductSelect = async (product: Product) => {
     if (creatingDraftRef.current) return;
@@ -244,9 +267,9 @@ const AppContent = () => {
       )}
 
       <main className="relative flex-grow">
-        <ErrorBoundary>
+        <ErrorBoundary language={language}>
           <PageTransition viewKey={routeToPath(route)}>
-            <Suspense fallback={<LoadingSpinner />}>{renderRoute()}</Suspense>
+            <Suspense fallback={<LoadingSpinner language={language} />}>{renderRoute()}</Suspense>
           </PageTransition>
         </ErrorBoundary>
       </main>

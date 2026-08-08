@@ -35,6 +35,22 @@ test('installs owned assets and reopens visited public routes from the productio
     expect(response.ok()).toBe(true);
   }
 
+  const precachedProductAssets = await page.evaluate(async () => {
+    return Promise.all(
+      (await caches.keys()).map(async (key) =>
+        (await (await caches.open(key)).keys()).map((request) => new URL(request.url).pathname),
+      ),
+    ).then((groups) => groups.flat());
+  });
+  expect(precachedProductAssets).toEqual(
+    expect.arrayContaining([
+      '/brand/products/classic-tshirt.svg',
+      '/brand/products/premium-hoodie.svg',
+      '/brand/products/oversized-tee.svg',
+      '/brand/products/urban-vest.svg',
+    ]),
+  );
+
   await page.goto('/guide');
   await expect(
     page.getByRole('heading', { name: 'KNOW WHAT IS VERIFIED BEFORE YOU DESIGN.' }),

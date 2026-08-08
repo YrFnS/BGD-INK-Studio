@@ -7,8 +7,7 @@ const root = process.cwd();
 const distDirectory = path.join(root, 'dist');
 const indexPath = path.join(distDirectory, 'index.html');
 const manifestPath = path.join(distDirectory, '.vite', 'manifest.json');
-const DELIVERY_HEAD_PATTERN =
-  /<!-- delivery:head:start -->[\s\S]*?<!-- delivery:head:end -->/;
+const DELIVERY_HEAD_PATTERN = /<!-- delivery:head:start -->[\s\S]*?<!-- delivery:head:end -->/;
 
 const PUBLIC_ROUTES = [
   { path: '/', changeFrequency: 'weekly', priority: '1.0' },
@@ -24,7 +23,7 @@ const STABLE_SHELL_ASSETS = [
   '/brand/app/icon-512.png',
   '/brand/app/icon-maskable-512.png',
   '/brand/products/classic-tshirt.svg',
-  '/brand/products/hoodie-premium.svg',
+  '/brand/products/premium-hoodie.svg',
   '/brand/products/oversized-tee.svg',
   '/brand/products/urban-vest.svg',
 ];
@@ -45,15 +44,8 @@ const normalizeSiteUrl = (candidate) => {
   }
 };
 
-const siteUrl =
-  normalizeSiteUrl(process.env.VITE_PUBLIC_SITE_URL) ??
-  normalizeSiteUrl(process.env.URL) ??
-  (process.env.CONTEXT === 'production'
-    ? normalizeSiteUrl(process.env.DEPLOY_PRIME_URL)
-    : null);
-const indexable =
-  Boolean(siteUrl) &&
-  (process.env.VITE_INDEXABLE_BUILD === 'true' || process.env.CONTEXT === 'production');
+const siteUrl = normalizeSiteUrl(process.env.VITE_PUBLIC_SITE_URL);
+const indexable = Boolean(siteUrl) && process.env.VITE_INDEXABLE_BUILD === 'true';
 
 const escapeAttribute = (value) =>
   value
@@ -138,7 +130,8 @@ const writeSitemap = async () => {
   if (!indexable || !siteUrl) return;
 
   const urls = PUBLIC_ROUTES.map(
-    (route) => `  <url>\n    <loc>${absoluteUrl(route.path)}</loc>\n    <changefreq>${route.changeFrequency}</changefreq>\n    <priority>${route.priority}</priority>\n  </url>`,
+    (route) =>
+      `  <url>\n    <loc>${absoluteUrl(route.path)}</loc>\n    <changefreq>${route.changeFrequency}</changefreq>\n    <priority>${route.priority}</priority>\n  </url>`,
   ).join('\n');
   const sitemap = [
     '<?xml version="1.0" encoding="UTF-8"?>',

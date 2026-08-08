@@ -45,7 +45,15 @@ export const Success: React.FC<SuccessProps> = ({
   }, []);
 
   const whatsappLink =
-    pendingOrder && orderDetails ? generateWhatsAppLink(orderId, pendingOrder, orderDetails) : null;
+    pendingOrder && orderDetails
+      ? generateWhatsAppLink(
+          orderId,
+          pendingOrder,
+          orderDetails,
+          language,
+          t(pendingOrder.productName),
+        )
+      : null;
   const isPrototype = PLATFORM_STATUS.phase === 'prototype';
   const title = isPrototype
     ? getPlatformText(PLATFORM_STATUS.savedDraftTitle, language)
@@ -129,7 +137,12 @@ export const Success: React.FC<SuccessProps> = ({
                   stroke="currentColor"
                   aria-hidden="true"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m5 13 4 4L19 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="m5 13 4 4L19 7"
+                  />
                 </svg>
               </div>
 
@@ -185,7 +198,9 @@ export const Success: React.FC<SuccessProps> = ({
                     <span className="text-[9px] font-black uppercase tracking-[0.15em] text-black/38 dark:text-white/34">
                       {copy.garment}
                     </span>
-                    <span className="mt-2 block text-lg font-black">{t(pendingOrder.productName)}</span>
+                    <span className="mt-2 block text-lg font-black">
+                      {t(pendingOrder.productName)}
+                    </span>
                   </div>
                   <div className="rounded-2xl border border-black/10 bg-white/55 p-4 dark:border-white/10 dark:bg-white/[0.035]">
                     <span className="text-[9px] font-black uppercase tracking-[0.15em] text-black/38 dark:text-white/34">
