@@ -87,7 +87,7 @@ requirePattern(
 );
 requirePattern(
   files.environment,
-  /resolution:[\s\S]*devicePixelRatio[\s\S]*connection\?\.addEventListener\('change'/,
+  /devicePixelRatio[\s\S]*resolution:[\s\S]*connection\?\.addEventListener\('change'/,
   'rendering capabilities must react to display DPR and Save-Data changes',
 );
 requirePattern(
@@ -102,8 +102,18 @@ requirePattern(
 );
 requirePattern(
   files.journey,
-  /reducedMotion:\s*'reduce'[\s\S]*data-rendering-quality[\s\S]*no-preference[\s\S]*balanced[\s\S]*high[\s\S]*Layer name/,
-  'the browser journey must prove reactive profiles preserve active draft state',
+  /reducedMotion:\s*'reduce'[\s\S]*reducedMotion:\s*'no-preference'/,
+  'the browser journey must exercise reduced-motion profile changes',
+);
+requirePattern(
+  files.journey,
+  /data-rendering-quality',\s*'low'[\s\S]*data-rendering-quality',\s*'balanced'[\s\S]*data-rendering-quality',\s*'high'/,
+  'the browser journey must prove low, balanced, and high profiles react in place',
+);
+requirePattern(
+  files.journey,
+  /getByLabel\('Layer name'\)[\s\S]*page\.reload\(\)[\s\S]*Adaptive mark/,
+  'the browser journey must prove profile changes and reload preserve the active draft',
 );
 
 if (failures.length > 0) {
