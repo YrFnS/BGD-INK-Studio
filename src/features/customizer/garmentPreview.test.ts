@@ -16,12 +16,14 @@ describe('getGarmentPreviewDefinition', () => {
     const hoodie = getGarmentPreviewDefinition('hoodie-premium', 'front');
     const vest = getGarmentPreviewDefinition('vest-urban', 'front');
 
-    expect(new Set([
-      classic.silhouettePath,
-      oversized.silhouettePath,
-      hoodie.silhouettePath,
-      vest.silhouettePath,
-    ])).toHaveLength(4);
+    expect(
+      new Set([
+        classic.silhouettePath,
+        oversized.silhouettePath,
+        hoodie.silhouettePath,
+        vest.silhouettePath,
+      ]).size,
+    ).toBe(4);
     expect(hoodie.secondaryPath).toBeTruthy();
   });
 
