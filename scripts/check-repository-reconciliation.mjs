@@ -117,11 +117,17 @@ if (budgetJson) {
 }
 
 requireText(files.readme, 'main\n└── agent/p6-runtime-stability', 'README must show the single active P6 branch');
+requireText(
+  files.readme,
+  'P6.1 through P6.6 are implemented and validated.',
+  'README must state the validated P6 engineering status',
+);
 requireText(files.readme, 'npm run test:performance', 'README must document production performance tests');
 requireText(files.readme, 'npm run verify:p6', 'README must document the complete P6 exit command');
 requireText(files.readme, 'docs/DEPLOYMENT.md', 'README must link deployment guidance');
 requireText(files.readme, 'docs/TROUBLESHOOTING.md', 'README must link troubleshooting guidance');
 requireText(files.tasks, 'agent/p6-runtime-stability', 'tasks must identify the active P6 branch');
+requireText(files.tasks, '| P6.6 | Complete and validated |', 'tasks must state the validated P6.6 status');
 requireText(files.tasks, 'Production Branch is `main`', 'tasks must retain the external production-branch gate');
 
 const livingStatus = `${files.readme}\n${files.tasks}`;
@@ -134,6 +140,11 @@ forbidPattern(
   livingStatus,
   /\b\d+\s+(?:unit\/component\/accessibility tests|functional Chromium journeys|Chromium journeys|production-only PWA Chromium journey)/i,
   'living status documents must not hard-code volatile validation totals',
+);
+forbidPattern(
+  livingStatus,
+  /P6\.6[^\n]*(?:final exit validation|reconciliation implemented; final)/i,
+  'living status documents must not retain the pre-validation P6.6 state',
 );
 
 requireText(
@@ -198,13 +209,24 @@ requireText(
 
 requireText(
   files.p6Plan,
-  'P6.6 repository and release reconciliation is implemented',
-  'the P6 plan must reflect implemented reconciliation work',
+  'P6.1 through P6.6 are complete and validated',
+  'the P6 plan must reflect the validated reconciliation state',
+);
+requireText(
+  files.p6Plan,
+  '31308581420',
+  'the P6 plan must retain the validated exit-suite run',
 );
 requireText(
   files.p66,
-  'Implementation complete; final exit validation',
-  'the P6.6 record must distinguish implementation from final validation',
+  '**Complete and validated**',
+  'the P6.6 record must state its validated engineering status',
+);
+requireText(files.p66, '31308581420', 'the P6.6 record must retain the validated CI run');
+requireText(
+  files.p66,
+  'Vercel and Netlify pull-request previews also completed successfully',
+  'the P6.6 record must retain provider preview evidence',
 );
 requireText(files.p66, 'version: 0.4.0', 'the P6.6 record must state the reconciled version');
 requireText(
@@ -258,5 +280,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  'Repository reconciliation passed: package metadata, branch policy, deployment contracts, living validation claims, troubleshooting, and the P6 exit command agree.',
+  'Repository reconciliation passed: package metadata, validated branch status, deployment contracts, living validation claims, troubleshooting, preview evidence, and the P6 exit command agree.',
 );

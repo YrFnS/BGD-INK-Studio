@@ -2,9 +2,22 @@
 
 ## Status
 
-P6.1 through P6.5 are complete and validated on `agent/p6-runtime-stability`.
+P6.1 through P6.6 are complete and validated on `agent/p6-runtime-stability`.
 
-P6.6 repository and release reconciliation is implemented on the same branch. The final clean exit suite, final documentation evidence, external Vercel/Netlify Production Branch confirmation, and owner review remain before PR #6 may leave draft status.
+The clean automated exit suite passed on the reconciled implementation head:
+
+```text
+0cbd21ab9c264072f8497ece9e14c25f78fc9aa0
+fix: separate CI validation from provider builds
+```
+
+Validated GitHub Actions run:
+
+```text
+31308581420
+```
+
+Vercel and Netlify pull-request previews also completed successfully on that head. PR #6 remains draft because the external provider Production Branch settings and the final owner merge/release decision are manual gates that repository code cannot confirm.
 
 All P6 work stays in one branch and one pull request:
 
@@ -55,7 +68,7 @@ P6 stabilizes the existing frontend and browser-local product. It does not add:
 | P6-11 | Artwork | A fallback could upload an unbounded original image. | Complete in P6.4. |
 | P6-12 | GPU memory | Compatible duplicate layers created duplicate textures. | Complete in P6.4. |
 | P6-13 | Quality gates | Bundle checks could not detect idle rendering or commit/save amplification. | Complete in P6.5. |
-| P6-14 | Repository | Version, branch, deployment, troubleshooting, and release claims disagreed. | Reconciled in P6.6; final validation/review pending. |
+| P6-14 | Repository | Version, branch, deployment, troubleshooting, and release claims disagreed. | Complete and validated in P6.6. |
 
 ## P6.1 — Shell and navigation
 
@@ -123,17 +136,20 @@ Detailed record: `docs/P6-5-RUNTIME-PERFORMANCE-VALIDATION.md`.
 
 ## P6.6 — Repository and release reconciliation
 
-Implemented:
+Completed and validated:
 
-- README now reflects the authoritative `main` plus single P6 branch.
+- README reflects the authoritative `main` plus single P6 branch.
 - Historical phase branches are no longer described as an active stack.
-- The private `0.4.0` package version is explicitly separated from P6 roadmap numbering and checked against the lockfile.
+- The private `0.4.0` package version is separated from P6 roadmap numbering and checked against the lockfile.
 - Living documentation avoids volatile test totals and points to commands as the source of truth.
 - Runtime, PWA, performance, and complete exit commands are documented.
 - Reduced motion, demand rendering, 2D fallback, WebGL recovery, large artwork, and texture ownership are documented.
 - Vercel and Netlify repository configuration is branch-neutral and the required production branch is documented as `main`.
+- Provider build commands use the deterministic production build while GitHub CI remains the complete validation gate.
 - A permanent repository-reconciliation source gate is part of `npm run check`.
-- `npm run verify:p6` defines the final exit sequence.
+- `npm run verify:p6` defines the final clean exit sequence.
+- The clean source/build, functional, PWA, and production-performance jobs passed together.
+- Both pull-request preview providers built the reconciled application successfully.
 
 Detailed record: `docs/P6-6-REPOSITORY-RECONCILIATION.md`.
 
@@ -151,14 +167,7 @@ The provider Production Branch setting is external to GitHub source. Confirm `ma
 
 ## Final exit suite
 
-A clean installation must pass:
-
-```bash
-npm ci --include=dev --no-audit --no-fund
-npm run verify:p6
-```
-
-`verify:p6` runs:
+The reconciled head passed the clean-equivalent GitHub Actions jobs for:
 
 ```text
 npm run check
@@ -167,16 +176,31 @@ npm run test:pwa
 npm run test:performance
 ```
 
-GitHub Actions splits these commands across independent clean jobs.
+The local combined command remains:
 
-## Definition of done
+```bash
+npm ci --include=dev --no-audit --no-fund
+npm run verify:p6
+```
 
-P6 is ready for final review only when:
+GitHub Actions executes the sequence across independent clean checkouts so source/build validation, functional/PWA behavior, and production-performance budgets remain separately visible.
 
-- all automated jobs pass on the final branch head,
-- documentation and package/deployment claims match that head,
-- no budget is weakened,
-- Vercel and Netlify Production Branch settings are manually confirmed as `main`,
-- and the owner approves moving PR #6 out of draft.
+## Engineering definition of done
 
-Until then, PR #6 remains draft and unmerged.
+The P6 engineering definition of done is satisfied:
+
+- P6.1 through P6.6 are implemented and documented,
+- all automated jobs pass on the reconciled implementation head,
+- documentation and package/deployment claims agree,
+- no budget was weakened,
+- both pull-request preview deployments build successfully,
+- and no unresolved engineering stabilization phase remains.
+
+## Remaining manual release gate
+
+PR #6 remains draft and unmerged until:
+
+- Vercel Production Branch is manually confirmed as `main`,
+- Netlify Production Branch is manually confirmed as `main`,
+- no historical branch deploy or build-hook reference remains,
+- and the owner approves moving the PR out of draft and merging it.

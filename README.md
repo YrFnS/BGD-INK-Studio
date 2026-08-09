@@ -17,7 +17,7 @@ main
 - Do not develop new work from a historical phase branch.
 - Do not merge PR #6 until its final review and external deployment-provider branch check are complete.
 
-P6.1 through P6.5 are implemented and validated. P6.6 reconciles repository metadata, branch policy, deployment guidance, troubleshooting, release claims, and the final exit suite.
+P6.1 through P6.6 are implemented and validated. PR #6 remains draft until the external provider Production Branch settings are manually confirmed and the owner approves the merge/release decision.
 
 ## Version and release policy
 

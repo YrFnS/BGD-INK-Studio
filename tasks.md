@@ -27,7 +27,7 @@ main
 | P6.3 | Complete and validated | `docs/P6-3-DEMAND-RENDERING-VALIDATION.md` |
 | P6.4 | Complete and validated | `docs/P6-4-TEXTURE-LIFECYCLE-VALIDATION.md` |
 | P6.5 | Complete and validated | `docs/P6-5-RUNTIME-PERFORMANCE-VALIDATION.md` |
-| P6.6 | Reconciliation implemented; final exit validation and review pending | `docs/P6-6-REPOSITORY-RECONCILIATION.md` |
+| P6.6 | Complete and validated | `docs/P6-6-REPOSITORY-RECONCILIATION.md` |
 
 ## P6.6 checklist
 
@@ -42,9 +42,11 @@ main
 - [x] Document large-artwork limits, texture sharing, and deterministic cleanup.
 - [x] Add branch-neutral Vercel and Netlify deployment guidance.
 - [x] Add a permanent repository-reconciliation source gate.
+- [x] Pass the clean source/build, functional, PWA, and production-performance exit suite.
+- [x] Confirm the PR preview builds complete successfully on Vercel and Netlify.
 - [ ] Confirm in the external Vercel dashboard that Production Branch is `main`.
 - [ ] Confirm in the external Netlify dashboard that Production Branch is `main`.
-- [ ] Complete final review of draft PR #6.
+- [ ] Complete final owner review of draft PR #6.
 - [ ] Merge only after the owner approves the release and deployment state.
 
 ## Required exit commands
@@ -73,4 +75,4 @@ The project remains frontend-only and browser-local. No backend, account system,
 
 ## Next decision
 
-After all automated checks pass, confirm the external provider production-branch settings and review PR #6. Keep the PR draft and unmerged until that manual release gate is complete.
+The engineering and automated validation work is complete. Confirm the external provider Production Branch settings and perform the final PR review. Keep PR #6 draft and unmerged until that manual release gate is complete.
