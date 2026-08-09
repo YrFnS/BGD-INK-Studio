@@ -1,0 +1,139 @@
+name: Fix post-merge Markdown rendering
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/fix-post-merge-markdown.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    name: Normalize post-merge documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          lfs: true
+
+      - name: Set up Node.js and npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Normalize inserted Markdown sections and strengthen the gate
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+
+          def read(path: str) -> str:
+              return (root / path).read_text(encoding='utf-8')
+
+          def write(path: str, content: str) -> None:
+              (root / path).write_text(content.rstrip() + '\n', encoding='utf-8')
+
+          def unindent_section(path: str, start: str, end: str | None) -> None:
+              content = read(path)
+              if end is None:
+                  pattern = re.compile(rf'({re.escape(start)}\n)(.*)\Z', re.S)
+              else:
+                  pattern = re.compile(
+                      rf'({re.escape(start)}\n)(.*?)(?=\n{re.escape(end)}\n)',
+                      re.S,
+                  )
+
+              def normalize(match: re.Match[str]) -> str:
+                  body = '\n'.join(
+                      line[4:] if line.startswith('    ') else line
+                      for line in match.group(2).splitlines()
+                  )
+                  return match.group(1) + body
+
+              updated, count = pattern.subn(normalize, content, count=1)
+              if count != 1:
+                  raise RuntimeError(f'{path}: section not found: {start}')
+              write(path, updated)
+
+          unindent_section('README.md', '## Repository status', '## Version and release policy')
+          unindent_section('docs/DEPLOYMENT.md', '## Branch policy', '## Repository-controlled build contract')
+          unindent_section('docs/DEPLOYMENT.md', '## Historical branch cleanup', None)
+          unindent_section('docs/P6-RUNTIME-STABILITY-PLAN.md', '## Status', '## Product boundary')
+          unindent_section('docs/P6-RUNTIME-STABILITY-PLAN.md', '## Remaining external production checks', None)
+          unindent_section('docs/P6-6-REPOSITORY-RECONCILIATION.md', '## Status', '## Reconciliation decisions')
+          unindent_section('docs/P6-6-REPOSITORY-RECONCILIATION.md', '### Authoritative branch state', '### Package and release state')
+          unindent_section('docs/P6-6-REPOSITORY-RECONCILIATION.md', '## Post-merge result', None)
+
+          checker_path = 'scripts/check-repository-reconciliation.mjs'
+          checker = read(checker_path)
+          marker = "requirePattern(\n  files.workflow,\n  /name:\\s*Production runtime performance budgets[\\s\\S]*npm run test:performance/,\n  'CI must retain the performance job',\n);"
+          guard = """requirePattern(
+  files.workflow,
+  /name:\\s*Production runtime performance budgets[\\s\\S]*npm run test:performance/,
+  'CI must retain the performance job',
+);
+
+const renderedMarkdown = `${files.readme}\\n${files.deployment}\\n${files.p6Plan}\\n${files.p66}`;
+forbidPattern(
+  renderedMarkdown,
+  /(?:## Repository status|## Branch policy|## Historical branch cleanup|## Status|### Authoritative branch state|## Remaining external production checks|## Post-merge result)\\n\\n {4}\\S/,
+  'post-merge documentation sections must not be indented into Markdown code blocks',
+);"""
+          if checker.count(marker) != 1:
+              raise RuntimeError('repository checker insertion point changed')
+          write(checker_path, checker.replace(marker, guard, 1))
+
+          for path in [
+              'README.md',
+              'docs/DEPLOYMENT.md',
+              'docs/P6-RUNTIME-STABILITY-PLAN.md',
+              'docs/P6-6-REPOSITORY-RECONCILIATION.md',
+          ]:
+              content = read(path)
+              if re.search(
+                  r'(?:## Repository status|## Branch policy|## Historical branch cleanup|## Status|### Authoritative branch state|## Remaining external production checks|## Post-merge result)\n\n {4}\S',
+                  content,
+              ):
+                  raise RuntimeError(f'{path}: indented post-merge section remains')
+
+          print('Post-merge Markdown sections normalized.')
+          PY
+
+      - name: Format changed files
+        run: |
+          npx prettier --write \
+            README.md \
+            docs/DEPLOYMENT.md \
+            docs/P6-RUNTIME-STABILITY-PLAN.md \
+            docs/P6-6-REPOSITORY-RECONCILIATION.md \
+            scripts/check-repository-reconciliation.mjs
+
+      - name: Run repository and production-build validation
+        run: npm run check
+
+      - name: Commit normalized documentation and remove this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/fix-post-merge-markdown.yml
+          git add README.md docs/DEPLOYMENT.md docs/P6-RUNTIME-STABILITY-PLAN.md docs/P6-6-REPOSITORY-RECONCILIATION.md scripts/check-repository-reconciliation.mjs
+          git commit -m "docs: normalize post-merge Markdown sections"
+          git push origin HEAD:main
