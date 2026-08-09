@@ -57,7 +57,7 @@ requirePattern(
 );
 requirePattern(
   files.texture,
-  /setTexture\(ownedTexture\)[\s\S]*invalidate\(\)/,
+  /lease\.texture\.then[\s\S]*setResolvedTexture\(\{ key: cacheKey, texture \}\)[\s\S]*invalidate\(\)/,
   'texture readiness must request a demand frame',
 );
 forbidPattern(
