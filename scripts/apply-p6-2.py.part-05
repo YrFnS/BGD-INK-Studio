@@ -1,0 +1,120 @@
+                  onPointerCancel={handlePointerEnd}
+                  onPointerMove={handlePointerMove}
+                >
+                  <PrintAreaGuide surface={selectedSurface} />
+                  {decals.map((layer, order) =>
+                    layer.visible ? (
+                      <DecalItem
+                        key={layer.id}
+                        layer={layer}
+                        surface={getPrintSurface(modelConfig, layer.surfaceId)}
+                        isActive={layer.id === activeDecalId}
+                        order={order}
+                        textureAnisotropy={textureAnisotropy}
+                        renderingQuality={renderingQuality}
+                        onMeshChange={(mesh) => registerDecalMesh(layer.id, mesh)}
+                      />
+                    ) : null,
+                  )}
+                </mesh>
+              </group>
+            </group>
+          </Center>
+        );
+      },
+    );
+
+    ShirtModel.displayName = 'ShirtModel';
+    ''',
+)
+
+# Customizer imports and live-gesture state.
+replace_once(
+    'src/features/customizer/Customizer.tsx',
+    """import { Controls } from './Controls';\nimport {\n  areEditorSnapshotsEqual,""",
+    """import { Controls } from './Controls';\nimport {\n  applyDecalTransform,\n  areDecalTransformsEqual,\n  normalizeDecalTransform,\n  readDecalTransform,\n  type DecalTransform,\n  type DecalTransformPatch,\n} from './decalTransform';\nimport {\n  areEditorSnapshotsEqual,""",
+)
+replace_once(
+    'src/features/customizer/Customizer.tsx',
+    """import { Scene } from './Scene';""",
+    """import { Scene, type SceneHandle } from './Scene';""",
+)
+replace_once(
+    'src/features/customizer/Customizer.tsx',
+    """type CustomizerLoadStatus = DraftLoadStatus | 'model-unavailable';\ntype LayerDirection = 'forward' | 'backward';""",
+    """type CustomizerLoadStatus = DraftLoadStatus | 'model-unavailable';\ntype LayerDirection = 'forward' | 'backward';\n\ninterface LiveEditorGesture {\n  layerId: string;\n  start: DecalTransform;\n  current: DecalTransform;\n}""",
+)
+replace_once(
+    'src/features/customizer/Customizer.tsx',
+    """  const controlsRef = useRef<HTMLDivElement>(null);\n  const modelConfigRef = useRef<ReadyProductModelConfig | null>(null);""",
+    """  const controlsRef = useRef<HTMLDivElement>(null);\n  const sceneRef = useRef<SceneHandle>(null);\n  const modelConfigRef = useRef<ReadyProductModelConfig | null>(null);""",
+)
+replace_once(
+    'src/features/customizer/Customizer.tsx',
+    """  const historyRef = useRef<EditorHistory | null>(null);\n  const gestureStartRef = useRef<EditorSnapshot | null>(null);\n  const mountedRef = useRef(true);""",
+    """  const historyRef = useRef<EditorHistory | null>(null);\n  const liveGestureRef = useRef<LiveEditorGesture | null>(null);\n  const mountedRef = useRef(true);""",
+)
+replace_once(
+    'src/features/customizer/Customizer.tsx',
+    """  const selectedSurfaceIdRef = useRef<PrintSurfaceId>(DEFAULT_PRINT_SURFACE_ID);\n  const activeDecalIdRef = useRef<string | null>(null);""",
+    """  const selectedSurfaceIdRef = useRef<PrintSurfaceId>(DEFAULT_PRINT_SURFACE_ID);\n  const notesRef = useRef('');\n  const activeDecalIdRef = useRef<string | null>(null);""",
+)
+replace_once(
+    'src/features/customizer/Customizer.tsx',
+    """  const pendingSaveRef = useRef<DesignDraftSnapshot | null>(null);\n  const autosaveTimerRef = useRef<number | null>(null);""",
+    """  const pendingSaveRef = useRef<DesignDraftSnapshot | null>(null);\n  const autosaveTimerRef = useRef<number | null>(null);\n  const skipNextAutosaveRef = useRef(false);""",
+)
+replace_once(
+    'src/features/customizer/Customizer.tsx',
+    """  useEffect(() => {\n    languageRef.current = language;\n  }, [language]);""",
+    """  notesRef.current = notes;\n\n  useEffect(() => {\n    languageRef.current = language;\n  }, [language]);""",
+)
+
+old_gesture_block = """  const commitEditorChange = useCallback(
+    (update: (current: EditorSnapshot) => EditorSnapshot) => {
+      const current = cloneEditorSnapshot(captureEditorSnapshot());
+      const next = update(cloneEditorSnapshot(current));
+      const baseHistory = historyRef.current
+        ? { ...historyRef.current, present: current }
+        : createEditorHistory(current);
+      const nextHistory = commitEditorHistory(baseHistory, next);
+
+      historyRef.current = nextHistory;
+      applyEditorSnapshot(nextHistory.present);
+      updateHistoryAvailability(nextHistory);
+    },
+    [applyEditorSnapshot, captureEditorSnapshot, updateHistoryAvailability],
+  );
+
+  const applyLiveEditorChange = useCallback(
+    (update: (current: EditorSnapshot) => EditorSnapshot) => {
+      const next = update(cloneEditorSnapshot(captureEditorSnapshot()));
+      applyEditorSnapshot(next);
+    },
+    [applyEditorSnapshot, captureEditorSnapshot],
+  );
+
+  const beginEditorGesture = useCallback(() => {
+    if (gestureStartRef.current) return;
+    const start = cloneEditorSnapshot(captureEditorSnapshot());
+    gestureStartRef.current = start;
+    syncHistoryPresent(start);
+  }, [captureEditorSnapshot, syncHistoryPresent]);
+
+  const endEditorGesture = useCallback(() => {
+    const start = gestureStartRef.current;
+    if (!start) return;
+
+    gestureStartRef.current = null;
+    const current = cloneEditorSnapshot(captureEditorSnapshot());
+    const baseHistory = historyRef.current
+      ? { ...historyRef.current, present: cloneEditorSnapshot(start) }
+      : createEditorHistory(start);
+    const nextHistory = areEditorSnapshotsEqual(start, current)
+      ? { ...baseHistory, present: current }
+      : commitEditorHistory(baseHistory, current);
+
+    historyRef.current = nextHistory;
+    updateHistoryAvailability(nextHistory);
+  }, [captureEditorSnapshot, updateHistoryAvailability]);
+"""
