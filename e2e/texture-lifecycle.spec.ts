@@ -20,8 +20,15 @@ interface TextureCacheSnapshot {
   largestPixelArea: number;
 }
 
+type TextureTestWindow = Window & {
+  __BGD_INK_TEXTURE_CACHE__?: TextureCacheSnapshot;
+  __BGD_INK_TEXTURE_TEST_DELAY_MS__?: number;
+};
+
 const readTextureCache = (page: Page): Promise<TextureCacheSnapshot | null> =>
-  page.evaluate(() => window.__BGD_INK_TEXTURE_CACHE__ ?? null);
+  page.evaluate(
+    () => (window as TextureTestWindow).__BGD_INK_TEXTURE_CACHE__ ?? null,
+  );
 
 const createTransparentPng = async (
   page: Page,
@@ -45,7 +52,10 @@ const createTransparentPng = async (
         Math.floor(imageHeight * 0.8),
       );
       const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((value) => (value ? resolve(value) : reject(new Error('PNG failed.'))), 'image/png');
+        canvas.toBlob(
+          (value) => (value ? resolve(value) : reject(new Error('PNG failed.'))),
+          'image/png',
+        );
       });
       return Array.from(new Uint8Array(await blob.arrayBuffer()));
     },
@@ -139,7 +149,7 @@ test('cancels a slow texture decode when the draft route unmounts', async ({ pag
 
   const cancelledBefore = (await readTextureCache(page))?.cancelledLoads ?? 0;
   await page.evaluate(() => {
-    window.__BGD_INK_TEXTURE_TEST_DELAY_MS__ = 1200;
+    (window as TextureTestWindow).__BGD_INK_TEXTURE_TEST_DELAY_MS__ = 1200;
   });
   await page.locator('input[type="file"]').setInputFiles({
     name: 'slow-mark.png',
@@ -157,10 +167,3 @@ test('cancels a slow texture decode when the draft route unmounts', async ({ pag
     .poll(async () => (await readTextureCache(page))?.cancelledLoads ?? 0)
     .toBeGreaterThan(cancelledBefore);
 });
-
-declare global {
-  interface Window {
-    __BGD_INK_TEXTURE_CACHE__?: TextureCacheSnapshot;
-    __BGD_INK_TEXTURE_TEST_DELAY_MS__?: number;
-  }
-}
