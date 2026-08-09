@@ -97,8 +97,18 @@ requirePattern(
 );
 requirePattern(
   files.configuration,
-  /testDir:\s*'\.\/e2e-performance'[\s\S]*npm run build && npm run preview[\s\S]*serviceWorkers:\s*'block'/,
-  'performance journeys must run serially against a production preview without a warmed service worker',
+  /testDir:\s*'\.\/e2e-performance'/,
+  'performance journeys must use the dedicated performance test directory',
+);
+requirePattern(
+  files.configuration,
+  /serviceWorkers:\s*'block'/,
+  'performance journeys must block service workers so samples are not warmed by a PWA cache',
+);
+requirePattern(
+  files.configuration,
+  /command:\s*'npm run build && npm run preview/,
+  'performance journeys must run against a production build and preview server',
 );
 forbidPattern(
   files.configuration,
