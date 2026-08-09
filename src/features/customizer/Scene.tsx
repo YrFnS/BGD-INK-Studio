@@ -46,6 +46,11 @@ interface ModelErrorBoundaryState {
   hasError: boolean;
 }
 
+const WEBGL_CONTEXT_OPTIONS = {
+  antialias: true,
+  powerPreference: 'default' as WebGLPowerPreference,
+};
+
 class ModelErrorBoundary extends React.Component<ModelErrorBoundaryProps, ModelErrorBoundaryState> {
   state: ModelErrorBoundaryState = { hasError: false };
 
@@ -72,6 +77,57 @@ const CameraRig = ({ surface }: { surface: PrintSurfaceDefinition }) => {
     camera.updateProjectionMatrix();
     invalidate();
   }, [camera, invalidate, surface]);
+
+  return null;
+};
+
+const DemandRenderCoordinator = ({
+  activeDecalId,
+  color,
+  decals,
+  interactionMode,
+  isPageVisible,
+  renderingProfile,
+  selectedSurfaceId,
+  theme,
+}: {
+  activeDecalId: string | null;
+  color: string;
+  decals: DecalLayer[];
+  interactionMode: CustomizerInteractionMode;
+  isPageVisible: boolean;
+  renderingProfile: RenderingProfile;
+  selectedSurfaceId: PrintSurfaceId;
+  theme: Theme;
+}) => {
+  const { gl, invalidate, setDpr, size } = useThree();
+
+  useEffect(() => {
+    const devicePixelRatio =
+      typeof window === 'undefined' ? 1 : Math.max(1, window.devicePixelRatio || 1);
+    setDpr(Math.min(devicePixelRatio, renderingProfile.maximumDpr));
+    gl.shadowMap.enabled = renderingProfile.shadows;
+    gl.shadowMap.autoUpdate = renderingProfile.shadows;
+    gl.shadowMap.needsUpdate = true;
+    if (isPageVisible) invalidate();
+  }, [gl, invalidate, isPageVisible, renderingProfile.maximumDpr, renderingProfile.shadows, setDpr]);
+
+  useEffect(() => {
+    if (isPageVisible) invalidate();
+  }, [
+    activeDecalId,
+    color,
+    decals,
+    interactionMode,
+    invalidate,
+    isPageVisible,
+    renderingProfile.quality,
+    renderingProfile.shadowMapSize,
+    selectedSurfaceId,
+    size.height,
+    size.width,
+    theme,
+  ]);
 
   return null;
 };
@@ -108,6 +164,36 @@ const WebGLContextMonitor = ({
   return null;
 };
 
+const DemandOrbitControls = ({
+  enabled,
+  surface,
+}: {
+  enabled: boolean;
+  surface: PrintSurfaceDefinition;
+}) => {
+  const invalidate = useThree((state) => state.invalidate);
+
+  return (
+    <OrbitControls
+      makeDefault
+      target={surface.cameraTarget}
+      minPolarAngle={Math.PI / 4}
+      maxPolarAngle={Math.PI / 1.8}
+      enablePan={false}
+      enableZoom
+      enableRotate
+      enableDamping
+      dampingFactor={0.08}
+      minDistance={2}
+      maxDistance={6}
+      enabled={enabled}
+      onStart={() => invalidate()}
+      onChange={() => invalidate()}
+      onEnd={() => invalidate()}
+    />
+  );
+};
+
 export const Scene = React.forwardRef<SceneHandle, SceneProps>(
   (
     {
@@ -134,11 +220,6 @@ export const Scene = React.forwardRef<SceneHandle, SceneProps>(
     const shirtModelRef = useRef<ShirtModelHandle>(null);
     const isDark = theme === 'dark';
     const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
-    const frameLoop = !isPageVisible
-      ? 'never'
-      : renderingProfile.idleAnimation
-        ? 'always'
-        : 'demand';
 
     useImperativeHandle(
       ref,
@@ -159,18 +240,26 @@ export const Scene = React.forwardRef<SceneHandle, SceneProps>(
       <Canvas
         shadows={renderingProfile.shadows}
         dpr={[1, renderingProfile.maximumDpr]}
-        frameloop={frameLoop}
+        frameloop={isPageVisible ? 'demand' : 'never'}
         camera={{ position: selectedSurface.cameraPosition, fov: 45 }}
-        gl={{
-          antialias: renderingProfile.antialias,
-          powerPreference: renderingProfile.powerPreference,
-        }}
+        gl={WEBGL_CONTEXT_OPTIONS}
         style={{ background: 'transparent', touchAction: 'none' }}
         onCreated={({ gl }) => {
           gl.shadowMap.enabled = renderingProfile.shadows;
+          gl.shadowMap.autoUpdate = renderingProfile.shadows;
         }}
         onPointerMissed={stopDecalInteraction}
       >
+        <DemandRenderCoordinator
+          activeDecalId={activeDecalId}
+          color={color}
+          decals={decals}
+          interactionMode={interactionMode}
+          isPageVisible={isPageVisible}
+          renderingProfile={renderingProfile}
+          selectedSurfaceId={selectedSurfaceId}
+          theme={theme}
+        />
         <WebGLContextMonitor onContextLost={onContextLost} onContextRestored={onContextRestored} />
         <CameraRig surface={selectedSurface} />
 
@@ -200,7 +289,6 @@ export const Scene = React.forwardRef<SceneHandle, SceneProps>(
             decals={decals}
             activeDecalId={activeDecalId}
             interactionMode={interactionMode}
-            idleAnimationEnabled={renderingProfile.idleAnimation && isPageVisible}
             textureAnisotropy={renderingProfile.textureAnisotropy}
             renderingQuality={renderingProfile.quality}
             shadowsEnabled={renderingProfile.shadows}
@@ -212,19 +300,9 @@ export const Scene = React.forwardRef<SceneHandle, SceneProps>(
           />
         </ModelErrorBoundary>
 
-        <OrbitControls
+        <DemandOrbitControls
           key={selectedSurface.id}
-          makeDefault
-          target={selectedSurface.cameraTarget}
-          minPolarAngle={Math.PI / 4}
-          maxPolarAngle={Math.PI / 1.8}
-          enablePan={false}
-          enableZoom
-          enableRotate
-          enableDamping
-          dampingFactor={0.08}
-          minDistance={2}
-          maxDistance={6}
+          surface={selectedSurface}
           enabled={interactionMode === 'view'}
         />
       </Canvas>
