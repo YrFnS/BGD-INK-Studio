@@ -218,8 +218,8 @@ if (vercelJson) {
   if (vercelJson.installCommand !== 'npm ci --include=dev --no-audit --no-fund') {
     failures.push('Vercel must use the clean locked install command');
   }
-  if (vercelJson.buildCommand !== 'npm run check') {
-    failures.push('Vercel must use the validated production build command');
+  if (vercelJson.buildCommand !== 'npm run build') {
+    failures.push('Vercel must use the deterministic production build command');
   }
   if (vercelJson.outputDirectory !== 'dist') {
     failures.push('Vercel must publish the dist directory');
@@ -233,8 +233,8 @@ if (vercelJson) {
 
 requirePattern(
   files.netlify,
-  /command\s*=\s*"npm run check"/,
-  'Netlify must use the validated production build command',
+  /command\s*=\s*"npm run build"/,
+  'Netlify must use the deterministic production build command',
 );
 requirePattern(files.netlify, /publish\s*=\s*"dist"/, 'Netlify must publish the dist directory');
 requirePattern(

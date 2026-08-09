@@ -38,10 +38,16 @@ Clean install:
 npm ci --include=dev --no-audit --no-fund
 ```
 
-Validated production build:
+Pre-merge validation runs in GitHub Actions:
 
 ```bash
 npm run check
+```
+
+Provider build command:
+
+```bash
+npm run build
 ```
 
 Output directory:
@@ -50,7 +56,7 @@ Output directory:
 dist
 ```
 
-`npm run check` includes the production build, bundle budgets, delivery generation, and repository-reconciliation gate.
+`npm run check` remains the required CI and release gate. Deployment providers run the deterministic production build after CI has validated the commit.
 
 ## Vercel
 
@@ -58,7 +64,7 @@ dist
 
 - Vite framework,
 - clean npm installation,
-- `npm run check`,
+- `npm run build`,
 - `dist` output,
 - SPA rewrites,
 - immutable asset caching,
@@ -79,7 +85,7 @@ The repository cannot encode or read the Vercel project’s Production Branch se
 
 `netlify.toml` and `public/_redirects` declare:
 
-- `npm run check`,
+- `npm run build`,
 - `dist` publishing,
 - the pinned Node runtime,
 - SPA fallback,
