@@ -4,19 +4,19 @@ BGD/INK Studio is a bilingual, browser-local apparel design prototype for prepar
 
 ## Repository status
 
-    The authoritative repository state is:
+The authoritative repository state is:
 
-    ```text
-    main
-    ```
+```text
+main
+```
 
-    - `main` contains the complete merged P0–P6 application.
-    - PR #6 was squash-merged into `main` as `03d78a08febd8428555d6f1b657848f2a520eddc`.
-    - All superseded P0–P6 phase branches were deleted after the merge.
-    - Merged pull requests and validation documents remain the audit record.
-    - Start future work from `main` on one intentionally named branch.
+- `main` contains the complete merged P0–P6 application.
+- PR #6 was squash-merged into `main` as `03d78a08febd8428555d6f1b657848f2a520eddc`.
+- All superseded P0–P6 phase branches were deleted after the merge.
+- Merged pull requests and validation documents remain the audit record.
+- Start future work from `main` on one intentionally named branch.
 
-    P6.1 through P6.6 are implemented, validated, merged, and consolidated in `main`.
+P6.1 through P6.6 are implemented, validated, merged, and consolidated in `main`.
 
 ## Version and release policy
 
@@ -69,11 +69,11 @@ All visible 3D profiles use demand rendering. Hidden documents stop the canvas l
 
 Rendering profiles are bounded and reactive:
 
-| Profile         | Maximum DPR | Shadows | Shadow map | Texture anisotropy |
-| --------------- | ----------: | ------- | ---------: | -----------------: |
-| Low power       |           1 | Off     |        256 |                  2 |
-| Balanced        |        1.25 | Off     |        256 |                  4 |
-| High capability |         1.5 | On      |        512 |                  8 |
+| Profile | Maximum DPR | Shadows | Shadow map | Texture anisotropy |
+| --- | ---: | --- | ---: | ---: |
+| Low power | 1 | Off | 256 | 2 |
+| Balanced | 1.25 | Off | 256 | 4 |
+| High capability | 1.5 | On | 512 | 8 |
 
 Reduced-motion, Save-Data, pointer, viewport, orientation, device-pixel-ratio, visibility, and capability changes can lower or restore quality without resetting the active draft.
 
@@ -81,11 +81,11 @@ Reduced-motion, Save-Data, pointer, viewport, orientation, device-pixel-ratio, v
 
 Every successful GPU artwork path is bounded before upload:
 
-| Profile         | Maximum dimension | Maximum decoded pixel area |
-| --------------- | ----------------: | -------------------------: |
-| Low power       |          1,024 px |             786,432 pixels |
-| Balanced        |          1,536 px |           1,572,864 pixels |
-| High capability |          2,048 px |           3,145,728 pixels |
+| Profile | Maximum dimension | Maximum decoded pixel area |
+| --- | ---: | ---: |
+| Low power | 1,024 px | 786,432 pixels |
+| Balanced | 1,536 px | 1,572,864 pixels |
+| High capability | 2,048 px | 3,145,728 pixels |
 
 The effective dimension is also limited by the browser-reported WebGL maximum texture size. Compatible duplicate layers share one reference-counted texture. Hiding, deleting, replacing a profile, switching to 2D, leaving the route, cancellation, timeout, or failure releases ownership deterministically.
 
@@ -118,16 +118,16 @@ git lfs pull
 
 ## Local setup
 
-    ```bash
-    git clone https://github.com/YrFnS/BGD-INK-Studio.git
-    cd BGD-INK-Studio
-    git checkout main
-    git lfs pull
-    npm ci --include=dev --no-audit --no-fund
-    npm run dev
-    ```
+```bash
+git clone https://github.com/YrFnS/BGD-INK-Studio.git
+cd BGD-INK-Studio
+git checkout main
+git lfs pull
+npm ci --include=dev --no-audit --no-fund
+npm run dev
+```
 
-    New development and production deployment should use `main` as the authoritative source.
+New development and production deployment should use `main` as the authoritative source.
 
 ## Validation commands
 
@@ -172,17 +172,17 @@ The committed source of truth is `src/config/runtime-performance-budgets.json`.
 
 Key ceilings include:
 
-| Measurement                   |    Budget |
-| ----------------------------- | --------: |
-| Homepage interactive median   |  2,500 ms |
-| Route-transition median       |  1,250 ms |
-| Studio ready                  |  9,000 ms |
-| Large artwork ready           |  7,000 ms |
-| Constrained artwork ready     | 15,000 ms |
-| Maximum normal long task      |    600 ms |
-| Maximum constrained long task |  1,200 ms |
-| Maximum normal frame gap      |    550 ms |
-| Maximum constrained frame gap |  1,000 ms |
+| Measurement | Budget |
+| --- | ---: |
+| Homepage interactive median | 2,500 ms |
+| Route-transition median | 1,250 ms |
+| Studio ready | 9,000 ms |
+| Large artwork ready | 7,000 ms |
+| Constrained artwork ready | 15,000 ms |
+| Maximum normal long task | 600 ms |
+| Maximum constrained long task | 1,200 ms |
+| Maximum normal frame gap | 550 ms |
+| Maximum constrained frame gap | 1,000 ms |
 
 Strict logical invariants include:
 
