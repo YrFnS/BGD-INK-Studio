@@ -110,7 +110,15 @@ const DemandRenderCoordinator = ({
     gl.shadowMap.autoUpdate = renderingProfile.shadows;
     gl.shadowMap.needsUpdate = true;
     if (isPageVisible) invalidate();
-  }, [gl, invalidate, isPageVisible, renderingProfile.maximumDpr, renderingProfile.shadows, setDpr]);
+  }, [
+    gl,
+    invalidate,
+    isPageVisible,
+    renderingProfile.maximumDpr,
+    renderingProfile.shadowMapSize,
+    renderingProfile.shadows,
+    setDpr,
+  ]);
 
   useEffect(() => {
     if (isPageVisible) invalidate();
