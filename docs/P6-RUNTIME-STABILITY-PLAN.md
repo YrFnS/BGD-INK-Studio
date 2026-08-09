@@ -2,225 +2,181 @@
 
 ## Status
 
-P6.1 through P6.5 are complete and validated on `agent/p6-runtime-stability`, branched from the authoritative `main` branch.
+P6.1 through P6.5 are complete and validated on `agent/p6-runtime-stability`.
 
-Only **P6.6 — repository and release reconciliation** remains open. PR #6 must remain draft and unmerged until that reconciliation and the final P6 exit suite are complete.
+P6.6 repository and release reconciliation is implemented on the same branch. The final clean exit suite, final documentation evidence, external Vercel/Netlify Production Branch confirmation, and owner review remain before PR #6 may leave draft status.
 
-Validated phase records:
-
-- `docs/P6-2-EDITOR-GESTURE-VALIDATION.md`
-- `docs/P6-3-DEMAND-RENDERING-VALIDATION.md`
-- `docs/P6-4-TEXTURE-LIFECYCLE-VALIDATION.md`
-- `docs/P6-5-RUNTIME-PERFORMANCE-VALIDATION.md`
-
-Validated P6.5 implementation head:
-
-```text
-35b5946240e7eef4bd47acf26ae582e6e80ac41b
-perf: cache disabled runtime instrumentation checks
-```
-
-Validated P6.5 CI run:
-
-```text
-31305836004
-```
-
-## Branch and delivery strategy
-
-All P6 work stays on one branch and one draft pull request:
+All P6 work stays in one branch and one pull request:
 
 ```text
 main
 └── agent/p6-runtime-stability
 ```
 
-Do not create a separate branch for each P6 phase. Use focused commits on the same branch so the complete stabilization work remains reviewable and no later branch silently misses an earlier repair.
-
-P6 must not be merged until the full validation, production performance, documentation, deployment-reference, and release-state checks pass together.
+The older P0–P5 phase branches are historical references. PRs #1–#5 are merged into `main`; the old active stacked-branch diagram is obsolete.
 
 ## Product boundary
 
-P6 remains frontend-only and browser-local. It does not add:
+P6 stabilizes the existing frontend and browser-local product. It does not add:
 
 - a backend or production database,
 - accounts or cross-device synchronization,
 - remote artwork storage,
 - inventory or payment processing,
 - real order acceptance, tracking, or fulfillment,
-- new garment models or physical print calibration,
 - analytics collection,
-- or new marketing sections and visual effects.
-
-The purpose of P6 is to make the existing application reliable, responsive, measurable, and accurately documented before adding more product scope.
+- new garment geometry,
+- physical print calibration,
+- or new marketing scope.
 
 ## Non-negotiable rules
 
-- Do not hide failures by disabling tests.
-- Do not raise JavaScript, CSS, GPU, image, or runtime budgets merely to make a check pass.
-- Do not disable React Strict Mode as a performance workaround.
-- Do not weaken local-draft persistence, Undo/Redo, WebGL recovery, accessibility, Iraqi Arabic/RTL, or PWA guarantees.
-- Do not restore the full GSAP dependency.
-- Runtime instrumentation must remain aggregate-only and explicitly enabled.
-- Prefer removing low-value work over adding abstraction around it.
-- Keep PR #6 draft until every P6 phase and the final exit suite are complete.
+- Do not hide failures by skipping tests.
+- Do not raise JavaScript, CSS, image, GPU, or runtime budgets merely to make a check pass.
+- Do not disable React Strict Mode as a workaround.
+- Do not weaken IndexedDB recovery, Undo/Redo, accessibility, Iraqi Arabic/RTL, safe 2D fallback, WebGL recovery, or PWA behavior.
+- Runtime instrumentation must remain disabled by default, aggregate-only, and free of artwork or customer data.
+- Keep PR #6 draft until the final review and external provider branch check are complete.
 
-## Confirmed issue inventory and disposition
+## Issue inventory and final disposition
 
-| ID | Area | Original problem | Current disposition |
+| ID | Area | Original problem | Disposition |
 | --- | --- | --- | --- |
-| P6-01 | Cursor | Native cursor hidden while a custom cursor ran on every pointer movement. | Complete in P6.1. Native cursor restored and custom cursor removed. |
-| P6-02 | Startup | Artificial full-screen preloader blocked access. | Complete in P6.1. Blocking preloader removed. |
-| P6-03 | Paint/compositing | Permanent full-screen SVG turbulence stayed mounted across routes. | Complete in P6.1. Turbulence layer removed. |
-| P6-04 | Navigation | Page transitions depended on changing child identity and bubbled transition events. | Complete in P6.1. Stable route-key transitions and browser history coverage added. |
-| P6-05 | Homepage | Magnetic CTA performed layout work during pointer movement. | Complete in P6.1. Layout-reading interaction removed. |
-| P6-06 | Route shell | Decorative effects remained inside the editor route. | Complete in P6.1. Performance-sensitive routes no longer carry the removed global effects. |
-| P6-07 | Editor interaction | Pointer movement cloned snapshots and updated durable React state continuously. | Complete in P6.2. Live refs/Three.js previews with one final commit per gesture. |
-| P6-08 | Undo/Redo | Snapshot equality serialized complete editor snapshots. | Complete in P6.2. Typed equality and bounded history work. |
-| P6-09 | WebGL | Continuous rendering, idle animation, DPR 2, and 1024 shadow maps. | Complete in P6.3. Demand rendering and bounded profiles. |
-| P6-10 | Rendering profiles | Capability profile selected only once. | Complete in P6.3. Reactive in-place profile selection. |
-| P6-11 | Artwork textures | Timeout/error fallback could upload the unbounded original image. | Complete in P6.4. Every successful path is dimension- and pixel-area-bounded. |
-| P6-12 | GPU memory | Compatible duplicate layers created duplicate textures. | Complete in P6.4. Reference-counted shared texture cache. |
-| P6-13 | Runtime quality gates | Bundle checks could not detect idle rendering, commit/save amplification, long tasks, or frame gaps. | Complete in P6.5. Production runtime budgets and CI job added. |
-| P6-14 | Repository hygiene | Version, branch, roadmap, validation, and release claims are inconsistent. | Open in P6.6. |
+| P6-01 | Cursor | Native cursor was hidden while a custom cursor ran on pointer movement. | Complete in P6.1. |
+| P6-02 | Startup | An artificial full-screen preloader blocked access. | Complete in P6.1. |
+| P6-03 | Paint | Permanent full-screen SVG turbulence remained mounted. | Complete in P6.1. |
+| P6-04 | Navigation | Route transitions depended on unstable child identity and bubbled events. | Complete in P6.1. |
+| P6-05 | Homepage | Magnetic interaction performed layout work during pointer movement. | Complete in P6.1. |
+| P6-06 | Route shell | Decorative work remained in the performance-sensitive editor route. | Complete in P6.1. |
+| P6-07 | Editor | Pointer movement cloned durable snapshots and rerendered the editor. | Complete in P6.2. |
+| P6-08 | History | Snapshot equality serialized complete editor state. | Complete in P6.2. |
+| P6-09 | WebGL | Continuous rendering, idle animation, DPR 2, and large shadows. | Complete in P6.3. |
+| P6-10 | Profiles | Rendering capability selection was frozen at mount. | Complete in P6.3. |
+| P6-11 | Artwork | A fallback could upload an unbounded original image. | Complete in P6.4. |
+| P6-12 | GPU memory | Compatible duplicate layers created duplicate textures. | Complete in P6.4. |
+| P6-13 | Quality gates | Bundle checks could not detect idle rendering or commit/save amplification. | Complete in P6.5. |
+| P6-14 | Repository | Version, branch, deployment, troubleshooting, and release claims disagreed. | Reconciled in P6.6; final validation/review pending. |
 
-## Completed phases
+## P6.1 — Shell and navigation
 
-### P6.1 — Shell and navigation stabilization
+Completed:
 
-- Restored browser-native cursors.
-- Removed the blocking preloader.
-- Removed full-screen SVG turbulence and persistent decorative compositing.
-- Removed layout-reading magnetic pointer work.
-- Rebuilt transitions around stable route keys.
-- Preserved keyboard focus and native control behavior.
-- Added source and Chromium regression gates.
+- restored native cursors,
+- removed the blocking preloader,
+- removed permanent turbulence and layout-reading magnetic behavior,
+- rebuilt transitions around stable route keys,
+- and added source plus Chromium regression coverage.
 
-### P6.2 — Editor gesture and state pipeline
+## P6.2 — Editor gesture and state pipeline
 
-- Separated pointer-frequency Three.js previews from durable React, history, and IndexedDB state.
-- One continuous gesture now produces one final editor commit, one history action, and one autosave cycle.
-- Added typed transform and snapshot equality.
-- Added navigation-safe and persistence-safe gesture finalization.
-- Preserved Undo/Redo, recovery, export, checkout, Arabic/RTL, and 2D fallback behavior.
+Completed:
 
-Detailed validation: `docs/P6-2-EDITOR-GESTURE-VALIDATION.md`.
+- pointer-frequency transforms stay in refs and Three.js objects,
+- one final transform is committed per gesture,
+- one history action and one autosave cycle are created,
+- typed transform and snapshot equality replace serialization,
+- and navigation, cancellation, reload, export, fallback, and recovery remain safe.
 
-### P6.3 — Demand-driven WebGL and adaptive rendering
+Detailed record: `docs/P6-2-EDITOR-GESTURE-VALIDATION.md`.
 
-- Every visible profile uses `frameloop="demand"`.
-- Hidden documents use `frameloop="never"`.
-- Removed permanent idle garment animation and continuous `useFrame` work.
-- Added explicit invalidation for camera, artwork, texture, renderer, scene, profile, resize, and recovery changes.
-- Rebalanced rendering profiles and removed DPR 2 plus 1024 shadow maps.
-- Made capability selection reactive without resetting the active draft.
+## P6.3 — Demand-driven WebGL
 
-Detailed validation: `docs/P6-3-DEMAND-RENDERING-VALIDATION.md`.
+Completed:
 
-### P6.4 — Bounded artwork decoding and shared texture lifecycle
+- visible canvases use demand rendering,
+- hidden documents stop the frame loop,
+- idle garment animation and continuous `useFrame` work are removed,
+- meaningful camera, scene, texture, profile, resize, and recovery changes invalidate explicitly,
+- profiles are bounded,
+- and capability changes react without resetting the draft.
 
-- Removed the direct original-image `TextureLoader` fallback.
-- Enforced maximum dimension and decoded pixel-area limits on every successful GPU path.
-- Intersected profile limits with the WebGL hardware ceiling.
-- Added resized `ImageBitmap` decoding and a bounded canvas compatibility path.
-- Added stable asset/configuration cache keys and reference-counted texture sharing.
-- Added deterministic release on layer hiding/deletion, profile replacement, 2D fallback, route navigation, failure, timeout, and cancellation.
-- Prevented stale asynchronous decodes from installing resources.
-- Added lifecycle diagnostics and focused unit/browser coverage.
+Detailed record: `docs/P6-3-DEMAND-RENDERING-VALIDATION.md`.
 
-Detailed validation: `docs/P6-4-TEXTURE-LIFECYCLE-VALIDATION.md`.
+## P6.4 — Bounded texture lifecycle
 
-### P6.5 — Production runtime-performance budgets
+Completed:
 
-- Added explicitly enabled aggregate runtime counters for route transitions, React/R3F commits, durable editor commits, completed gestures, draft saves, WebGL invalidations, and actual WebGL frames.
-- Added save-duration and route-settled milestones.
-- Kept instrumentation dormant for ordinary users and cached the disabled decision to avoid pointer-path URL parsing.
-- Added a dedicated production Playwright project that builds and serves the application through Vite preview.
-- Blocked service workers in performance journeys to avoid warmed-cache timing distortion.
-- Added Long Tasks API and requestAnimationFrame-gap probes.
-- Added deterministic visible/hidden document simulation.
-- Added 4× Chromium CPU-throttled constrained-device coverage.
-- Added committed timing and logical-count budgets.
-- Added strict one-history-commit, one-draft-save, visible-idle, hidden-frame, texture-cleanup, and duplicate-sharing invariants.
-- Added `check:runtime-performance` to the normal source gate.
-- Added `test:performance` and a dedicated CI job.
+- every successful GPU path resizes before upload,
+- dimension and decoded-pixel-area budgets apply,
+- limits intersect the WebGL hardware ceiling,
+- compatible duplicate layers share a reference-counted texture,
+- stale results cannot install,
+- and every final consumer releases ownership deterministically.
 
-Validated baseline:
+Detailed record: `docs/P6-4-TEXTURE-LIFECYCLE-VALIDATION.md`.
 
-```text
-99 unit/component/accessibility tests across 35 files
-16 functional Chromium journeys
-1 production-only PWA Chromium journey
-3 production runtime-performance Chromium journeys
-strict TypeScript
-zero-warning ESLint
-all architecture, runtime, bundle, delivery, and performance gates
-```
+## P6.5 — Production runtime budgets
 
-Production runtime budgets passed without raising any existing JavaScript, CSS, image, GPU, or runtime threshold.
+Completed:
 
-Detailed validation: `docs/P6-5-RUNTIME-PERFORMANCE-VALIDATION.md`.
+- opt-in route, commit, gesture, save, invalidation, and frame counters,
+- save durations and settled milestones,
+- Long Tasks API and requestAnimationFrame-gap collection,
+- production Vite-preview performance journeys,
+- visible-idle and hidden-frame invariants,
+- bounded artwork and texture cleanup checks,
+- and a 4× CPU-throttled constrained-device journey.
 
-## Remaining phase
+Committed budgets are in `src/config/runtime-performance-budgets.json`.
+
+Detailed record: `docs/P6-5-RUNTIME-PERFORMANCE-VALIDATION.md`.
 
 ## P6.6 — Repository and release reconciliation
 
-### Goal
+Implemented:
 
-Make the repository, package metadata, branch documentation, troubleshooting guidance, validation claims, and release state accurately describe the consolidated and measured application.
+- README now reflects the authoritative `main` plus single P6 branch.
+- Historical phase branches are no longer described as an active stack.
+- The private `0.4.0` package version is explicitly separated from P6 roadmap numbering and checked against the lockfile.
+- Living documentation avoids volatile test totals and points to commands as the source of truth.
+- Runtime, PWA, performance, and complete exit commands are documented.
+- Reduced motion, demand rendering, 2D fallback, WebGL recovery, large artwork, and texture ownership are documented.
+- Vercel and Netlify repository configuration is branch-neutral and the required production branch is documented as `main`.
+- A permanent repository-reconciliation source gate is part of `npm run check`.
+- `npm run verify:p6` defines the final exit sequence.
 
-### Work
+Detailed record: `docs/P6-6-REPOSITORY-RECONCILIATION.md`.
 
-- Reconcile `package.json` versioning with the intended validated release.
-- Update README status and branch documentation.
-- Remove the obsolete active stacked-branch diagram.
-- Replace stale hard-coded test counts with generated/current claims or intentionally omit volatile counts.
-- Document:
-  - `npm run check`,
-  - `npm run test:e2e`,
-  - `npm run test:pwa`,
-  - `npm run test:performance`,
-  - committed runtime budgets,
-  - reduced-motion behavior,
-  - safe 2D fallback,
-  - WebGL context loss,
-  - large artwork handling,
-  - and performance-test troubleshooting.
-- Verify Vercel, Netlify, and any other deployment target do not depend on obsolete phase branches.
-- Review merged/superseded branches for later deletion only after deployment-reference verification.
-- Reconcile PR #6 title, body, validation evidence, and remaining-risk statements.
-- Run the final P6 exit suite from a clean installation.
-- Keep PR #6 draft unless the full exit criteria are satisfied and the repository accurately reflects release readiness.
+## Version decision
 
-### Acceptance criteria
+The current package remains private version `0.4.0`.
 
-- README, roadmap, package metadata, deployment guidance, and PR status agree.
-- Validation claims match current command output or are intentionally non-numeric.
-- Runtime-performance commands and budgets are documented alongside existing checks.
-- No deployment instruction points developers to an obsolete phase branch.
-- Troubleshooting guidance covers the main runtime and recovery paths.
-- The clean final exit suite passes without weakening tests or budgets.
+P0–P6 identifiers describe engineering phases; they are not package semantic versions. This pull request does not publish an npm package, create a GitHub release, or approve a production deployment. Package and lockfile versions must match. A future release owner may bump and tag the package only with an approved deployment/domain/business release decision.
 
-## Required final commands
+## Deployment decision
 
-Before P6 can leave draft status, a clean checkout must pass:
+Repository-controlled Vercel and Netlify files contain no phase-branch dependency. Production must use `main`; PR branches are previews.
+
+The provider Production Branch setting is external to GitHub source. Confirm `main` in both provider dashboards before the merge/release decision. See `docs/DEPLOYMENT.md`.
+
+## Final exit suite
+
+A clean installation must pass:
 
 ```bash
 npm ci --include=dev --no-audit --no-fund
+npm run verify:p6
+```
+
+`verify:p6` runs:
+
+```text
 npm run check
 npm run test:e2e
 npm run test:pwa
 npm run test:performance
 ```
 
-## Final P6 definition of done
+GitHub Actions splits these commands across independent clean jobs.
 
-P6 is complete only when:
+## Definition of done
 
-- P6.1 through P6.6 are implemented and documented,
-- all source, unit, functional, PWA, production-performance, bundle, accessibility, localization, persistence, texture, and WebGL gates pass together,
-- runtime instrumentation remains opt-in and privacy-safe,
-- committed budgets are not weakened to obtain a pass,
-- README, roadmap, package version, deployment references, troubleshooting, and PR status are reconciled,
-- no unresolved stabilization work remains in PR #6,
-- and the final branch is reviewed before any merge decision.
+P6 is ready for final review only when:
+
+- all automated jobs pass on the final branch head,
+- documentation and package/deployment claims match that head,
+- no budget is weakened,
+- Vercel and Netlify Production Branch settings are manually confirmed as `main`,
+- and the owner approves moving PR #6 out of draft.
+
+Until then, PR #6 remains draft and unmerged.
