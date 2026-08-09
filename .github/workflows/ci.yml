@@ -126,14 +126,14 @@ jobs:
         if: steps.payload.outputs.ready == 'true'
         run: npm ci --include=dev --no-audit --no-fund
 
-      - name: Verify, decode, and apply the P6.2 migration
+      - name: Verify and apply the P6.2 migration
         if: steps.payload.outputs.ready == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          cat scripts/apply-p6-2.b64.part-* > /tmp/apply-p6-2.py.gz.b64
-          echo "62ff9402c5003781ce6c87503637faefb4ba54f319d0e2b202c3b18f398fa87e  /tmp/apply-p6-2.py.gz.b64" | sha256sum -c -
-          base64 --decode /tmp/apply-p6-2.py.gz.b64 | gzip -d > /tmp/apply-p6-2.py
+          cat scripts/apply-p6-2.py.part-* > /tmp/apply-p6-2.py
+          echo "cafd1b5a8380c6dc78c246deeb87e328bcf3ef6fd44a3f61a715ab09b20ea913  /tmp/apply-p6-2.py" | sha256sum -c -
+          python -m py_compile /tmp/apply-p6-2.py
           python /tmp/apply-p6-2.py
 
       - name: Format changed files
@@ -175,7 +175,7 @@ jobs:
           set -euo pipefail
           git fetch origin main
           git checkout origin/main -- .github/workflows/ci.yml
-          git rm scripts/apply-p6-2.b64.part-* scripts/apply-p6-2.ready
+          git rm scripts/apply-p6-2.b64.part-* scripts/apply-p6-2.py.part-* scripts/apply-p6-2.ready
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
