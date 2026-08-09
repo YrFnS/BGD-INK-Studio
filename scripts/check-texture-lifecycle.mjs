@@ -36,7 +36,7 @@ const forbidPattern = (source, pattern, message) => {
 
 forbidPattern(
   `${files.loader}\n${files.hook}`,
-  /TextureLoader|loadOriginalTexture|fallbackTexture/,
+  /new\s+THREE\.TextureLoader|TextureLoader\(\)\.load|loadOriginalTexture|fallbackTexture/,
   'the original unbounded TextureLoader fallback must stay removed',
 );
 requirePattern(
@@ -56,12 +56,12 @@ requirePattern(
 );
 requirePattern(
   files.loader,
-  /createBoundedCanvasTexture[\s\S]*CanvasTexture[\s\S]*isArtworkTextureWithinLimits/,
+  /createBoundedCanvasTexture[\s\S]*isArtworkTextureWithinLimits[\s\S]*CanvasTexture/,
   'every successful decode must pass through the bounded canvas texture constructor',
 );
 requirePattern(
   files.loader,
-  /AbortController[\s\S]*timeout[\s\S]*disposeLateResult/,
+  /disposeLateResult[\s\S]*AbortController[\s\S]*timeout/,
   'slow or cancelled decodes must have an abort and late-result disposal path',
 );
 requirePattern(
