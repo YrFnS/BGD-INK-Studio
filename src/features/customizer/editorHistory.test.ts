@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PRINT_SURFACE_ID, Size, type DecalLayer } from '@/types';
 import {
+  areEditorSnapshotsEqual,
   commitEditorHistory,
   createEditorHistory,
   redoEditorHistory,
@@ -72,5 +73,16 @@ describe('customizer editor history', () => {
 
     expect(history.past).toHaveLength(3);
     expect(history.present.decals[0].id).toBe('layer-5');
+  });
+
+  it('uses typed equality and skips structurally identical commits', () => {
+    const initial = snapshot([layer('one')]);
+    const equivalent = snapshot([layer('one')]);
+    const changed = snapshot([{ ...layer('one'), scale: 0.25 }]);
+    const history = createEditorHistory(initial);
+
+    expect(areEditorSnapshotsEqual(initial, equivalent)).toBe(true);
+    expect(areEditorSnapshotsEqual(initial, changed)).toBe(false);
+    expect(commitEditorHistory(history, equivalent)).toBe(history);
   });
 });

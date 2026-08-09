@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useImperativeHandle, useRef } from 'react';
 import { OrbitControls } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import {
@@ -7,9 +7,10 @@ import {
   type ReadyProductModelConfig,
 } from '@/data/assets3d';
 import { DecalLayer, PrintSurfaceId, Theme } from '@/types';
+import type { DecalTransform } from './decalTransform';
 import type { CustomizerInteractionMode } from './interactionGestures';
 import type { RenderingProfile } from './renderingCapabilities';
-import { ProceduralFallback, ShirtModel } from './ShirtModel';
+import { ProceduralFallback, ShirtModel, type ShirtModelHandle } from './ShirtModel';
 
 interface SceneProps {
   modelConfig: ReadyProductModelConfig;
@@ -29,6 +30,10 @@ interface SceneProps {
   onContextRestored: () => void;
   onModelError: (error: unknown) => void;
   setDraggingDecal: (dragging: boolean) => void;
+}
+
+export interface SceneHandle {
+  previewDecalTransform: (layerId: string, transform: DecalTransform) => void;
 }
 
 interface ModelErrorBoundaryProps {
@@ -103,115 +108,128 @@ const WebGLContextMonitor = ({
   return null;
 };
 
-export const Scene: React.FC<SceneProps> = ({
-  modelConfig,
-  selectedSurfaceId,
-  color,
-  theme,
-  decals,
-  activeDecalId,
-  interactionMode,
-  renderingProfile,
-  isPageVisible,
-  onDecalChange,
-  onDecalTransformChange,
-  onDecalInteractionStart,
-  onDecalInteractionEnd,
-  onContextLost,
-  onContextRestored,
-  onModelError,
-  setDraggingDecal,
-}) => {
-  const isDark = theme === 'dark';
-  const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
-  const frameLoop = !isPageVisible
-    ? 'never'
-    : renderingProfile.idleAnimation
-      ? 'always'
-      : 'demand';
+export const Scene = React.forwardRef<SceneHandle, SceneProps>(
+  (
+    {
+      modelConfig,
+      selectedSurfaceId,
+      color,
+      theme,
+      decals,
+      activeDecalId,
+      interactionMode,
+      renderingProfile,
+      isPageVisible,
+      onDecalChange,
+      onDecalTransformChange,
+      onDecalInteractionStart,
+      onDecalInteractionEnd,
+      onContextLost,
+      onContextRestored,
+      onModelError,
+      setDraggingDecal,
+    },
+    ref,
+  ) => {
+    const shirtModelRef = useRef<ShirtModelHandle>(null);
+    const isDark = theme === 'dark';
+    const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
+    const frameLoop = !isPageVisible
+      ? 'never'
+      : renderingProfile.idleAnimation
+        ? 'always'
+        : 'demand';
 
-  const stopDecalInteraction = () => {
-    setDraggingDecal(false);
-    onDecalInteractionEnd();
-  };
+    useImperativeHandle(
+      ref,
+      () => ({
+        previewDecalTransform: (layerId, transform) => {
+          shirtModelRef.current?.previewDecalTransform(layerId, transform);
+        },
+      }),
+      [],
+    );
 
-  return (
-    <Canvas
-      shadows={renderingProfile.shadows}
-      dpr={[1, renderingProfile.maximumDpr]}
-      frameloop={frameLoop}
-      camera={{ position: selectedSurface.cameraPosition, fov: 45 }}
-      gl={{
-        antialias: renderingProfile.antialias,
-        powerPreference: renderingProfile.powerPreference,
-      }}
-      style={{ background: 'transparent', touchAction: 'none' }}
-      onCreated={({ gl }) => {
-        gl.shadowMap.enabled = renderingProfile.shadows;
-      }}
-      onPointerMissed={stopDecalInteraction}
-    >
-      <WebGLContextMonitor
-        onContextLost={onContextLost}
-        onContextRestored={onContextRestored}
-      />
-      <CameraRig surface={selectedSurface} />
+    const stopDecalInteraction = () => {
+      shirtModelRef.current?.finishDecalInteraction();
+      setDraggingDecal(false);
+    };
 
-      <ambientLight intensity={isDark ? 0.7 : 1.1} />
-      <hemisphereLight
-        intensity={isDark ? 0.55 : 0.8}
-        color={isDark ? '#dbeafe' : '#ffffff'}
-        groundColor={isDark ? '#111827' : '#d4d4d8'}
-      />
-      <directionalLight
-        castShadow={renderingProfile.shadows}
-        intensity={isDark ? 1.6 : 2.1}
-        position={[3, 5, 4]}
-        shadow-mapSize-width={renderingProfile.shadowMapSize}
-        shadow-mapSize-height={renderingProfile.shadowMapSize}
-      />
-      {renderingProfile.quality !== 'low' && (
-        <directionalLight intensity={0.65} position={[-4, 2, -3]} />
-      )}
-
-      <ModelErrorBoundary
-        fallback={<ProceduralFallback color={color} />}
-        onError={onModelError}
+    return (
+      <Canvas
+        shadows={renderingProfile.shadows}
+        dpr={[1, renderingProfile.maximumDpr]}
+        frameloop={frameLoop}
+        camera={{ position: selectedSurface.cameraPosition, fov: 45 }}
+        gl={{
+          antialias: renderingProfile.antialias,
+          powerPreference: renderingProfile.powerPreference,
+        }}
+        style={{ background: 'transparent', touchAction: 'none' }}
+        onCreated={({ gl }) => {
+          gl.shadowMap.enabled = renderingProfile.shadows;
+        }}
+        onPointerMissed={stopDecalInteraction}
       >
-        <ShirtModel
-          modelConfig={modelConfig}
-          selectedSurfaceId={selectedSurfaceId}
-          color={color}
-          decals={decals}
-          activeDecalId={activeDecalId}
-          interactionMode={interactionMode}
-          idleAnimationEnabled={renderingProfile.idleAnimation && isPageVisible}
-          textureAnisotropy={renderingProfile.textureAnisotropy}
-          renderingQuality={renderingProfile.quality}
-          shadowsEnabled={renderingProfile.shadows}
-          onDecalChange={onDecalChange}
-          onDecalTransformChange={onDecalTransformChange}
-          onDecalInteractionStart={onDecalInteractionStart}
-          onDecalInteractionEnd={onDecalInteractionEnd}
-          setDraggingDecal={setDraggingDecal}
-        />
-      </ModelErrorBoundary>
+        <WebGLContextMonitor onContextLost={onContextLost} onContextRestored={onContextRestored} />
+        <CameraRig surface={selectedSurface} />
 
-      <OrbitControls
-        key={selectedSurface.id}
-        makeDefault
-        target={selectedSurface.cameraTarget}
-        minPolarAngle={Math.PI / 4}
-        maxPolarAngle={Math.PI / 1.8}
-        enablePan={false}
-        enableZoom
-        enableRotate
-        enableDamping
-        dampingFactor={0.08}
-        minDistance={2}
-        maxDistance={6}
-        enabled={interactionMode === 'view'}
-      />
-    </Canvas>
-  );
-};
+        <ambientLight intensity={isDark ? 0.7 : 1.1} />
+        <hemisphereLight
+          intensity={isDark ? 0.55 : 0.8}
+          color={isDark ? '#dbeafe' : '#ffffff'}
+          groundColor={isDark ? '#111827' : '#d4d4d8'}
+        />
+        <directionalLight
+          castShadow={renderingProfile.shadows}
+          intensity={isDark ? 1.6 : 2.1}
+          position={[3, 5, 4]}
+          shadow-mapSize-width={renderingProfile.shadowMapSize}
+          shadow-mapSize-height={renderingProfile.shadowMapSize}
+        />
+        {renderingProfile.quality !== 'low' && (
+          <directionalLight intensity={0.65} position={[-4, 2, -3]} />
+        )}
+
+        <ModelErrorBoundary fallback={<ProceduralFallback color={color} />} onError={onModelError}>
+          <ShirtModel
+            ref={shirtModelRef}
+            modelConfig={modelConfig}
+            selectedSurfaceId={selectedSurfaceId}
+            color={color}
+            decals={decals}
+            activeDecalId={activeDecalId}
+            interactionMode={interactionMode}
+            idleAnimationEnabled={renderingProfile.idleAnimation && isPageVisible}
+            textureAnisotropy={renderingProfile.textureAnisotropy}
+            renderingQuality={renderingProfile.quality}
+            shadowsEnabled={renderingProfile.shadows}
+            onDecalChange={onDecalChange}
+            onDecalTransformChange={onDecalTransformChange}
+            onDecalInteractionStart={onDecalInteractionStart}
+            onDecalInteractionEnd={onDecalInteractionEnd}
+            setDraggingDecal={setDraggingDecal}
+          />
+        </ModelErrorBoundary>
+
+        <OrbitControls
+          key={selectedSurface.id}
+          makeDefault
+          target={selectedSurface.cameraTarget}
+          minPolarAngle={Math.PI / 4}
+          maxPolarAngle={Math.PI / 1.8}
+          enablePan={false}
+          enableZoom
+          enableRotate
+          enableDamping
+          dampingFactor={0.08}
+          minDistance={2}
+          maxDistance={6}
+          enabled={interactionMode === 'view'}
+        />
+      </Canvas>
+    );
+  },
+);
+
+Scene.displayName = 'Scene';

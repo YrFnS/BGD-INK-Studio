@@ -75,6 +75,8 @@ export const Controls: React.FC<ControlsProps> = ({
 }) => {
   const { t, language } = useAppContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const artworkWidthOutputRef = useRef<HTMLOutputElement>(null);
+  const rotationOutputRef = useRef<HTMLOutputElement>(null);
 
   const triggerFileUpload = () => {
     if (!isUploading) fileInputRef.current?.click();
@@ -92,9 +94,7 @@ export const Controls: React.FC<ControlsProps> = ({
     : selectedSurface;
   const activeScaleLimits = activeSurface ? getSurfaceScaleLimits(activeSurface) : null;
   const activeArtworkWidthCm =
-    activeDecal && activeSurface
-      ? scaleToArtworkWidthCm(activeDecal.scale, activeSurface)
-      : null;
+    activeDecal && activeSurface ? scaleToArtworkWidthCm(activeDecal.scale, activeSurface) : null;
 
   const copy =
     language === 'ar'
@@ -115,8 +115,7 @@ export const Controls: React.FC<ControlsProps> = ({
           backward: 'رجّع الطبقة',
           hidden: 'مخفية',
           firstLayer: 'أضف أول طبقة تصميم',
-          dragHelp:
-            'حرّك التصميم داخل حدود الطباعة. تگدر تتراجع عن التحريك وتغيير الحجم والدوران.',
+          dragHelp: 'حرّك التصميم داخل حدود الطباعة. تگدر تتراجع عن التحريك وتغيير الحجم والدوران.',
         }
       : {
           upload: 'Add layer',
@@ -272,7 +271,10 @@ export const Controls: React.FC<ControlsProps> = ({
                 }`}
               >
                 <span className="block text-sm font-bold">{t(surface.labelKey)}</span>
-                <bdi className="technical-ltr mt-1 block font-mono text-[10px] opacity-70" dir="ltr">
+                <bdi
+                  className="technical-ltr mt-1 block font-mono text-[10px] opacity-70"
+                  dir="ltr"
+                >
                   {surface.physicalWidthCm} × {surface.physicalHeightCm} cm
                 </bdi>
               </button>
@@ -462,29 +464,40 @@ export const Controls: React.FC<ControlsProps> = ({
                       >
                         {t('customizer.artworkWidth')}
                       </label>
-                      <bdi className="technical-ltr font-mono text-[10px] text-gray-400" dir="ltr">
+                      <output
+                        key={`layer-width-output-${activeDecal.id}-${activeDecal.scale}`}
+                        ref={artworkWidthOutputRef}
+                        className="technical-ltr font-mono text-[10px] text-gray-400"
+                        dir="ltr"
+                      >
                         {activeArtworkWidthCm?.toFixed(1)} cm
-                      </bdi>
+                      </output>
                     </div>
                     <input
+                      key={`layer-size-${activeDecal.id}-${activeDecal.scale}`}
                       id={`layer-size-${activeDecal.id}`}
                       type="range"
                       dir="ltr"
                       min={activeScaleLimits.minimum}
                       max={activeScaleLimits.maximum}
                       step="0.005"
-                      value={activeDecal.scale}
+                      defaultValue={activeDecal.scale}
                       onPointerDown={() => onBeginTransform()}
                       onPointerUp={() => onEndTransform()}
                       onPointerCancel={() => onEndTransform()}
                       onKeyDown={beginKeyboardTransform}
                       onKeyUp={endKeyboardTransform}
                       onBlur={() => onEndTransform()}
-                      onChange={(event) =>
-                        onUpdateDecal(activeDecal.id, {
-                          scale: Number.parseFloat(event.target.value),
-                        })
-                      }
+                      onInput={(event) => {
+                        const scale = Number.parseFloat(event.currentTarget.value);
+                        if (artworkWidthOutputRef.current) {
+                          artworkWidthOutputRef.current.textContent = `${scaleToArtworkWidthCm(
+                            scale,
+                            activeSurface,
+                          ).toFixed(1)} cm`;
+                        }
+                        onUpdateDecal(activeDecal.id, { scale });
+                      }}
                       className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-accent dark:bg-zinc-700"
                     />
                   </div>
@@ -497,29 +510,39 @@ export const Controls: React.FC<ControlsProps> = ({
                       >
                         {copy.rotation}
                       </label>
-                      <bdi className="technical-ltr font-mono text-[10px] text-gray-400" dir="ltr">
+                      <output
+                        key={`layer-rotation-output-${activeDecal.id}-${activeDecal.userRotation}`}
+                        ref={rotationOutputRef}
+                        className="technical-ltr font-mono text-[10px] text-gray-400"
+                        dir="ltr"
+                      >
                         {Math.round(activeDecal.userRotation * (180 / Math.PI))}°
-                      </bdi>
+                      </output>
                     </div>
                     <input
+                      key={`layer-rotation-${activeDecal.id}-${activeDecal.userRotation}`}
                       id={`layer-rotation-${activeDecal.id}`}
                       type="range"
                       dir="ltr"
                       min="0"
                       max={Math.PI * 2}
                       step="0.1"
-                      value={activeDecal.userRotation}
+                      defaultValue={activeDecal.userRotation}
                       onPointerDown={() => onBeginTransform()}
                       onPointerUp={() => onEndTransform()}
                       onPointerCancel={() => onEndTransform()}
                       onKeyDown={beginKeyboardTransform}
                       onKeyUp={endKeyboardTransform}
                       onBlur={() => onEndTransform()}
-                      onChange={(event) =>
-                        onUpdateDecal(activeDecal.id, {
-                          userRotation: Number.parseFloat(event.target.value),
-                        })
-                      }
+                      onInput={(event) => {
+                        const userRotation = Number.parseFloat(event.currentTarget.value);
+                        if (rotationOutputRef.current) {
+                          rotationOutputRef.current.textContent = `${Math.round(
+                            userRotation * (180 / Math.PI),
+                          )}°`;
+                        }
+                        onUpdateDecal(activeDecal.id, { userRotation });
+                      }}
                       className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-accent dark:bg-zinc-700"
                     />
                   </div>

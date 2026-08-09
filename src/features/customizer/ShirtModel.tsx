@@ -1,6 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Center, Decal, useGLTF } from '@react-three/drei';
-import { ThreeEvent, useFrame } from '@react-three/fiber';
+import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import {
   getPrintSurface,
   type PrintSurfaceDefinition,
@@ -10,17 +17,20 @@ import { DecalLayer, PrintSurfaceId } from '@/types';
 import { normalizeArtworkAspectRatio } from './artworkAnalysis';
 import { useOptimizedArtworkTexture } from './artworkTexture';
 import {
+  applyDecalTransformToObject,
+  getDecalRenderRotation,
+  normalizeDecalTransform,
+  readDecalTransform,
+  type DecalTransform,
+} from './decalTransform';
+import {
   calculateMultiPointerTransform,
   calculateSinglePointerTransform,
   type ArtworkTransform,
   type CustomizerInteractionMode,
   type ScreenPoint,
 } from './interactionGestures';
-import {
-  clampPositionToSurface,
-  getArtworkModelDimensions,
-  isPointOnSurfaceSide,
-} from './printArea';
+import { getArtworkModelDimensions, isPointOnSurfaceSide } from './printArea';
 import type { RenderingQuality } from './renderingCapabilities';
 import * as THREE from 'three';
 
@@ -40,6 +50,11 @@ interface ShirtModelProps {
   onDecalInteractionStart: () => void;
   onDecalInteractionEnd: () => void;
   setDraggingDecal: (dragging: boolean) => void;
+}
+
+export interface ShirtModelHandle {
+  previewDecalTransform: (layerId: string, transform: DecalTransform) => void;
+  finishDecalInteraction: () => void;
 }
 
 interface LoadedGarmentModel {
@@ -86,6 +101,7 @@ const DecalItem = ({
   order,
   textureAnisotropy,
   renderingQuality,
+  onMeshChange,
 }: {
   layer: DecalLayer;
   surface: PrintSurfaceDefinition;
@@ -93,32 +109,21 @@ const DecalItem = ({
   order: number;
   textureAnisotropy: 2 | 4 | 8;
   renderingQuality: RenderingQuality;
+  onMeshChange: (mesh: THREE.Mesh | null) => void;
 }) => {
-  const texture = useOptimizedArtworkTexture(
-    layer.url,
-    renderingQuality,
-    textureAnisotropy,
-  );
+  const texture = useOptimizedArtworkTexture(layer.url, renderingQuality, textureAnisotropy);
   const aspectRatio = normalizeArtworkAspectRatio(layer.aspectRatio);
   const dimensions = getArtworkModelDimensions(layer.scale, surface, aspectRatio);
-
-  const finalRotation = useMemo(() => {
-    const orientation = new THREE.Euler(...layer.rotation);
-    const orientationQuaternion = new THREE.Quaternion().setFromEuler(orientation);
-    const userQuaternion = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(0, 0, 1),
-      layer.userRotation || 0,
-    );
-    const finalEuler = new THREE.Euler().setFromQuaternion(
-      orientationQuaternion.multiply(userQuaternion),
-    );
-    return [finalEuler.x, finalEuler.y, finalEuler.z] as [number, number, number];
-  }, [layer.rotation, layer.userRotation]);
+  const finalRotation = useMemo(
+    () => getDecalRenderRotation(layer.rotation, layer.userRotation),
+    [layer.rotation, layer.userRotation],
+  );
 
   if (!texture) return null;
 
   return (
     <Decal
+      ref={(mesh) => onMeshChange(mesh as THREE.Mesh | null)}
       position={layer.position}
       rotation={finalRotation}
       scale={[dimensions.width, dimensions.height, 0.02]}
@@ -170,263 +175,354 @@ const PrintAreaGuide = ({ surface }: { surface: PrintSurfaceDefinition }) => {
   );
 };
 
-export const ShirtModel: React.FC<ShirtModelProps> = ({
-  modelConfig,
-  selectedSurfaceId,
-  color,
-  decals,
-  activeDecalId,
-  interactionMode,
-  idleAnimationEnabled,
-  textureAnisotropy,
-  renderingQuality,
-  shadowsEnabled,
-  onDecalChange,
-  onDecalTransformChange,
-  onDecalInteractionStart,
-  onDecalInteractionEnd,
-  setDraggingDecal,
-}) => {
-  const groupRef = useRef<THREE.Group>(null);
-  const activePointersRef = useRef(new Map<number, ScreenPoint>());
-  const transformBaselineRef = useRef<TransformBaseline | null>(null);
-  const isManipulatingRef = useRef(false);
-  const [isManipulating, setIsManipulating] = useState(false);
-  const { nodes } = useGLTF(modelConfig.modelUrl) as unknown as LoadedGarmentModel;
-  const targetMesh = useMemo(() => {
-    const node = nodes[modelConfig.garmentMeshName];
-    if (!(node instanceof THREE.Mesh)) {
-      throw new Error(
-        `The garment mesh "${modelConfig.garmentMeshName}" was not found in ${modelConfig.modelUrl}.`,
-      );
-    }
-    return node;
-  }, [modelConfig.garmentMeshName, modelConfig.modelUrl, nodes]);
-  const coloredMaterial = useMemo(
-    () =>
-      Array.isArray(targetMesh.material)
-        ? targetMesh.material.map((material) => cloneColoredMaterial(material, color))
-        : cloneColoredMaterial(targetMesh.material, color),
-    [color, targetMesh.material],
-  );
-  const activeLayer =
-    decals.find((layer) => layer.id === activeDecalId && layer.visible) ?? null;
-  const activeLayerRef = useRef<DecalLayer | null>(activeLayer);
-  activeLayerRef.current = activeLayer;
-  const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
-
-  useEffect(
-    () => () => {
-      if (Array.isArray(coloredMaterial)) {
-        coloredMaterial.forEach((material) => material.dispose());
-      } else {
-        coloredMaterial.dispose();
-      }
+export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
+  (
+    {
+      modelConfig,
+      selectedSurfaceId,
+      color,
+      decals,
+      activeDecalId,
+      interactionMode,
+      idleAnimationEnabled,
+      textureAnisotropy,
+      renderingQuality,
+      shadowsEnabled,
+      onDecalChange,
+      onDecalTransformChange,
+      onDecalInteractionStart,
+      onDecalInteractionEnd,
+      setDraggingDecal,
     },
-    [coloredMaterial],
-  );
+    ref,
+  ) => {
+    const invalidate = useThree((state) => state.invalidate);
+    const groupRef = useRef<THREE.Group>(null);
+    const activePointersRef = useRef(new Map<number, ScreenPoint>());
+    const transformBaselineRef = useRef<TransformBaseline | null>(null);
+    const isManipulatingRef = useRef(false);
+    const decalMeshesRef = useRef(new Map<string, THREE.Mesh>());
+    const liveTransformRef = useRef<{ layerId: string; transform: DecalTransform } | null>(null);
+    const decalsRef = useRef(decals);
+    const [isManipulating, setIsManipulating] = useState(false);
+    decalsRef.current = decals;
 
-  useEffect(() => {
-    if (!idleAnimationEnabled && groupRef.current) groupRef.current.rotation.y = 0;
-  }, [idleAnimationEnabled]);
-
-  useFrame((state) => {
-    if (groupRef.current && idleAnimationEnabled && !isManipulating) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
-    }
-  });
-
-  const beginManipulation = useCallback(() => {
-    if (isManipulatingRef.current) return;
-    isManipulatingRef.current = true;
-    setIsManipulating(true);
-    setDraggingDecal(true);
-    onDecalInteractionStart();
-  }, [onDecalInteractionStart, setDraggingDecal]);
-
-  const finishManipulation = useCallback(() => {
-    activePointersRef.current.clear();
-    transformBaselineRef.current = null;
-    if (isManipulatingRef.current) onDecalInteractionEnd();
-    isManipulatingRef.current = false;
-    setIsManipulating(false);
-    setDraggingDecal(false);
-  }, [onDecalInteractionEnd, setDraggingDecal]);
-
-  useEffect(() => finishManipulation, [activeDecalId, finishManipulation, interactionMode]);
-
-  const resetTransformBaseline = () => {
-    const layer = activeLayerRef.current;
-    if (!layer) {
-      transformBaselineRef.current = null;
-      return;
-    }
-
-    const pointers = Array.from(activePointersRef.current.entries());
-    const initial = { scale: layer.scale, rotation: layer.userRotation };
-
-    if (pointers.length >= 2) {
-      const [[firstId, first], [secondId, second]] = pointers;
-      transformBaselineRef.current = {
-        kind: 'multi',
-        pointerIds: [firstId, secondId],
-        startFirst: first,
-        startSecond: second,
-        initial,
-      };
-    } else if (pointers[0]) {
-      const [pointerId, start] = pointers[0];
-      transformBaselineRef.current = { kind: 'single', pointerId, start, initial };
-    } else {
-      transformBaselineRef.current = null;
-    }
-  };
-
-  const updateDecalPosition = (event: ThreeEvent<PointerEvent>) => {
-    const layer = activeLayerRef.current;
-    if (!event.face || !layer) return;
-
-    const surface = getPrintSurface(modelConfig, layer.surfaceId);
-    const mesh = event.object as THREE.Mesh;
-    const localPoint = mesh.worldToLocal(event.point.clone());
-    if (!isPointOnSurfaceSide(localPoint.z, surface)) return;
-
-    const normal = event.face.normal.clone();
-    const target = new THREE.Vector3(0, 0, 1);
-    const quaternion = new THREE.Quaternion().setFromUnitVectors(target, normal);
-    const euler = new THREE.Euler().setFromQuaternion(quaternion);
-    const position = clampPositionToSurface(
-      [localPoint.x, localPoint.y, localPoint.z],
-      surface,
-      layer.scale,
-      normalizeArtworkAspectRatio(layer.aspectRatio),
-    );
-
-    onDecalChange(position, [euler.x, euler.y, euler.z]);
-  };
-
-  const updateDecalTransform = () => {
-    const baseline = transformBaselineRef.current;
-    if (!baseline) return;
-
-    if (baseline.kind === 'single') {
-      const current = activePointersRef.current.get(baseline.pointerId);
-      if (!current) return;
-      const transform = calculateSinglePointerTransform(
-        baseline.initial,
-        baseline.start,
-        current,
-      );
-      onDecalTransformChange(transform.scale, transform.rotation);
-      return;
-    }
-
-    const currentFirst = activePointersRef.current.get(baseline.pointerIds[0]);
-    const currentSecond = activePointersRef.current.get(baseline.pointerIds[1]);
-    if (!currentFirst || !currentSecond) return;
-
-    const transform = calculateMultiPointerTransform(
-      baseline.initial,
-      baseline.startFirst,
-      baseline.startSecond,
-      currentFirst,
-      currentSecond,
-    );
-    onDecalTransformChange(transform.scale, transform.rotation);
-  };
-
-  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
-    if (!activeLayer || interactionMode === 'view') return;
-
-    event.stopPropagation();
-    const target = event.target as EventTarget & {
-      setPointerCapture?: (pointerId: number) => void;
-    };
-    target.setPointerCapture?.(event.pointerId);
-    activePointersRef.current.set(event.pointerId, {
-      x: event.clientX,
-      y: event.clientY,
-    });
-    beginManipulation();
-
-    if (interactionMode === 'move') updateDecalPosition(event);
-    else resetTransformBaseline();
-  };
-
-  const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
-    if (!isManipulatingRef.current || interactionMode === 'view') return;
-    if (!activePointersRef.current.has(event.pointerId)) return;
-
-    event.stopPropagation();
-    activePointersRef.current.set(event.pointerId, {
-      x: event.clientX,
-      y: event.clientY,
-    });
-
-    if (interactionMode === 'move') updateDecalPosition(event);
-    else {
-      const pointerCount = activePointersRef.current.size;
-      const baseline = transformBaselineRef.current;
-      if (
-        (pointerCount >= 2 && baseline?.kind !== 'multi') ||
-        (pointerCount === 1 && baseline?.kind !== 'single')
-      ) {
-        resetTransformBaseline();
+    const { nodes } = useGLTF(modelConfig.modelUrl) as unknown as LoadedGarmentModel;
+    const targetMesh = useMemo(() => {
+      const node = nodes[modelConfig.garmentMeshName];
+      if (!(node instanceof THREE.Mesh)) {
+        throw new Error(
+          `The garment mesh "${modelConfig.garmentMeshName}" was not found in ${modelConfig.modelUrl}.`,
+        );
       }
-      updateDecalTransform();
-    }
-  };
+      return node;
+    }, [modelConfig.garmentMeshName, modelConfig.modelUrl, nodes]);
+    const coloredMaterial = useMemo(
+      () =>
+        Array.isArray(targetMesh.material)
+          ? targetMesh.material.map((material) => cloneColoredMaterial(material, color))
+          : cloneColoredMaterial(targetMesh.material, color),
+      [color, targetMesh.material],
+    );
+    const activeLayer = decals.find((layer) => layer.id === activeDecalId && layer.visible) ?? null;
+    const activeLayerRef = useRef<DecalLayer | null>(activeLayer);
+    activeLayerRef.current = activeLayer;
+    const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
 
-  const handlePointerEnd = (event: ThreeEvent<PointerEvent>) => {
-    const target = event.target as EventTarget & {
-      releasePointerCapture?: (pointerId: number) => void;
+    const applyPreview = useCallback(
+      (layerId: string, transform: DecalTransform) => {
+        const layer = decalsRef.current.find((candidate) => candidate.id === layerId);
+        const mesh = decalMeshesRef.current.get(layerId);
+        if (!layer || !mesh) return;
+
+        applyDecalTransformToObject(
+          mesh,
+          layer,
+          transform,
+          getPrintSurface(modelConfig, layer.surfaceId),
+        );
+        invalidate();
+      },
+      [invalidate, modelConfig],
+    );
+
+    const previewLayerTransform = useCallback(
+      (layerId: string, transform: DecalTransform) => {
+        liveTransformRef.current = { layerId, transform };
+        applyPreview(layerId, transform);
+      },
+      [applyPreview],
+    );
+
+    const registerDecalMesh = useCallback(
+      (layerId: string, mesh: THREE.Mesh | null) => {
+        if (mesh) decalMeshesRef.current.set(layerId, mesh);
+        else decalMeshesRef.current.delete(layerId);
+
+        const live = liveTransformRef.current;
+        if (mesh && live?.layerId === layerId) applyPreview(layerId, live.transform);
+      },
+      [applyPreview],
+    );
+
+    const getActiveTransform = useCallback((): DecalTransform | null => {
+      const layer = activeLayerRef.current;
+      if (!layer) return null;
+      const live = liveTransformRef.current;
+      return live?.layerId === layer.id ? live.transform : readDecalTransform(layer);
+    }, []);
+
+    useEffect(
+      () => () => {
+        if (Array.isArray(coloredMaterial)) {
+          coloredMaterial.forEach((material) => material.dispose());
+        } else {
+          coloredMaterial.dispose();
+        }
+      },
+      [coloredMaterial],
+    );
+
+    useEffect(() => {
+      liveTransformRef.current = null;
+    }, [activeDecalId, decals]);
+
+    useEffect(() => {
+      if (!idleAnimationEnabled && groupRef.current) groupRef.current.rotation.y = 0;
+    }, [idleAnimationEnabled]);
+
+    useFrame((state) => {
+      if (groupRef.current && idleAnimationEnabled && !isManipulating) {
+        groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
+      }
+    });
+
+    const beginManipulation = useCallback(() => {
+      const layer = activeLayerRef.current;
+      if (!layer || isManipulatingRef.current) return;
+
+      if (liveTransformRef.current?.layerId !== layer.id) {
+        liveTransformRef.current = { layerId: layer.id, transform: readDecalTransform(layer) };
+      }
+      isManipulatingRef.current = true;
+      setIsManipulating(true);
+      setDraggingDecal(true);
+      onDecalInteractionStart();
+    }, [onDecalInteractionStart, setDraggingDecal]);
+
+    const finishManipulation = useCallback(() => {
+      activePointersRef.current.clear();
+      transformBaselineRef.current = null;
+      if (isManipulatingRef.current) onDecalInteractionEnd();
+      isManipulatingRef.current = false;
+      setIsManipulating(false);
+      setDraggingDecal(false);
+    }, [onDecalInteractionEnd, setDraggingDecal]);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        previewDecalTransform: previewLayerTransform,
+        finishDecalInteraction: finishManipulation,
+      }),
+      [finishManipulation, previewLayerTransform],
+    );
+
+    useEffect(
+      () => () => {
+        finishManipulation();
+      },
+      [activeDecalId, finishManipulation, interactionMode],
+    );
+
+    const resetTransformBaseline = () => {
+      const current = getActiveTransform();
+      if (!current) {
+        transformBaselineRef.current = null;
+        return;
+      }
+
+      const pointers = Array.from(activePointersRef.current.entries());
+      const initial = { scale: current.scale, rotation: current.userRotation };
+
+      if (pointers.length >= 2) {
+        const [[firstId, first], [secondId, second]] = pointers;
+        transformBaselineRef.current = {
+          kind: 'multi',
+          pointerIds: [firstId, secondId],
+          startFirst: first,
+          startSecond: second,
+          initial,
+        };
+      } else if (pointers[0]) {
+        const [pointerId, start] = pointers[0];
+        transformBaselineRef.current = { kind: 'single', pointerId, start, initial };
+      } else {
+        transformBaselineRef.current = null;
+      }
     };
-    target.releasePointerCapture?.(event.pointerId);
-    activePointersRef.current.delete(event.pointerId);
 
-    if (interactionMode === 'transform' && activePointersRef.current.size > 0) {
-      resetTransformBaseline();
-    } else {
-      finishManipulation();
-    }
-  };
+    const updateDecalPosition = (event: ThreeEvent<PointerEvent>) => {
+      const layer = activeLayerRef.current;
+      const current = getActiveTransform();
+      if (!event.face || !layer || !current) return;
 
-  return (
-    <Center>
-      <group
-        ref={groupRef}
-        dispose={null}
-        position={modelConfig.position}
-        scale={modelConfig.scale}
-      >
-        <group rotation={modelConfig.rotation}>
-          <mesh
-            castShadow={shadowsEnabled}
-            receiveShadow={shadowsEnabled}
-            geometry={targetMesh.geometry}
-            material={coloredMaterial}
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerEnd}
-            onPointerCancel={handlePointerEnd}
-            onPointerMove={handlePointerMove}
-          >
-            <PrintAreaGuide surface={selectedSurface} />
-            {decals.map((layer, order) =>
-              layer.visible ? (
-                <DecalItem
-                  key={layer.id}
-                  layer={layer}
-                  surface={getPrintSurface(modelConfig, layer.surfaceId)}
-                  isActive={layer.id === activeDecalId}
-                  order={order}
-                  textureAnisotropy={textureAnisotropy}
-                  renderingQuality={renderingQuality}
-                />
-              ) : null,
-            )}
-          </mesh>
+      const surface = getPrintSurface(modelConfig, layer.surfaceId);
+      const mesh = event.object as THREE.Mesh;
+      const localPoint = mesh.worldToLocal(event.point.clone());
+      if (!isPointOnSurfaceSide(localPoint.z, surface)) return;
+
+      const normal = event.face.normal.clone();
+      const target = new THREE.Vector3(0, 0, 1);
+      const quaternion = new THREE.Quaternion().setFromUnitVectors(target, normal);
+      const euler = new THREE.Euler().setFromQuaternion(quaternion);
+      const next = normalizeDecalTransform(
+        layer,
+        current,
+        {
+          position: [localPoint.x, localPoint.y, localPoint.z],
+          rotation: [euler.x, euler.y, euler.z],
+        },
+        surface,
+      );
+
+      previewLayerTransform(layer.id, next);
+      onDecalChange(next.position, next.rotation);
+    };
+
+    const updateDecalTransform = () => {
+      const baseline = transformBaselineRef.current;
+      const layer = activeLayerRef.current;
+      const current = getActiveTransform();
+      if (!baseline || !layer || !current) return;
+
+      let calculated: ArtworkTransform | null = null;
+      if (baseline.kind === 'single') {
+        const pointer = activePointersRef.current.get(baseline.pointerId);
+        if (pointer) {
+          calculated = calculateSinglePointerTransform(baseline.initial, baseline.start, pointer);
+        }
+      } else {
+        const currentFirst = activePointersRef.current.get(baseline.pointerIds[0]);
+        const currentSecond = activePointersRef.current.get(baseline.pointerIds[1]);
+        if (currentFirst && currentSecond) {
+          calculated = calculateMultiPointerTransform(
+            baseline.initial,
+            baseline.startFirst,
+            baseline.startSecond,
+            currentFirst,
+            currentSecond,
+          );
+        }
+      }
+      if (!calculated) return;
+
+      const next = normalizeDecalTransform(
+        layer,
+        current,
+        { scale: calculated.scale, userRotation: calculated.rotation },
+        getPrintSurface(modelConfig, layer.surfaceId),
+      );
+      previewLayerTransform(layer.id, next);
+      onDecalTransformChange(next.scale, next.userRotation);
+    };
+
+    const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
+      if (!activeLayer || interactionMode === 'view') return;
+
+      event.stopPropagation();
+      const target = event.target as EventTarget & {
+        setPointerCapture?: (pointerId: number) => void;
+      };
+      target.setPointerCapture?.(event.pointerId);
+      activePointersRef.current.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+      beginManipulation();
+
+      if (interactionMode === 'move') updateDecalPosition(event);
+      else resetTransformBaseline();
+    };
+
+    const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
+      if (!isManipulatingRef.current || interactionMode === 'view') return;
+      if (!activePointersRef.current.has(event.pointerId)) return;
+
+      event.stopPropagation();
+      activePointersRef.current.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      if (interactionMode === 'move') updateDecalPosition(event);
+      else {
+        const pointerCount = activePointersRef.current.size;
+        const baseline = transformBaselineRef.current;
+        if (
+          (pointerCount >= 2 && baseline?.kind !== 'multi') ||
+          (pointerCount === 1 && baseline?.kind !== 'single')
+        ) {
+          resetTransformBaseline();
+        }
+        updateDecalTransform();
+      }
+    };
+
+    const handlePointerEnd = (event: ThreeEvent<PointerEvent>) => {
+      const target = event.target as EventTarget & {
+        releasePointerCapture?: (pointerId: number) => void;
+      };
+      target.releasePointerCapture?.(event.pointerId);
+      activePointersRef.current.delete(event.pointerId);
+
+      if (interactionMode === 'transform' && activePointersRef.current.size > 0) {
+        resetTransformBaseline();
+      } else {
+        finishManipulation();
+      }
+    };
+
+    return (
+      <Center>
+        <group
+          ref={groupRef}
+          dispose={null}
+          position={modelConfig.position}
+          scale={modelConfig.scale}
+        >
+          <group rotation={modelConfig.rotation}>
+            <mesh
+              castShadow={shadowsEnabled}
+              receiveShadow={shadowsEnabled}
+              geometry={targetMesh.geometry}
+              material={coloredMaterial}
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerEnd}
+              onPointerCancel={handlePointerEnd}
+              onPointerMove={handlePointerMove}
+            >
+              <PrintAreaGuide surface={selectedSurface} />
+              {decals.map((layer, order) =>
+                layer.visible ? (
+                  <DecalItem
+                    key={layer.id}
+                    layer={layer}
+                    surface={getPrintSurface(modelConfig, layer.surfaceId)}
+                    isActive={layer.id === activeDecalId}
+                    order={order}
+                    textureAnisotropy={textureAnisotropy}
+                    renderingQuality={renderingQuality}
+                    onMeshChange={(mesh) => registerDecalMesh(layer.id, mesh)}
+                  />
+                ) : null,
+              )}
+            </mesh>
+          </group>
         </group>
-      </group>
-    </Center>
-  );
-};
+      </Center>
+    );
+  },
+);
+
+ShirtModel.displayName = 'ShirtModel';

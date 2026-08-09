@@ -22,15 +22,42 @@ const cloneLayer = (layer: DecalLayer): DecalLayer => ({
   rotation: cloneTuple(layer.rotation),
 });
 
+const tuplesEqual = (left: readonly number[], right: readonly number[]): boolean =>
+  left.length === right.length && left.every((value, index) => value === right[index]);
+
+const areLayersEqual = (left: DecalLayer, right: DecalLayer): boolean =>
+  left.id === right.id &&
+  left.name === right.name &&
+  left.visible === right.visible &&
+  left.url === right.url &&
+  left.assetId === right.assetId &&
+  left.fileName === right.fileName &&
+  left.mimeType === right.mimeType &&
+  left.surfaceId === right.surfaceId &&
+  tuplesEqual(left.position, right.position) &&
+  tuplesEqual(left.rotation, right.rotation) &&
+  left.userRotation === right.userRotation &&
+  left.scale === right.scale &&
+  left.pixelWidth === right.pixelWidth &&
+  left.pixelHeight === right.pixelHeight &&
+  left.aspectRatio === right.aspectRatio &&
+  left.hasTransparency === right.hasTransparency &&
+  left.transparentPixelRatio === right.transparentPixelRatio &&
+  left.transparentPaddingRatio === right.transparentPaddingRatio;
+
 export const cloneEditorSnapshot = (snapshot: EditorSnapshot): EditorSnapshot => ({
   ...snapshot,
   decals: snapshot.decals.map(cloneLayer),
 });
 
-export const areEditorSnapshotsEqual = (
-  left: EditorSnapshot,
-  right: EditorSnapshot,
-): boolean => JSON.stringify(left) === JSON.stringify(right);
+export const areEditorSnapshotsEqual = (left: EditorSnapshot, right: EditorSnapshot): boolean =>
+  left === right ||
+  (left.color === right.color &&
+    left.size === right.size &&
+    left.selectedSurfaceId === right.selectedSurfaceId &&
+    left.activeDecalId === right.activeDecalId &&
+    left.decals.length === right.decals.length &&
+    left.decals.every((layer, index) => areLayersEqual(layer, right.decals[index])));
 
 export const createEditorHistory = (initial: EditorSnapshot): EditorHistory => ({
   past: [],
