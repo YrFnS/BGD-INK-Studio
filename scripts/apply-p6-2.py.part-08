@@ -102,7 +102,7 @@ journey += textwrap.dedent(
           input.dispatchEvent(new Event('input', { bubbles: true }));
         });
         input.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 7 }));
-        return values.at(-1) ?? input.valueAsNumber;
+        return input.valueAsNumber;
       });
 
       await expect
