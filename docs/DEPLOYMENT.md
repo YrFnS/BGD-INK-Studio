@@ -4,24 +4,15 @@ This document defines the repository-controlled deployment contract and the exte
 
 ## Branch policy
 
-**Production branch: `main`.**
+    **Production branch: `main`.**
 
-```text
-main                             # production source after approved merges
-└── agent/p6-runtime-stability   # draft PR #6 preview only
-```
+    ```text
+    main   # authoritative production and development source
+    ```
 
-Historical phase branches are not deployment targets:
+    PRs #1–#6 are merged. All superseded phase branches were deleted after PR #6 merged as `03d78a08febd8428555d6f1b657848f2a520eddc`. Merged pull requests and validation documents preserve the audit history.
 
-```text
-agent/bgd-ink-p0-foundation
-agent/bgd-ink-p2-models-print-areas
-agent/bgd-ink-p3-premium-storefront
-agent/bgd-ink-p4-delivery-seo-pwa
-agent/bgd-ink-p5-prelaunch-hardening
-```
-
-PRs #1–#5 are merged. Their branches may remain temporarily for audit/history, but no production project, deploy context, build hook, or environment should point to them.
+    Historical phase branches are not deployment targets and must not be recreated as a stack.
 
 ## Repository-controlled build contract
 
@@ -132,7 +123,7 @@ A preview deployment validates the branch’s generated static application. It i
 - business information is final,
 - or the application is authorized for real order processing.
 
-PR #6 must remain draft until the final review and provider branch checks are complete.
+Preview deployments validate proposed commits only; production remains sourced from `main`.
 
 ## Local production preview
 
@@ -188,14 +179,9 @@ The deployment is static and browser-local.
 
 ## Historical branch cleanup
 
-Branch deletion is separate from P6 implementation.
+    Completed after the P6 merge:
 
-Before deleting a historical branch:
-
-1. Confirm its pull request is merged.
-2. Confirm no provider Production Branch, branch deploy, build hook, or environment references it.
-3. Confirm no active external review requires the branch ref.
-4. Preserve the merged PR and validation documents as the audit record.
-5. Delete through the repository owner’s normal branch-cleanup process.
-
-P6 does not delete historical branches automatically.
+    - PRs #1–#6 remain the audit record.
+    - P0–P6 validation documents remain in `main`.
+    - All superseded phase branches were deleted.
+    - Future work must branch from `main` without recreating the old stack.
