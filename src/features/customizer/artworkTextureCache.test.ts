@@ -70,8 +70,8 @@ describe('artwork texture cache', () => {
   });
 
   it('aborts a pending decode and disposes a late result after navigation or unmount', async () => {
-    let resolveLoad: ((resource: LoadedArtworkTexture) => void) | null = null;
-    let observedSignal: AbortSignal | null = null;
+    let resolveLoad!: (resource: LoadedArtworkTexture) => void;
+    let observedSignal!: AbortSignal;
     const { resource, dispose } = createResource();
     const lease = acquireArtworkTexture(cacheKey(), (signal) => {
       observedSignal = signal;
@@ -82,8 +82,8 @@ describe('artwork texture cache', () => {
     const rejection = lease.texture.catch((error: unknown) => error);
 
     lease.release();
-    expect(observedSignal?.aborted).toBe(true);
-    resolveLoad?.(resource);
+    expect(observedSignal.aborted).toBe(true);
+    resolveLoad(resource);
 
     await expect(rejection).resolves.toMatchObject({ name: 'AbortError' });
     expect(dispose).toHaveBeenCalledTimes(1);
