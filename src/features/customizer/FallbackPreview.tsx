@@ -47,7 +47,7 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
     language === 'ar'
       ? {
           label: 'معاينة التصميم ثنائية الأبعاد',
-          title: 'وضع المراجعة 2D',
+          title: 'المعاينة الآمنة 2D',
           manual: 'تم تفعيل عرض 2D. الطبقات والمسودة ما زالت محفوظة بالكامل على هذا الجهاز.',
           unsupported: 'WebGL غير متوفر حالياً، لذلك نعرض مراجعة 2D آمنة بدل شاشة مكسورة.',
           lost: 'توقفت معاينة 3D مؤقتاً بعد فقدان اتصال WebGL، لكن تصميمك محفوظ.',
