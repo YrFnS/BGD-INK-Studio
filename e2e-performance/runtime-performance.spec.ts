@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import budgets from '../src/config/runtime-performance-budgets.json';
+import budgets from '../src/config/runtime-performance-budgets.json' with { type: 'json' };
 import {
   createTransparentPng,
   enableRuntimePerformanceHarness,
