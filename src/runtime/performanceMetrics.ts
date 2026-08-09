@@ -28,6 +28,9 @@ export interface RuntimePerformanceSnapshot {
   milestones: Record<string, number>;
 }
 
+let cachedSearch = '';
+let cachedSearchEnabled = false;
+
 const now = (): number =>
   typeof performance !== 'undefined' && typeof performance.now === 'function'
     ? performance.now()
@@ -66,11 +69,16 @@ export const isRuntimePerformanceMetricsEnabled = (): boolean => {
   if (typeof window === 'undefined') return false;
   if (window.__BGD_INK_RUNTIME_METRICS_ENABLED__ === true) return true;
 
+  const search = window.location.search;
+  if (search === cachedSearch) return cachedSearchEnabled;
+
+  cachedSearch = search;
   try {
-    return new URLSearchParams(window.location.search).get('runtimeMetrics') === '1';
+    cachedSearchEnabled = new URLSearchParams(search).get('runtimeMetrics') === '1';
   } catch {
-    return false;
+    cachedSearchEnabled = false;
   }
+  return cachedSearchEnabled;
 };
 
 const getOrCreateSnapshot = (): RuntimePerformanceSnapshot | null => {
