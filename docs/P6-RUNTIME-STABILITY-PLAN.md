@@ -2,30 +2,30 @@
 
 ## Status
 
-    P6.1 through P6.6 are complete, validated, and merged into `main`.
+P6.1 through P6.6 are complete, validated, and merged into `main`.
 
-    The clean automated exit suite passed on the reconciled implementation head:
+The clean automated exit suite passed on the reconciled implementation head:
 
-    ```text
-    0cbd21ab9c264072f8497ece9e14c25f78fc9aa0
-    fix: separate CI validation from provider builds
-    ```
+```text
+0cbd21ab9c264072f8497ece9e14c25f78fc9aa0
+fix: separate CI validation from provider builds
+```
 
-    Validated GitHub Actions run:
+Validated GitHub Actions run:
 
-    ```text
-    31308581420
-    ```
+```text
+31308581420
+```
 
-    Vercel and Netlify pull-request previews completed successfully on that head. PR #6 was subsequently squash-merged into `main` as `03d78a08febd8428555d6f1b657848f2a520eddc`.
+Vercel and Netlify pull-request previews completed successfully on that head. PR #6 was subsequently squash-merged into `main` as `03d78a08febd8428555d6f1b657848f2a520eddc`.
 
-    The final repository state is:
+The final repository state is:
 
-    ```text
-    main
-    ```
+```text
+main
+```
 
-    PRs #1–#6 are merged, and all superseded phase branches were deleted. Merged pull requests and validation documents preserve the history.
+PRs #1–#6 are merged, and all superseded phase branches were deleted. Merged pull requests and validation documents preserve the history.
 
 ## Product boundary
 
@@ -52,22 +52,22 @@ P6 stabilizes the existing frontend and browser-local product. It does not add:
 
 ## Issue inventory and final disposition
 
-| ID    | Area          | Original problem                                                            | Disposition                     |
-| ----- | ------------- | --------------------------------------------------------------------------- | ------------------------------- |
-| P6-01 | Cursor        | Native cursor was hidden while a custom cursor ran on pointer movement.     | Complete in P6.1.               |
-| P6-02 | Startup       | An artificial full-screen preloader blocked access.                         | Complete in P6.1.               |
-| P6-03 | Paint         | Permanent full-screen SVG turbulence remained mounted.                      | Complete in P6.1.               |
-| P6-04 | Navigation    | Route transitions depended on unstable child identity and bubbled events.   | Complete in P6.1.               |
-| P6-05 | Homepage      | Magnetic interaction performed layout work during pointer movement.         | Complete in P6.1.               |
-| P6-06 | Route shell   | Decorative work remained in the performance-sensitive editor route.         | Complete in P6.1.               |
-| P6-07 | Editor        | Pointer movement cloned durable snapshots and rerendered the editor.        | Complete in P6.2.               |
-| P6-08 | History       | Snapshot equality serialized complete editor state.                         | Complete in P6.2.               |
-| P6-09 | WebGL         | Continuous rendering, idle animation, DPR 2, and large shadows.             | Complete in P6.3.               |
-| P6-10 | Profiles      | Rendering capability selection was frozen at mount.                         | Complete in P6.3.               |
-| P6-11 | Artwork       | A fallback could upload an unbounded original image.                        | Complete in P6.4.               |
-| P6-12 | GPU memory    | Compatible duplicate layers created duplicate textures.                     | Complete in P6.4.               |
-| P6-13 | Quality gates | Bundle checks could not detect idle rendering or commit/save amplification. | Complete in P6.5.               |
-| P6-14 | Repository    | Version, branch, deployment, troubleshooting, and release claims disagreed. | Complete and validated in P6.6. |
+| ID | Area | Original problem | Disposition |
+| --- | --- | --- | --- |
+| P6-01 | Cursor | Native cursor was hidden while a custom cursor ran on pointer movement. | Complete in P6.1. |
+| P6-02 | Startup | An artificial full-screen preloader blocked access. | Complete in P6.1. |
+| P6-03 | Paint | Permanent full-screen SVG turbulence remained mounted. | Complete in P6.1. |
+| P6-04 | Navigation | Route transitions depended on unstable child identity and bubbled events. | Complete in P6.1. |
+| P6-05 | Homepage | Magnetic interaction performed layout work during pointer movement. | Complete in P6.1. |
+| P6-06 | Route shell | Decorative work remained in the performance-sensitive editor route. | Complete in P6.1. |
+| P6-07 | Editor | Pointer movement cloned durable snapshots and rerendered the editor. | Complete in P6.2. |
+| P6-08 | History | Snapshot equality serialized complete editor state. | Complete in P6.2. |
+| P6-09 | WebGL | Continuous rendering, idle animation, DPR 2, and large shadows. | Complete in P6.3. |
+| P6-10 | Profiles | Rendering capability selection was frozen at mount. | Complete in P6.3. |
+| P6-11 | Artwork | A fallback could upload an unbounded original image. | Complete in P6.4. |
+| P6-12 | GPU memory | Compatible duplicate layers created duplicate textures. | Complete in P6.4. |
+| P6-13 | Quality gates | Bundle checks could not detect idle rendering or commit/save amplification. | Complete in P6.5. |
+| P6-14 | Repository | Version, branch, deployment, troubleshooting, and release claims disagreed. | Complete and validated in P6.6. |
 
 ## P6.1 — Shell and navigation
 
@@ -162,7 +162,7 @@ P0–P6 identifiers describe engineering phases; they are not package semantic v
 
 Repository-controlled Vercel and Netlify files contain no phase-branch dependency. Production must use `main`; PR branches are previews.
 
-The provider Production Branch setting is external to GitHub source. Confirm `main` in both provider dashboards before the merge/release decision. See `docs/DEPLOYMENT.md`.
+The provider Production Branch setting is external to GitHub source. Confirm `main` in both provider dashboards before a public production launch. See `docs/DEPLOYMENT.md`.
 
 ## Final exit suite
 
@@ -197,9 +197,9 @@ The P6 engineering definition of done is satisfied:
 
 ## Remaining external production checks
 
-    P6 engineering and repository consolidation are complete. Before presenting the application as a production service, still confirm:
+P6 engineering and repository consolidation are complete. Before presenting the application as a production service, still confirm:
 
-    - Vercel Production Branch is `main`,
-    - Netlify Production Branch is `main`,
-    - no obsolete deploy hook or branch context remains,
-    - and the production domain, indexing, business content, and physical-device review are approved.
+- Vercel Production Branch is `main`,
+- Netlify Production Branch is `main`,
+- no obsolete deploy hook or branch context remains,
+- and the production domain, indexing, business content, and physical-device review are approved.
