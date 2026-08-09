@@ -1,0 +1,42 @@
+    """  const { t, language } = useAppContext();\n  const fileInputRef = useRef<HTMLInputElement>(null);\n  const artworkWidthOutputRef = useRef<HTMLOutputElement>(null);\n  const rotationOutputRef = useRef<HTMLOutputElement>(null);""",
+)
+replace_once(
+    'src/features/customizer/Controls.tsx',
+    """                      <bdi className=\"technical-ltr font-mono text-[10px] text-gray-400\" dir=\"ltr\">\n                        {activeArtworkWidthCm?.toFixed(1)} cm\n                      </bdi>""",
+    """                      <output\n                        key={`layer-width-output-${activeDecal.id}-${activeDecal.scale}`}\n                        ref={artworkWidthOutputRef}\n                        className=\"technical-ltr font-mono text-[10px] text-gray-400\"\n                        dir=\"ltr\"\n                      >\n                        {activeArtworkWidthCm?.toFixed(1)} cm\n                      </output>""",
+)
+replace_once(
+    'src/features/customizer/Controls.tsx',
+    """                    <input\n                      id={`layer-size-${activeDecal.id}`}\n                      type=\"range\"\n                      dir=\"ltr\"\n                      min={activeScaleLimits.minimum}\n                      max={activeScaleLimits.maximum}\n                      step=\"0.005\"\n                      value={activeDecal.scale}\n                      onPointerDown={() => onBeginTransform()}\n                      onPointerUp={() => onEndTransform()}\n                      onPointerCancel={() => onEndTransform()}\n                      onKeyDown={beginKeyboardTransform}\n                      onKeyUp={endKeyboardTransform}\n                      onBlur={() => onEndTransform()}\n                      onChange={(event) =>\n                        onUpdateDecal(activeDecal.id, {\n                          scale: Number.parseFloat(event.target.value),\n                        })\n                      }\n                      className=\"h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-accent dark:bg-zinc-700\"\n                    />""",
+    """                    <input\n                      key={`layer-size-${activeDecal.id}-${activeDecal.scale}`}\n                      id={`layer-size-${activeDecal.id}`}\n                      type=\"range\"\n                      dir=\"ltr\"\n                      min={activeScaleLimits.minimum}\n                      max={activeScaleLimits.maximum}\n                      step=\"0.005\"\n                      defaultValue={activeDecal.scale}\n                      onPointerDown={() => onBeginTransform()}\n                      onPointerUp={() => onEndTransform()}\n                      onPointerCancel={() => onEndTransform()}\n                      onKeyDown={beginKeyboardTransform}\n                      onKeyUp={endKeyboardTransform}\n                      onBlur={() => onEndTransform()}\n                      onInput={(event) => {\n                        const scale = Number.parseFloat(event.currentTarget.value);\n                        if (artworkWidthOutputRef.current) {\n                          artworkWidthOutputRef.current.textContent = `${scaleToArtworkWidthCm(\n                            scale,\n                            activeSurface,\n                          ).toFixed(1)} cm`;\n                        }\n                        onUpdateDecal(activeDecal.id, { scale });\n                      }}\n                      className=\"h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-accent dark:bg-zinc-700\"\n                    />""",
+)
+replace_once(
+    'src/features/customizer/Controls.tsx',
+    """                      <bdi className=\"technical-ltr font-mono text-[10px] text-gray-400\" dir=\"ltr\">\n                        {Math.round(activeDecal.userRotation * (180 / Math.PI))}°\n                      </bdi>""",
+    """                      <output\n                        key={`layer-rotation-output-${activeDecal.id}-${activeDecal.userRotation}`}\n                        ref={rotationOutputRef}\n                        className=\"technical-ltr font-mono text-[10px] text-gray-400\"\n                        dir=\"ltr\"\n                      >\n                        {Math.round(activeDecal.userRotation * (180 / Math.PI))}°\n                      </output>""",
+)
+replace_once(
+    'src/features/customizer/Controls.tsx',
+    """                    <input\n                      id={`layer-rotation-${activeDecal.id}`}\n                      type=\"range\"\n                      dir=\"ltr\"\n                      min=\"0\"\n                      max={Math.PI * 2}\n                      step=\"0.1\"\n                      value={activeDecal.userRotation}\n                      onPointerDown={() => onBeginTransform()}\n                      onPointerUp={() => onEndTransform()}\n                      onPointerCancel={() => onEndTransform()}\n                      onKeyDown={beginKeyboardTransform}\n                      onKeyUp={endKeyboardTransform}\n                      onBlur={() => onEndTransform()}\n                      onChange={(event) =>\n                        onUpdateDecal(activeDecal.id, {\n                          userRotation: Number.parseFloat(event.target.value),\n                        })\n                      }\n                      className=\"h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-accent dark:bg-zinc-700\"\n                    />""",
+    """                    <input\n                      key={`layer-rotation-${activeDecal.id}-${activeDecal.userRotation}`}\n                      id={`layer-rotation-${activeDecal.id}`}\n                      type=\"range\"\n                      dir=\"ltr\"\n                      min=\"0\"\n                      max={Math.PI * 2}\n                      step=\"0.1\"\n                      defaultValue={activeDecal.userRotation}\n                      onPointerDown={() => onBeginTransform()}\n                      onPointerUp={() => onEndTransform()}\n                      onPointerCancel={() => onEndTransform()}\n                      onKeyDown={beginKeyboardTransform}\n                      onKeyUp={endKeyboardTransform}\n                      onBlur={() => onEndTransform()}\n                      onInput={(event) => {\n                        const userRotation = Number.parseFloat(event.currentTarget.value);\n                        if (rotationOutputRef.current) {\n                          rotationOutputRef.current.textContent = `${Math.round(\n                            userRotation * (180 / Math.PI),\n                          )}°`;\n                        }\n                        onUpdateDecal(activeDecal.id, { userRotation });\n                      }}\n                      className=\"h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-accent dark:bg-zinc-700\"\n                    />""",
+)
+
+write_text(
+    'scripts/check-editor-gesture.mjs',
+    r'''
+    import { readFile } from 'node:fs/promises';
+    import path from 'node:path';
+    import process from 'node:process';
+
+    const root = process.cwd();
+    const files = {
+      customizer: await readFile(path.join(root, 'src/features/customizer/Customizer.tsx'), 'utf8'),
+      controls: await readFile(path.join(root, 'src/features/customizer/Controls.tsx'), 'utf8'),
+      shirt: await readFile(path.join(root, 'src/features/customizer/ShirtModel.tsx'), 'utf8'),
+      scene: await readFile(path.join(root, 'src/features/customizer/Scene.tsx'), 'utf8'),
+      history: await readFile(path.join(root, 'src/features/customizer/editorHistory.ts'), 'utf8'),
+      transform: await readFile(path.join(root, 'src/features/customizer/decalTransform.ts'), 'utf8'),
+      journey: await readFile(path.join(root, 'e2e/layer-editor.spec.ts'), 'utf8'),
+    };
+
+    const failures = [];
