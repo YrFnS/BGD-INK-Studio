@@ -1,0 +1,236 @@
+      ...layer,
+      position: cloneTuple(layer.position),
+      rotation: cloneTuple(layer.rotation),
+    });
+
+    const tuplesEqual = (
+      left: readonly number[],
+      right: readonly number[],
+    ): boolean => left.length === right.length && left.every((value, index) => value === right[index]);
+
+    const areLayersEqual = (left: DecalLayer, right: DecalLayer): boolean =>
+      left.id === right.id &&
+      left.name === right.name &&
+      left.visible === right.visible &&
+      left.url === right.url &&
+      left.assetId === right.assetId &&
+      left.fileName === right.fileName &&
+      left.mimeType === right.mimeType &&
+      left.surfaceId === right.surfaceId &&
+      tuplesEqual(left.position, right.position) &&
+      tuplesEqual(left.rotation, right.rotation) &&
+      left.userRotation === right.userRotation &&
+      left.scale === right.scale &&
+      left.pixelWidth === right.pixelWidth &&
+      left.pixelHeight === right.pixelHeight &&
+      left.aspectRatio === right.aspectRatio &&
+      left.hasTransparency === right.hasTransparency &&
+      left.transparentPixelRatio === right.transparentPixelRatio &&
+      left.transparentPaddingRatio === right.transparentPaddingRatio;
+
+    export const cloneEditorSnapshot = (snapshot: EditorSnapshot): EditorSnapshot => ({
+      ...snapshot,
+      decals: snapshot.decals.map(cloneLayer),
+    });
+
+    export const areEditorSnapshotsEqual = (
+      left: EditorSnapshot,
+      right: EditorSnapshot,
+    ): boolean =>
+      left === right ||
+      (left.color === right.color &&
+        left.size === right.size &&
+        left.selectedSurfaceId === right.selectedSurfaceId &&
+        left.activeDecalId === right.activeDecalId &&
+        left.decals.length === right.decals.length &&
+        left.decals.every((layer, index) => areLayersEqual(layer, right.decals[index])));
+
+    export const createEditorHistory = (initial: EditorSnapshot): EditorHistory => ({
+      past: [],
+      present: cloneEditorSnapshot(initial),
+      future: [],
+    });
+
+    export const commitEditorHistory = (
+      history: EditorHistory,
+      next: EditorSnapshot,
+      limit = 50,
+    ): EditorHistory => {
+      if (areEditorSnapshotsEqual(history.present, next)) return history;
+
+      return {
+        past: [...history.past, cloneEditorSnapshot(history.present)].slice(-limit),
+        present: cloneEditorSnapshot(next),
+        future: [],
+      };
+    };
+
+    export const undoEditorHistory = (history: EditorHistory): EditorHistory => {
+      const previous = history.past.at(-1);
+      if (!previous) return history;
+
+      return {
+        past: history.past.slice(0, -1),
+        present: cloneEditorSnapshot(previous),
+        future: [cloneEditorSnapshot(history.present), ...history.future],
+      };
+    };
+
+    export const redoEditorHistory = (history: EditorHistory): EditorHistory => {
+      const next = history.future[0];
+      if (!next) return history;
+
+      return {
+        past: [...history.past, cloneEditorSnapshot(history.present)],
+        present: cloneEditorSnapshot(next),
+        future: history.future.slice(1),
+      };
+    };
+    ''',
+)
+
+replace_once(
+    'src/features/customizer/editorHistory.test.ts',
+    """import {
+  commitEditorHistory,
+  createEditorHistory,
+  redoEditorHistory,
+  undoEditorHistory,
+  type EditorSnapshot,
+} from './editorHistory';""",
+    """import {
+  areEditorSnapshotsEqual,
+  commitEditorHistory,
+  createEditorHistory,
+  redoEditorHistory,
+  undoEditorHistory,
+  type EditorSnapshot,
+} from './editorHistory';""",
+)
+replace_once(
+    'src/features/customizer/editorHistory.test.ts',
+    """  it('keeps only the configured number of past snapshots', () => {
+    let history = createEditorHistory(snapshot());
+
+    for (let index = 0; index < 6; index += 1) {
+      history = commitEditorHistory(history, snapshot([layer(`layer-${index}`)]), 3);
+    }
+
+    expect(history.past).toHaveLength(3);
+    expect(history.present.decals[0].id).toBe('layer-5');
+  });
+});""",
+    """  it('keeps only the configured number of past snapshots', () => {
+    let history = createEditorHistory(snapshot());
+
+    for (let index = 0; index < 6; index += 1) {
+      history = commitEditorHistory(history, snapshot([layer(`layer-${index}`)]), 3);
+    }
+
+    expect(history.past).toHaveLength(3);
+    expect(history.present.decals[0].id).toBe('layer-5');
+  });
+
+  it('uses typed equality and skips structurally identical commits', () => {
+    const initial = snapshot([layer('one')]);
+    const equivalent = snapshot([layer('one')]);
+    const changed = snapshot([{ ...layer('one'), scale: 0.25 }]);
+    const history = createEditorHistory(initial);
+
+    expect(areEditorSnapshotsEqual(initial, equivalent)).toBe(true);
+    expect(areEditorSnapshotsEqual(initial, changed)).toBe(false);
+    expect(commitEditorHistory(history, equivalent)).toBe(history);
+  });
+});""",
+)
+
+write_text(
+    'src/features/customizer/Scene.tsx',
+    r'''
+    import React, { ReactNode, useEffect, useImperativeHandle, useRef } from 'react';
+    import { OrbitControls } from '@react-three/drei';
+    import { Canvas, useThree } from '@react-three/fiber';
+    import {
+      getPrintSurface,
+      type PrintSurfaceDefinition,
+      type ReadyProductModelConfig,
+    } from '@/data/assets3d';
+    import { DecalLayer, PrintSurfaceId, Theme } from '@/types';
+    import type { DecalTransform } from './decalTransform';
+    import type { CustomizerInteractionMode } from './interactionGestures';
+    import type { RenderingProfile } from './renderingCapabilities';
+    import {
+      ProceduralFallback,
+      ShirtModel,
+      type ShirtModelHandle,
+    } from './ShirtModel';
+
+    interface SceneProps {
+      modelConfig: ReadyProductModelConfig;
+      selectedSurfaceId: PrintSurfaceId;
+      color: string;
+      theme: Theme;
+      decals: DecalLayer[];
+      activeDecalId: string | null;
+      interactionMode: CustomizerInteractionMode;
+      renderingProfile: RenderingProfile;
+      isPageVisible: boolean;
+      onDecalChange: (pos: [number, number, number], rot: [number, number, number]) => void;
+      onDecalTransformChange: (scale: number, rotation: number) => void;
+      onDecalInteractionStart: () => void;
+      onDecalInteractionEnd: () => void;
+      onContextLost: () => void;
+      onContextRestored: () => void;
+      onModelError: (error: unknown) => void;
+      setDraggingDecal: (dragging: boolean) => void;
+    }
+
+    export interface SceneHandle {
+      previewDecalTransform: (layerId: string, transform: DecalTransform) => void;
+    }
+
+    interface ModelErrorBoundaryProps {
+      fallback: ReactNode;
+      children: ReactNode;
+      onError: (error: unknown) => void;
+    }
+
+    interface ModelErrorBoundaryState {
+      hasError: boolean;
+    }
+
+    class ModelErrorBoundary extends React.Component<ModelErrorBoundaryProps, ModelErrorBoundaryState> {
+      state: ModelErrorBoundaryState = { hasError: false };
+
+      static getDerivedStateFromError(): ModelErrorBoundaryState {
+        return { hasError: true };
+      }
+
+      componentDidCatch(error: unknown): void {
+        this.props.onError(error);
+        if (import.meta.env.DEV) console.error('3D model load failed:', error);
+      }
+
+      render(): ReactNode {
+        return this.state.hasError ? this.props.fallback : this.props.children;
+      }
+    }
+
+    const CameraRig = ({ surface }: { surface: PrintSurfaceDefinition }) => {
+      const { camera, invalidate } = useThree();
+
+      useEffect(() => {
+        camera.position.set(...surface.cameraPosition);
+        camera.lookAt(...surface.cameraTarget);
+        camera.updateProjectionMatrix();
+        invalidate();
+      }, [camera, invalidate, surface]);
+
+      return null;
+    };
+
+    const WebGLContextMonitor = ({
+      onContextLost,
+      onContextRestored,
+    }: {
+      onContextLost: () => void;
