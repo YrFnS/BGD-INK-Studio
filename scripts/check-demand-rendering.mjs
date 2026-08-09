@@ -92,7 +92,7 @@ requirePattern(
 );
 requirePattern(
   files.environment,
-  /visibilitychange[\s\S]*refreshCapabilities\(\)/,
+  /const handleVisibilityChange[\s\S]*refreshCapabilities\(\)[\s\S]*addEventListener\('visibilitychange'/,
   'returning to a visible document must refresh the rendering environment',
 );
 requirePattern(
