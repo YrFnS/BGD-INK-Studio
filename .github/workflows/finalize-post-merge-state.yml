@@ -10,6 +10,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: finalize-post-merge-state
+  cancel-in-progress: true
+
 jobs:
   finalize:
     name: Reconcile main-only status and validate
@@ -39,59 +43,71 @@ jobs:
         run: |
           python <<'PY'
           from pathlib import Path
+          import re
           import textwrap
 
           root = Path('.')
+          merge_sha = '03d78a08febd8428555d6f1b657848f2a520eddc'
 
           def read(path: str) -> str:
               return (root / path).read_text(encoding='utf-8')
 
           def write(path: str, content: str) -> None:
-              (root / path).write_text(content, encoding='utf-8')
+              (root / path).write_text(content.rstrip() + '\n', encoding='utf-8')
+
+          def replace_section(path: str, start: str, end: str | None, replacement: str) -> None:
+              content = read(path)
+              if end is None:
+                  pattern = re.compile(rf'{re.escape(start)}\n.*\Z', re.S)
+              else:
+                  pattern = re.compile(rf'{re.escape(start)}\n.*?(?=\n{re.escape(end)}\n)', re.S)
+              updated, count = pattern.subn(replacement.rstrip(), content, count=1)
+              if count != 1:
+                  raise RuntimeError(f'{path}: could not replace section {start!r}')
+              write(path, updated)
 
           def replace_once(path: str, old: str, new: str) -> None:
               content = read(path)
-              count = content.count(old)
-              if count != 1:
-                  raise RuntimeError(f'{path}: expected one match, found {count}: {old[:100]!r}')
+              if content.count(old) != 1:
+                  raise RuntimeError(f'{path}: expected one occurrence of {old!r}')
               write(path, content.replace(old, new, 1))
 
-          merge_sha = '03d78a08febd8428555d6f1b657848f2a520eddc'
-
-          replace_once(
+          replace_section(
               'README.md',
-              '''The authoritative repository state is:
+              '## Repository status',
+              '## Version and release policy',
+              f'''## Repository status
 
-          ```text
-          main
-          └── agent/p6-runtime-stability   # active stabilization pull request
-          ```
+              The authoritative repository state is:
 
-          - `main` contains the merged P0–P5 application baseline.
-          - `agent/p6-runtime-stability` is the only active phase branch and is reviewed through draft PR #6.
-          - The older `agent/bgd-ink-p0-foundation`, `agent/bgd-ink-p2-models-print-areas`, `agent/bgd-ink-p3-premium-storefront`, `agent/bgd-ink-p4-delivery-seo-pwa`, and `agent/bgd-ink-p5-prelaunch-hardening` branches are historical references, not an active stack and not deployment targets.
-          - Do not develop new work from a historical phase branch.
-          - Do not merge PR #6 until its final review and external deployment-provider branch check are complete.
+              ```text
+              main
+              ```
 
-          P6.1 through P6.6 are implemented and validated. PR #6 remains draft until the external provider Production Branch settings are manually confirmed and the owner approves the merge/release decision.''',
-              f'''The authoritative repository state is:
+              - `main` contains the complete merged P0–P6 application.
+              - PR #6 was squash-merged into `main` as `{merge_sha}`.
+              - All superseded P0–P6 phase branches were deleted after the merge.
+              - Merged pull requests and validation documents remain the audit record.
+              - Start future work from `main` on one intentionally named branch.
 
-          ```text
-          main
-          ```
-
-          - `main` contains the complete merged P0–P6 application.
-          - PR #6 was squash-merged into `main` as `{merge_sha}`.
-          - All superseded P0–P6 phase branches were deleted after the merge; their pull requests and validation documents remain the audit record.
-          - Start future work from `main` on one intentionally named branch.
-
-          P6.1 through P6.6 are implemented, validated, merged, and consolidated in `main`.''',
+              P6.1 through P6.6 are implemented, validated, merged, and consolidated in `main`.''',
           )
-          replace_once('README.md', 'git checkout agent/p6-runtime-stability', 'git checkout main')
-          replace_once(
+          replace_section(
               'README.md',
-              'After PR #6 is approved and merged, new development and production deployment should use `main`.',
-              'New development and production deployment should use `main` as the authoritative source.',
+              '## Local setup',
+              '## Validation commands',
+              '''## Local setup
+
+              ```bash
+              git clone https://github.com/YrFnS/BGD-INK-Studio.git
+              cd BGD-INK-Studio
+              git checkout main
+              git lfs pull
+              npm ci --include=dev --no-audit --no-fund
+              npm run dev
+              ```
+
+              New development and production deployment should use `main` as the authoritative source.''',
           )
           replace_once(
               'README.md',
@@ -113,7 +129,7 @@ jobs:
               - `main` contains the complete merged P0–P6 application.
               - PR #6 was squash-merged as `{merge_sha}`.
               - All superseded phase branches were deleted after the merge.
-              - Pull requests and phase validation documents remain the historical audit trail.
+              - Pull requests and phase validation documents remain the audit trail.
               - Future work must begin from `main` on one intentionally named branch.
 
               ## Phase status
@@ -179,88 +195,71 @@ jobs:
               '''),
           )
 
-          replace_once(
+          replace_section(
               'docs/DEPLOYMENT.md',
-              '''```text
-          main                             # production source after approved merges
-          └── agent/p6-runtime-stability   # draft PR #6 preview only
-          ```
+              '## Branch policy',
+              '## Repository-controlled build contract',
+              f'''## Branch policy
 
-          Historical phase branches are not deployment targets:
+              **Production branch: `main`.**
 
-          ```text
-          agent/bgd-ink-p0-foundation
-          agent/bgd-ink-p2-models-print-areas
-          agent/bgd-ink-p3-premium-storefront
-          agent/bgd-ink-p4-delivery-seo-pwa
-          agent/bgd-ink-p5-prelaunch-hardening
-          ```
+              ```text
+              main   # authoritative production and development source
+              ```
 
-          PRs #1–#5 are merged. Their branches may remain temporarily for audit/history, but no production project, deploy context, build hook, or environment should point to them.''',
-              f'''```text
-          main   # authoritative production and development source
-          ```
+              PRs #1–#6 are merged. All superseded phase branches were deleted after PR #6 merged as `{merge_sha}`. Merged pull requests and validation documents preserve the audit history.
 
-          PRs #1–#6 are merged. All superseded phase branches were deleted after PR #6 merged as `{merge_sha}`. Merged pull requests and validation documents preserve the audit history.
-
-          Historical phase branches are not deployment targets and must not be recreated as a stack.''',
+              Historical phase branches are not deployment targets and must not be recreated as a stack.''',
           )
           replace_once(
               'docs/DEPLOYMENT.md',
               'PR #6 must remain draft until the final review and provider branch checks are complete.',
               'Preview deployments validate proposed commits only; production remains sourced from `main`.',
           )
-          replace_once(
+          replace_section(
               'docs/DEPLOYMENT.md',
+              '## Historical branch cleanup',
+              None,
               '''## Historical branch cleanup
 
-          Branch deletion is separate from P6 implementation.
+              Completed after the P6 merge:
 
-          Before deleting a historical branch:
-
-          1. Confirm its pull request is merged.
-          2. Confirm no provider Production Branch, branch deploy, build hook, or environment references it.
-          3. Confirm no active external review requires the branch ref.
-          4. Preserve the merged PR and validation documents as the audit record.
-          5. Delete through the repository owner’s normal branch-cleanup process.
-
-          P6 does not delete historical branches automatically.''',
-              '''## Historical branch cleanup
-
-          Completed after the P6 merge:
-
-          - PRs #1–#6 remain the audit record.
-          - P0–P6 validation documents remain in `main`.
-          - All superseded phase branches were deleted.
-          - Future work must branch from `main` without recreating the old stack.''',
+              - PRs #1–#6 remain the audit record.
+              - P0–P6 validation documents remain in `main`.
+              - All superseded phase branches were deleted.
+              - Future work must branch from `main` without recreating the old stack.''',
           )
 
-          replace_once(
+          replace_section(
               'docs/P6-RUNTIME-STABILITY-PLAN.md',
-              '''P6.1 through P6.6 are complete and validated on `agent/p6-runtime-stability`.''',
-              '''P6.1 through P6.6 are complete, validated, and merged into `main`.''',
-          )
-          replace_once(
-              'docs/P6-RUNTIME-STABILITY-PLAN.md',
-              '''Vercel and Netlify pull-request previews also completed successfully on that head. PR #6 remains draft because the external provider Production Branch settings and the final owner merge/release decision are manual gates that repository code cannot confirm.
+              '## Status',
+              '## Product boundary',
+              f'''## Status
 
-          All P6 work stays in one branch and one pull request:
+              P6.1 through P6.6 are complete, validated, and merged into `main`.
 
-          ```text
-          main
-          └── agent/p6-runtime-stability
-          ```
+              The clean automated exit suite passed on the reconciled implementation head:
 
-          The older P0–P5 phase branches are historical references. PRs #1–#5 are merged into `main`; the old active stacked-branch diagram is obsolete.''',
-              f'''Vercel and Netlify pull-request previews completed successfully on that head. PR #6 was subsequently squash-merged into `main` as `{merge_sha}`.
+              ```text
+              0cbd21ab9c264072f8497ece9e14c25f78fc9aa0
+              fix: separate CI validation from provider builds
+              ```
 
-          The final repository state is:
+              Validated GitHub Actions run:
 
-          ```text
-          main
-          ```
+              ```text
+              31308581420
+              ```
 
-          PRs #1–#6 are merged, and all superseded phase branches were deleted. The old stacked-branch diagram is obsolete; merged pull requests and validation documents preserve the history.''',
+              Vercel and Netlify pull-request previews completed successfully on that head. PR #6 was subsequently squash-merged into `main` as `{merge_sha}`.
+
+              The final repository state is:
+
+              ```text
+              main
+              ```
+
+              PRs #1–#6 are merged, and all superseded phase branches were deleted. Merged pull requests and validation documents preserve the history.''',
           )
           replace_once(
               'docs/P6-RUNTIME-STABILITY-PLAN.md',
@@ -277,147 +276,289 @@ jobs:
               'This pull request does not publish an npm package, create a GitHub release, or approve a production deployment.',
               'The P6 merge does not publish an npm package, create a GitHub release, or by itself approve a production deployment.',
           )
-          replace_once(
+          replace_section(
               'docs/P6-RUNTIME-STABILITY-PLAN.md',
-              '''## Remaining manual release gate
-
-          PR #6 remains draft and unmerged until:
-
-          - Vercel Production Branch is manually confirmed as `main`,
-          - Netlify Production Branch is manually confirmed as `main`,
-          - no historical branch deploy or build-hook reference remains,
-          - and the owner approves moving the PR out of draft and merging it.''',
+              '## Remaining manual release gate',
+              None,
               '''## Remaining external production checks
 
-          P6 engineering and repository consolidation are complete. Before presenting the application as a production service, still confirm:
+              P6 engineering and repository consolidation are complete. Before presenting the application as a production service, still confirm:
 
-          - Vercel Production Branch is `main`,
-          - Netlify Production Branch is `main`,
-          - no obsolete deploy hook or branch context remains,
-          - and the production domain, indexing, business content, and physical-device review are approved.''',
+              - Vercel Production Branch is `main`,
+              - Netlify Production Branch is `main`,
+              - no obsolete deploy hook or branch context remains,
+              - and the production domain, indexing, business content, and physical-device review are approved.''',
           )
 
-          replace_once(
+          replace_section(
               'docs/P6-6-REPOSITORY-RECONCILIATION.md',
-              '**Complete and validated** on `agent/p6-runtime-stability`.',
-              '**Complete, validated, merged, and consolidated** in `main`.',
+              '## Status',
+              '## Reconciliation decisions',
+              f'''## Status
+
+              **Complete, validated, merged, and consolidated** in `main`.
+
+              Validated reconciled implementation head:
+
+              ```text
+              0cbd21ab9c264072f8497ece9e14c25f78fc9aa0
+              fix: separate CI validation from provider builds
+              ```
+
+              Validated GitHub Actions run:
+
+              ```text
+              31308581420
+              ```
+
+              All source/build, functional, PWA, and production-performance jobs passed, and both pull-request preview providers completed successfully.
+
+              PR #6 was squash-merged as `{merge_sha}`, and all superseded phase branches were deleted afterward. This does not by itself create a public production release or alter external Vercel/Netlify Production Branch settings.''',
           )
-          replace_once(
+          replace_section(
               'docs/P6-6-REPOSITORY-RECONCILIATION.md',
-              '''P6.6 reconciles repository-controlled claims. It does not create a production release, change the product boundary, delete historical branches, or alter external Vercel/Netlify Production Branch settings.''',
-              f'''P6.6 reconciles repository-controlled claims. PR #6 was squash-merged as `{merge_sha}`, and all superseded phase branches were deleted afterward. This does not by itself create a public production release or alter external Vercel/Netlify Production Branch settings.''',
-          )
-          replace_once(
-              'docs/P6-6-REPOSITORY-RECONCILIATION.md',
-              '''```text
-          main
-          └── agent/p6-runtime-stability
-          ```
+              '### Authoritative branch state',
+              '### Package and release state',
+              f'''### Authoritative branch state
 
-          - PRs #1–#5 are merged.
-          - `main` is the P0–P5 baseline.
-          - PR #6 is the only active phase pull request.
-          - Historical phase branches are audit references, not an active stack and not deployment targets.
+              ```text
+              main
+              ```
 
-          Branch comparisons found:
-
-          - P0, P2, P3, and P4 branches contain no commits ahead of `main`.
-          - The P5 branch uses squash-merge topology and therefore appears diverged from `main`; it has no file changes after the merged PR #5 head.
-          - Historical branch deletion remains a separate owner action after external deployment references are checked.''',
-              f'''```text
-          main
-          ```
-
-          - PRs #1–#6 are merged.
-          - `main` contains the complete P0–P6 application.
-          - PR #6 produced squash commit `{merge_sha}`.
-          - All superseded phase branches were deleted after their contents were verified as merged.
-          - Merged pull requests and validation documents are the audit record.''',
+              - PRs #1–#6 are merged.
+              - `main` contains the complete P0–P6 application.
+              - PR #6 produced squash commit `{merge_sha}`.
+              - All superseded phase branches were deleted after their contents were verified as merged.
+              - Merged pull requests and validation documents are the audit record.''',
           )
           replace_once(
               'docs/P6-6-REPOSITORY-RECONCILIATION.md',
               '- Provider dashboards retain the external Production Branch setting, which must be manually confirmed before merge/release.',
               '- Provider dashboards retain external Production Branch settings that repository source cannot read; they should be confirmed as `main` before a public production launch.',
           )
-          replace_once(
+          replace_section(
               'docs/P6-6-REPOSITORY-RECONCILIATION.md',
-              '''## Remaining manual release gate
-
-          Before PR #6 can leave draft status:
-
-          1. Confirm Vercel Production Branch is `main` in the external dashboard.
-          2. Confirm Netlify Production Branch is `main` in the external dashboard.
-          3. Confirm no historical branch deploy or build-hook target remains.
-          4. Review the final PR diff and successful preview deployments.
-          5. Approve moving the PR out of draft and merging it.
-
-          P6.6 does not claim those external dashboard checks or the owner’s release approval have happened until they are explicitly confirmed.''',
+              '## Remaining manual release gate',
+              None,
               f'''## Post-merge result
 
-          - PR #6 was reviewed, marked ready, and squash-merged as `{merge_sha}`.
-          - All phase branches were deleted; only `main` remains.
-          - The complete P6 automated exit suite had passed before merge.
-          - Vercel built the merged `main` commit successfully.
+              - PR #6 was reviewed, marked ready, and squash-merged as `{merge_sha}`.
+              - All phase branches were deleted; only `main` remains.
+              - The complete P6 automated exit suite passed before merge.
+              - Vercel built the merged `main` commit successfully.
 
-          External provider dashboard settings, the public production domain, indexing approval, business content, and physical-device validation remain separate production-launch inputs. Repository source does not claim those external decisions have been completed.''',
+              External provider dashboard settings, the public production domain, indexing approval, business content, and physical-device validation remain separate production-launch inputs. Repository source does not claim those external decisions have been completed.''',
           )
 
-          checker = read('scripts/check-repository-reconciliation.mjs')
-          checker = checker.replace(
-              "requireText(files.readme, 'main\\n└── agent/p6-runtime-stability', 'README must show the single active P6 branch');",
-              "requireText(files.readme, 'main\\n```', 'README must show main as the sole authoritative branch');",
-          )
-          checker = checker.replace(
-              "requireText(files.tasks, 'agent/p6-runtime-stability', 'tasks must identify the active P6 branch');",
-              "requireText(files.tasks, 'All superseded phase branches were deleted', 'tasks must state the completed branch cleanup');",
-          )
-          checker = checker.replace(
-              "requireText(files.tasks, '| P6.6 | Complete and validated |', 'tasks must state the validated P6.6 status');",
-              "requireText(files.tasks, '| P6.1–P6.6 | Merged into `main` and validated |', 'tasks must state the merged P6 status');",
-          )
-          checker = checker.replace(
-              "requireText(files.tasks, 'Production Branch is `main`', 'tasks must retain the external production-branch gate');",
-              "requireText(files.tasks, 'Production Branch is `main`', 'tasks must retain the external production-branch check');",
-          )
-          checker = checker.replace(
-              "  /main\\s*\\n\\s*└──\\s*agent\\/bgd-ink-p0-foundation/,
-  'living status documents must not restore the obsolete active P0-P5 branch stack',",
-              "  /agent\\/(?:bgd-ink|p6-runtime-stability)/,
-  'living status documents must not restore deleted phase branches',",
-          )
-          checker = checker.replace(
-              "requireText(\n  files.deployment,\n  'agent/p6-runtime-stability',\n  'deployment docs must distinguish the PR preview branch',\n);",
-              "requireText(\n  files.deployment,\n  'All superseded phase branches were deleted',\n  'deployment docs must state the completed phase-branch cleanup',\n);",
-          )
-          checker = checker.replace(
-              "  'P6.1 through P6.6 are complete and validated',\n  'the P6 plan must reflect the validated reconciliation state',",
-              "  'P6.1 through P6.6 are complete, validated, and merged into `main`',\n  'the P6 plan must reflect the merged reconciliation state',",
-          )
-          checker = checker.replace(
-              "requireText(files.p66, '31308581420', 'the P6.6 record must retain the validated CI run');",
-              "requireText(files.p66, '31308581420', 'the P6.6 record must retain the validated CI run');\nrequireText(files.p66, '03d78a08febd8428555d6f1b657848f2a520eddc', 'the P6.6 record must retain the merge commit');\nrequireText(files.p66, 'All phase branches were deleted', 'the P6.6 record must retain completed branch cleanup');",
-          )
-          checker = checker.replace(
-              "  'Repository reconciliation passed: package metadata, validated branch status, deployment contracts, living validation claims, troubleshooting, preview evidence, and the P6 exit command agree.',",
-              "  'Repository reconciliation passed: package metadata, main-only branch status, deployment contracts, living validation claims, troubleshooting, merge evidence, and the P6 exit command agree.',",
-          )
-          checker = checker.replace(
-              "forbidPattern(\n  livingStatus,\n  /P6\\.6[^\\n]*(?:final exit validation|reconciliation implemented; final)/i,\n  'living status documents must not retain the pre-validation P6.6 state',\n);",
-              "forbidPattern(\n  livingStatus,\n  /(?:draft PR #6|PR #6 remains draft|draft and unmerged|agent\\/p6-runtime-stability)/i,\n  'living status documents must not retain the pre-merge P6 state',\n);",
-          )
-          write('scripts/check-repository-reconciliation.mjs', checker)
+          write(
+              'scripts/check-repository-reconciliation.mjs',
+              r'''
+              import { readFile } from 'node:fs/promises';
+              import path from 'node:path';
+              import process from 'node:process';
 
-          stale_patterns = {
-              'README.md': ['PR #6 remains draft', 'agent/p6-runtime-stability'],
-              'tasks.md': ['draft PR #6', 'agent/p6-runtime-stability'],
-              'docs/P6-RUNTIME-STABILITY-PLAN.md': ['PR #6 remains draft and unmerged'],
-              'docs/DEPLOYMENT.md': ['PR #6 must remain draft'],
-          }
-          for path, patterns in stale_patterns.items():
+              const root = process.cwd();
+              const read = (relativePath) => readFile(path.join(root, relativePath), 'utf8');
+
+              const files = {
+                readme: await read('README.md'),
+                tasks: await read('tasks.md'),
+                troubleshooting: await read('docs/TROUBLESHOOTING.md'),
+                deployment: await read('docs/DEPLOYMENT.md'),
+                p6Plan: await read('docs/P6-RUNTIME-STABILITY-PLAN.md'),
+                p66: await read('docs/P6-6-REPOSITORY-RECONCILIATION.md'),
+                package: await read('package.json'),
+                lock: await read('package-lock.json'),
+                budgets: await read('src/config/runtime-performance-budgets.json'),
+                netlify: await read('netlify.toml'),
+                vercel: await read('vercel.json'),
+                redirects: await read('public/_redirects'),
+                workflow: await read('.github/workflows/ci.yml'),
+              };
+
+              const failures = [];
+              const requireText = (source, text, message) => {
+                if (!source.includes(text)) failures.push(message);
+              };
+              const requirePattern = (source, pattern, message) => {
+                if (!pattern.test(source)) failures.push(message);
+              };
+              const forbidPattern = (source, pattern, message) => {
+                if (pattern.test(source)) failures.push(message);
+              };
+
+              let packageJson;
+              let lockJson;
+              let budgetJson;
+              let vercelJson;
+
+              try {
+                packageJson = JSON.parse(files.package);
+                lockJson = JSON.parse(files.lock);
+                budgetJson = JSON.parse(files.budgets);
+                vercelJson = JSON.parse(files.vercel);
+              } catch {
+                failures.push('repository metadata JSON must be valid');
+              }
+
+              if (packageJson && lockJson) {
+                if (packageJson.private !== true) failures.push('the prototype package must remain private');
+                if (packageJson.name !== lockJson.name || packageJson.name !== lockJson.packages?.['']?.name) {
+                  failures.push('package and lockfile names must agree');
+                }
+                if (
+                  packageJson.version !== lockJson.version ||
+                  packageJson.version !== lockJson.packages?.['']?.version
+                ) {
+                  failures.push('package and lockfile versions must agree');
+                }
+                requireText(
+                  files.readme,
+                  `Current private package version: \`${packageJson.version}\``,
+                  'README must state the private package version',
+                );
+                if (packageJson.scripts?.['check:repository'] !== 'node scripts/check-repository-reconciliation.mjs') {
+                  failures.push('package scripts must expose check:repository');
+                }
+                if (
+                  packageJson.scripts?.['verify:p6'] !==
+                  'npm run check && npm run test:e2e && npm run test:pwa && npm run test:performance'
+                ) {
+                  failures.push('package scripts must expose the complete P6 exit sequence');
+                }
+                requireText(
+                  packageJson.scripts?.check ?? '',
+                  'npm run check:repository',
+                  'check:repository must run inside npm run check',
+                );
+              }
+
+              if (budgetJson) {
+                const values = [
+                  budgetJson.timingMs?.homepageInteractiveMedian,
+                  budgetJson.timingMs?.routeTransitionMedian,
+                  budgetJson.timingMs?.studioReady,
+                  budgetJson.timingMs?.largeArtworkReady,
+                  budgetJson.timingMs?.constrainedArtworkReady,
+                  budgetJson.throttling?.cpuRate,
+                ];
+                if (values.some((value) => typeof value !== 'number' || value <= 0)) {
+                  failures.push('runtime budgets must retain positive production limits');
+                }
+              }
+
+              const mergeSha = '03d78a08febd8428555d6f1b657848f2a520eddc';
+              requirePattern(
+                files.readme,
+                /The authoritative repository state is:\s*```text\s*main\s*```/,
+                'README must show main as the sole authoritative branch',
+              );
+              requireText(files.readme, mergeSha, 'README must retain the P6 merge commit');
+              requireText(
+                files.readme,
+                'P6.1 through P6.6 are implemented, validated, merged, and consolidated in `main`.',
+                'README must state the merged P6 status',
+              );
+              requireText(files.readme, 'npm run test:performance', 'README must document performance tests');
+              requireText(files.readme, 'npm run verify:p6', 'README must document the P6 exit command');
+              requireText(files.readme, 'docs/DEPLOYMENT.md', 'README must link deployment guidance');
+              requireText(files.readme, 'docs/TROUBLESHOOTING.md', 'README must link troubleshooting');
+
+              requireText(files.tasks, 'All superseded phase branches were deleted', 'tasks must state branch cleanup');
+              requireText(
+                files.tasks,
+                '| P6.1–P6.6 | Merged into `main` and validated |',
+                'tasks must state the merged P6 phase status',
+              );
+              requireText(files.tasks, mergeSha, 'tasks must retain the merge commit');
+              requireText(files.tasks, 'Production Branch is `main`', 'tasks must retain provider checks');
+
+              const livingStatus = `${files.readme}\n${files.tasks}`;
+              forbidPattern(
+                livingStatus,
+                /agent\/(?:bgd-ink|p6-runtime-stability)|draft PR #6|PR #6 remains draft|draft and unmerged/i,
+                'living status documents must not restore deleted branches or pre-merge P6 claims',
+              );
+              forbidPattern(
+                livingStatus,
+                /\b\d+\s+(?:unit\/component\/accessibility tests|functional Chromium journeys|Chromium journeys|production-only PWA Chromium journey)/i,
+                'living status documents must not hard-code volatile validation totals',
+              );
+
+              requireText(files.troubleshooting, 'Draft schema version is 6', 'troubleshooting must state draft schema 6');
+              requireText(files.troubleshooting, 'npm run test:performance', 'troubleshooting must cover performance tests');
+              requirePattern(files.troubleshooting, /Reduced motion[\s\S]*demand rendering/i, 'troubleshooting must cover reduced motion');
+              requirePattern(files.troubleshooting, /2D fallback[\s\S]*WebGL/i, 'troubleshooting must cover WebGL recovery');
+              requireText(files.troubleshooting, '786,432 pixels', 'troubleshooting must retain low-power texture limits');
+              requireText(files.troubleshooting, '3,145,728 pixels', 'troubleshooting must retain high texture limits');
+              requireText(files.troubleshooting, 'Do not raise a runtime budget', 'troubleshooting must reject budget inflation');
+
+              requireText(files.deployment, 'Production branch: `main`', 'deployment docs must name main as production');
+              requireText(files.deployment, 'All superseded phase branches were deleted', 'deployment docs must state branch cleanup');
+              forbidPattern(files.deployment, /agent\/(?:bgd-ink|p6-runtime-stability)/, 'deployment docs must not restore phase refs');
+              requireText(files.deployment, 'Vercel', 'deployment docs must cover Vercel');
+              requireText(files.deployment, 'Netlify', 'deployment docs must cover Netlify');
+              requireText(files.deployment, 'VITE_PUBLIC_SITE_URL', 'deployment docs must cover the public URL');
+              requireText(files.deployment, 'VITE_INDEXABLE_BUILD', 'deployment docs must cover indexing approval');
+
+              requireText(
+                files.p6Plan,
+                'P6.1 through P6.6 are complete, validated, and merged into `main`.',
+                'the P6 plan must state its merged status',
+              );
+              requireText(files.p6Plan, mergeSha, 'the P6 plan must retain the merge commit');
+              forbidPattern(files.p6Plan, /PR #6 remains draft|draft and unmerged/i, 'the P6 plan must not retain pre-merge status');
+
+              requireText(files.p66, '**Complete, validated, merged, and consolidated**', 'P6.6 must state merged status');
+              requireText(files.p66, mergeSha, 'P6.6 must retain the merge commit');
+              requireText(files.p66, 'All phase branches were deleted', 'P6.6 must retain branch cleanup');
+              requireText(files.p66, '31308581420', 'P6.6 must retain the validated CI run');
+              requireText(files.p66, 'version: 0.4.0', 'P6.6 must state the reconciled version');
+              requireText(files.p66, 'Production branch: main', 'P6.6 must state the deployment branch decision');
+
+              if (vercelJson) {
+                if (vercelJson.framework !== 'vite') failures.push('Vercel must declare Vite');
+                if (vercelJson.installCommand !== 'npm ci --include=dev --no-audit --no-fund') {
+                  failures.push('Vercel must use the clean locked install command');
+                }
+                if (vercelJson.buildCommand !== 'npm run build') failures.push('Vercel must use npm run build');
+                if (vercelJson.outputDirectory !== 'dist') failures.push('Vercel must publish dist');
+                forbidPattern(JSON.stringify(vercelJson), /agent\//, 'Vercel config must be branch-neutral');
+              }
+
+              requirePattern(files.netlify, /command\s*=\s*"npm run build"/, 'Netlify must use npm run build');
+              requirePattern(files.netlify, /publish\s*=\s*"dist"/, 'Netlify must publish dist');
+              requirePattern(files.netlify, /NODE_VERSION\s*=\s*"22\.23\.1"/, 'Netlify must retain pinned Node');
+              forbidPattern(files.netlify, /agent\//, 'Netlify config must be branch-neutral');
+              requireText(files.redirects, '/* /index.html 200', 'Netlify must retain SPA fallback');
+              requirePattern(
+                files.workflow,
+                /name:\s*Production runtime performance budgets[\s\S]*npm run test:performance/,
+                'CI must retain the performance job',
+              );
+
+              if (failures.length > 0) {
+                console.error('\nRepository reconciliation failed:\n');
+                failures.forEach((failure) => console.error(`  - ${failure}`));
+                process.exit(1);
+              }
+
+              console.log(
+                'Repository reconciliation passed: package metadata, main-only branch status, deployment contracts, living claims, troubleshooting, merge evidence, and the P6 exit command agree.',
+              );
+              ''',
+          )
+
+          for path in [
+              'README.md',
+              'tasks.md',
+              'docs/DEPLOYMENT.md',
+              'docs/P6-RUNTIME-STABILITY-PLAN.md',
+              'docs/P6-6-REPOSITORY-RECONCILIATION.md',
+          ]:
               content = read(path)
-              for pattern in patterns:
-                  if pattern in content:
-                      raise RuntimeError(f'{path}: stale post-merge text remains: {pattern}')
+              if re.search(r'agent/(?:bgd-ink|p6-runtime-stability)|PR #6 remains draft|draft and unmerged', content, re.I):
+                  raise RuntimeError(f'{path}: stale pre-merge branch or PR text remains')
 
           print('Post-merge repository state reconciled.')
           PY
