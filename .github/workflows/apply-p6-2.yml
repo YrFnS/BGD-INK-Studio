@@ -1,0 +1,82 @@
+name: Apply P6.2 editor gesture refactor
+
+on:
+  push:
+    branches:
+      - agent/p6-runtime-stability
+    paths:
+      - scripts/apply-p6-2.py.gz.b64
+      - .github/workflows/apply-p6-2.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-p6-2
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout P6 branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/p6-runtime-stability
+          fetch-depth: 0
+          lfs: true
+
+      - name: Set up Node.js and npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Decode and apply the P6.2 migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 --decode scripts/apply-p6-2.py.gz.b64 | gzip -d > /tmp/apply-p6-2.py
+          python /tmp/apply-p6-2.py
+
+      - name: Format changed files
+        run: |
+          npx prettier --write \
+            package.json \
+            scripts/check-editor-gesture.mjs \
+            src/features/customizer/Customizer.tsx \
+            src/features/customizer/Controls.tsx \
+            src/features/customizer/Scene.tsx \
+            src/features/customizer/ShirtModel.tsx \
+            src/features/customizer/decalTransform.ts \
+            src/features/customizer/decalTransform.test.ts \
+            src/features/customizer/editorHistory.ts \
+            src/features/customizer/editorHistory.test.ts \
+            e2e/layer-editor.spec.ts
+
+      - name: Run repository validation
+        run: npm run check
+
+      - name: Run desktop and mobile journeys
+        run: npm run test:e2e
+
+      - name: Run production PWA journey
+        run: npm run test:pwa
+
+      - name: Commit validated P6.2 changes and remove migration files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm scripts/apply-p6-2.py.gz.b64 .github/workflows/apply-p6-2.yml
+          git add -A
+          git commit -m "P6.2: commit editor gestures once"
+          git push origin HEAD:agent/p6-runtime-stability
