@@ -1,13 +1,6 @@
-import React, {
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { Center, Decal, useGLTF } from '@react-three/drei';
-import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
+import { ThreeEvent, useThree } from '@react-three/fiber';
 import {
   getPrintSurface,
   type PrintSurfaceDefinition,
@@ -41,7 +34,6 @@ interface ShirtModelProps {
   decals: DecalLayer[];
   activeDecalId: string | null;
   interactionMode: CustomizerInteractionMode;
-  idleAnimationEnabled: boolean;
   textureAnisotropy: 2 | 4 | 8;
   renderingQuality: RenderingQuality;
   shadowsEnabled: boolean;
@@ -184,7 +176,6 @@ export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
       decals,
       activeDecalId,
       interactionMode,
-      idleAnimationEnabled,
       textureAnisotropy,
       renderingQuality,
       shadowsEnabled,
@@ -197,14 +188,12 @@ export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
     ref,
   ) => {
     const invalidate = useThree((state) => state.invalidate);
-    const groupRef = useRef<THREE.Group>(null);
     const activePointersRef = useRef(new Map<number, ScreenPoint>());
     const transformBaselineRef = useRef<TransformBaseline | null>(null);
     const isManipulatingRef = useRef(false);
     const decalMeshesRef = useRef(new Map<string, THREE.Mesh>());
     const liveTransformRef = useRef<{ layerId: string; transform: DecalTransform } | null>(null);
     const decalsRef = useRef(decals);
-    const [isManipulating, setIsManipulating] = useState(false);
     decalsRef.current = decals;
 
     const { nodes } = useGLTF(modelConfig.modelUrl) as unknown as LoadedGarmentModel;
@@ -287,16 +276,6 @@ export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
       liveTransformRef.current = null;
     }, [activeDecalId, decals]);
 
-    useEffect(() => {
-      if (!idleAnimationEnabled && groupRef.current) groupRef.current.rotation.y = 0;
-    }, [idleAnimationEnabled]);
-
-    useFrame((state) => {
-      if (groupRef.current && idleAnimationEnabled && !isManipulating) {
-        groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
-      }
-    });
-
     const beginManipulation = useCallback(() => {
       const layer = activeLayerRef.current;
       if (!layer || isManipulatingRef.current) return;
@@ -305,7 +284,6 @@ export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
         liveTransformRef.current = { layerId: layer.id, transform: readDecalTransform(layer) };
       }
       isManipulatingRef.current = true;
-      setIsManipulating(true);
       setDraggingDecal(true);
       onDecalInteractionStart();
     }, [onDecalInteractionStart, setDraggingDecal]);
@@ -315,7 +293,6 @@ export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
       transformBaselineRef.current = null;
       if (isManipulatingRef.current) onDecalInteractionEnd();
       isManipulatingRef.current = false;
-      setIsManipulating(false);
       setDraggingDecal(false);
     }, [onDecalInteractionEnd, setDraggingDecal]);
 
@@ -485,12 +462,7 @@ export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
 
     return (
       <Center>
-        <group
-          ref={groupRef}
-          dispose={null}
-          position={modelConfig.position}
-          scale={modelConfig.scale}
-        >
+        <group dispose={null} position={modelConfig.position} scale={modelConfig.scale}>
           <group rotation={modelConfig.rotation}>
             <mesh
               castShadow={shadowsEnabled}
