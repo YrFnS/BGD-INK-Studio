@@ -16,13 +16,10 @@ export interface RenderingCapabilities {
 
 export interface RenderingProfile {
   quality: RenderingQuality;
-  maximumDpr: number;
-  antialias: boolean;
+  maximumDpr: 1 | 1.25 | 1.5;
   shadows: boolean;
-  shadowMapSize: 256 | 512 | 1024;
-  idleAnimation: boolean;
+  shadowMapSize: 256 | 512;
   textureAnisotropy: 2 | 4 | 8;
-  powerPreference: WebGLPowerPreference;
 }
 
 interface NavigatorWithRenderingHints extends Navigator {
@@ -58,10 +55,23 @@ export const readRenderingCapabilities = (): RenderingCapabilities => {
     coarsePointer: window.matchMedia('(pointer: coarse)').matches,
     reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     saveData: renderingNavigator.connection?.saveData === true,
-    viewportWidth: window.innerWidth,
-    viewportHeight: window.innerHeight,
+    viewportWidth: Math.max(1, window.innerWidth),
+    viewportHeight: Math.max(1, window.innerHeight),
   };
 };
+
+export const areRenderingCapabilitiesEqual = (
+  left: RenderingCapabilities,
+  right: RenderingCapabilities,
+): boolean =>
+  left.devicePixelRatio === right.devicePixelRatio &&
+  left.hardwareConcurrency === right.hardwareConcurrency &&
+  left.deviceMemoryGb === right.deviceMemoryGb &&
+  left.coarsePointer === right.coarsePointer &&
+  left.reducedMotion === right.reducedMotion &&
+  left.saveData === right.saveData &&
+  left.viewportWidth === right.viewportWidth &&
+  left.viewportHeight === right.viewportHeight;
 
 export const selectRenderingProfile = (
   capabilities: RenderingCapabilities,
@@ -70,6 +80,7 @@ export const selectRenderingProfile = (
   const constrainedDevice =
     capabilities.saveData ||
     capabilities.reducedMotion ||
+    smallestViewport < 600 ||
     capabilities.hardwareConcurrency <= 2 ||
     (capabilities.deviceMemoryGb !== null && capabilities.deviceMemoryGb <= 2);
 
@@ -77,43 +88,35 @@ export const selectRenderingProfile = (
     return {
       quality: 'low',
       maximumDpr: 1,
-      antialias: false,
       shadows: false,
       shadowMapSize: 256,
-      idleAnimation: false,
       textureAnisotropy: 2,
-      powerPreference: 'low-power',
     };
   }
 
-  const balancedDevice =
-    capabilities.coarsePointer ||
-    smallestViewport < 900 ||
-    capabilities.hardwareConcurrency <= 4 ||
-    (capabilities.deviceMemoryGb !== null && capabilities.deviceMemoryGb <= 4);
+  const highCapabilityDesktop =
+    !capabilities.coarsePointer &&
+    capabilities.viewportWidth >= 1280 &&
+    smallestViewport >= 900 &&
+    capabilities.hardwareConcurrency >= 12 &&
+    (capabilities.deviceMemoryGb === null || capabilities.deviceMemoryGb >= 8);
 
-  if (balancedDevice) {
+  if (highCapabilityDesktop) {
     return {
-      quality: 'balanced',
-      maximumDpr: Math.min(1.5, capabilities.devicePixelRatio),
-      antialias: true,
+      quality: 'high',
+      maximumDpr: 1.5,
       shadows: true,
       shadowMapSize: 512,
-      idleAnimation: false,
-      textureAnisotropy: 4,
-      powerPreference: 'high-performance',
+      textureAnisotropy: 8,
     };
   }
 
   return {
-    quality: 'high',
-    maximumDpr: Math.min(2, capabilities.devicePixelRatio),
-    antialias: true,
-    shadows: true,
-    shadowMapSize: 1024,
-    idleAnimation: true,
-    textureAnisotropy: 8,
-    powerPreference: 'high-performance',
+    quality: 'balanced',
+    maximumDpr: 1.25,
+    shadows: false,
+    shadowMapSize: 256,
+    textureAnisotropy: 4,
   };
 };
 
