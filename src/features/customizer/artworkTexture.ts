@@ -32,6 +32,7 @@ export const useOptimizedArtworkTexture = (
   anisotropy: 2 | 4 | 8,
 ): THREE.Texture | null => {
   const { gl, invalidate } = useThree();
+  const { assetId, url, pixelWidth, pixelHeight } = layer;
   const hardwareMaximumDimension = Math.max(1, gl.capabilities.maxTextureSize || 1);
   const hardwareMaximumAnisotropy = Math.max(1, gl.capabilities.getMaxAnisotropy() || 1);
   const effectiveAnisotropy = Math.max(
@@ -43,8 +44,8 @@ export const useOptimizedArtworkTexture = (
     [hardwareMaximumDimension, quality],
   );
   const source = useMemo(
-    () => createSource(layer),
-    [layer.assetId, layer.pixelHeight, layer.pixelWidth, layer.url],
+    () => createSource({ assetId, url, pixelWidth, pixelHeight }),
+    [assetId, pixelHeight, pixelWidth, url],
   );
   const cacheKey = useMemo(
     () =>
