@@ -103,7 +103,7 @@ const DecalItem = ({
   renderingQuality: RenderingQuality;
   onMeshChange: (mesh: THREE.Mesh | null) => void;
 }) => {
-  const texture = useOptimizedArtworkTexture(layer.url, renderingQuality, textureAnisotropy);
+  const texture = useOptimizedArtworkTexture(layer, renderingQuality, textureAnisotropy);
   const aspectRatio = normalizeArtworkAspectRatio(layer.aspectRatio);
   const dimensions = getArtworkModelDimensions(layer.scale, surface, aspectRatio);
   const finalRotation = useMemo(
