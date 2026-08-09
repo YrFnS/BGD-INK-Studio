@@ -1,0 +1,227 @@
+          pointerIds: [number, number];
+          startFirst: ScreenPoint;
+          startSecond: ScreenPoint;
+          initial: ArtworkTransform;
+        };
+
+    export const ProceduralFallback = ({ color }: { color: string }) => (
+      <Center>
+        <mesh>
+          <boxGeometry args={[1, 1.4, 0.4]} />
+          <meshStandardMaterial color={color} roughness={0.8} />
+        </mesh>
+      </Center>
+    );
+
+    const cloneColoredMaterial = (source: THREE.Material, color: string): THREE.Material => {
+      const material = source.clone();
+      if ('color' in material && material.color instanceof THREE.Color) {
+        material.color.set(color);
+      }
+      material.needsUpdate = true;
+      return material;
+    };
+
+    const DecalItem = ({
+      layer,
+      surface,
+      isActive,
+      order,
+      textureAnisotropy,
+      renderingQuality,
+      onMeshChange,
+    }: {
+      layer: DecalLayer;
+      surface: PrintSurfaceDefinition;
+      isActive: boolean;
+      order: number;
+      textureAnisotropy: 2 | 4 | 8;
+      renderingQuality: RenderingQuality;
+      onMeshChange: (mesh: THREE.Mesh | null) => void;
+    }) => {
+      const texture = useOptimizedArtworkTexture(
+        layer.url,
+        renderingQuality,
+        textureAnisotropy,
+      );
+      const aspectRatio = normalizeArtworkAspectRatio(layer.aspectRatio);
+      const dimensions = getArtworkModelDimensions(layer.scale, surface, aspectRatio);
+      const finalRotation = useMemo(
+        () => getDecalRenderRotation(layer.rotation, layer.userRotation),
+        [layer.rotation, layer.userRotation],
+      );
+
+      if (!texture) return null;
+
+      return (
+        <Decal
+          ref={(mesh) => onMeshChange(mesh as THREE.Mesh | null)}
+          position={layer.position}
+          rotation={finalRotation}
+          scale={[dimensions.width, dimensions.height, 0.02]}
+          debug={false}
+          renderOrder={30 + order}
+        >
+          <meshBasicMaterial
+            map={texture}
+            transparent
+            polygonOffset
+            polygonOffsetFactor={isActive ? -100 : -4 - order * 2}
+            depthTest
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </Decal>
+      );
+    };
+
+    const PrintAreaGuide = ({ surface }: { surface: PrintSurfaceDefinition }) => {
+      const geometry = useMemo(() => {
+        const { minX, maxX, minY, maxY } = surface.modelBounds;
+        const offset = surface.side === 'front' ? 0.008 : -0.008;
+        const z = surface.defaultPosition[2] + offset;
+        return new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(minX, minY, z),
+          new THREE.Vector3(maxX, minY, z),
+          new THREE.Vector3(maxX, minY, z),
+          new THREE.Vector3(maxX, maxY, z),
+          new THREE.Vector3(maxX, maxY, z),
+          new THREE.Vector3(minX, maxY, z),
+          new THREE.Vector3(minX, maxY, z),
+          new THREE.Vector3(minX, minY, z),
+        ]);
+      }, [surface]);
+
+      useEffect(() => () => geometry.dispose(), [geometry]);
+
+      return (
+        <lineSegments geometry={geometry} renderOrder={20}>
+          <lineBasicMaterial
+            color="#ef4444"
+            transparent
+            opacity={0.8}
+            depthTest={false}
+            depthWrite={false}
+          />
+        </lineSegments>
+      );
+    };
+
+    export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
+      (
+        {
+          modelConfig,
+          selectedSurfaceId,
+          color,
+          decals,
+          activeDecalId,
+          interactionMode,
+          idleAnimationEnabled,
+          textureAnisotropy,
+          renderingQuality,
+          shadowsEnabled,
+          onDecalChange,
+          onDecalTransformChange,
+          onDecalInteractionStart,
+          onDecalInteractionEnd,
+          setDraggingDecal,
+        },
+        ref,
+      ) => {
+        const invalidate = useThree((state) => state.invalidate);
+        const groupRef = useRef<THREE.Group>(null);
+        const activePointersRef = useRef(new Map<number, ScreenPoint>());
+        const transformBaselineRef = useRef<TransformBaseline | null>(null);
+        const isManipulatingRef = useRef(false);
+        const decalMeshesRef = useRef(new Map<string, THREE.Mesh>());
+        const liveTransformRef = useRef<{ layerId: string; transform: DecalTransform } | null>(null);
+        const decalsRef = useRef(decals);
+        const [isManipulating, setIsManipulating] = useState(false);
+        decalsRef.current = decals;
+
+        const { nodes } = useGLTF(modelConfig.modelUrl) as unknown as LoadedGarmentModel;
+        const targetMesh = useMemo(() => {
+          const node = nodes[modelConfig.garmentMeshName];
+          if (!(node instanceof THREE.Mesh)) {
+            throw new Error(
+              `The garment mesh "${modelConfig.garmentMeshName}" was not found in ${modelConfig.modelUrl}.`,
+            );
+          }
+          return node;
+        }, [modelConfig.garmentMeshName, modelConfig.modelUrl, nodes]);
+        const coloredMaterial = useMemo(
+          () =>
+            Array.isArray(targetMesh.material)
+              ? targetMesh.material.map((material) => cloneColoredMaterial(material, color))
+              : cloneColoredMaterial(targetMesh.material, color),
+          [color, targetMesh.material],
+        );
+        const activeLayer =
+          decals.find((layer) => layer.id === activeDecalId && layer.visible) ?? null;
+        const activeLayerRef = useRef<DecalLayer | null>(activeLayer);
+        activeLayerRef.current = activeLayer;
+        const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
+
+        const applyPreview = useCallback(
+          (layerId: string, transform: DecalTransform) => {
+            const layer = decalsRef.current.find((candidate) => candidate.id === layerId);
+            const mesh = decalMeshesRef.current.get(layerId);
+            if (!layer || !mesh) return;
+
+            applyDecalTransformToObject(
+              mesh,
+              layer,
+              transform,
+              getPrintSurface(modelConfig, layer.surfaceId),
+            );
+            invalidate();
+          },
+          [invalidate, modelConfig],
+        );
+
+        const previewLayerTransform = useCallback(
+          (layerId: string, transform: DecalTransform) => {
+            liveTransformRef.current = { layerId, transform };
+            applyPreview(layerId, transform);
+          },
+          [applyPreview],
+        );
+
+        const registerDecalMesh = useCallback(
+          (layerId: string, mesh: THREE.Mesh | null) => {
+            if (mesh) decalMeshesRef.current.set(layerId, mesh);
+            else decalMeshesRef.current.delete(layerId);
+
+            const live = liveTransformRef.current;
+            if (mesh && live?.layerId === layerId) applyPreview(layerId, live.transform);
+          },
+          [applyPreview],
+        );
+
+        const getActiveTransform = useCallback((): DecalTransform | null => {
+          const layer = activeLayerRef.current;
+          if (!layer) return null;
+          const live = liveTransformRef.current;
+          return live?.layerId === layer.id ? live.transform : readDecalTransform(layer);
+        }, []);
+
+        useEffect(
+          () => () => {
+            if (Array.isArray(coloredMaterial)) {
+              coloredMaterial.forEach((material) => material.dispose());
+            } else {
+              coloredMaterial.dispose();
+            }
+          },
+          [coloredMaterial],
+        );
+
+        useEffect(() => {
+          liveTransformRef.current = null;
+        }, [activeDecalId, decals]);
+
+        useEffect(() => {
+          if (!idleAnimationEnabled && groupRef.current) groupRef.current.rotation.y = 0;
+        }, [idleAnimationEnabled]);
+
+        useFrame((state) => {
