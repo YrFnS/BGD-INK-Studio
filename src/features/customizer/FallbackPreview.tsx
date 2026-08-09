@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import type { PrintSurfaceDefinition } from '@/data/assets3d';
+import { PRODUCTS } from '@/data/products';
 import type { DecalLayer } from '@/types';
 import { normalizeArtworkAspectRatio } from './artworkAnalysis';
 import { getGarmentPreviewDefinition } from './garmentPreview';
@@ -21,7 +22,7 @@ interface FallbackPreviewProps {
 const toPercentage = (value: number): string => `${Math.max(0, Math.min(100, value))}%`;
 
 export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
-  productId = 'tshirt-classic',
+  productId,
   productName,
   color,
   surface,
@@ -32,11 +33,15 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
   onRetry3d,
 }) => {
   const { language, t } = useAppContext();
+  const resolvedProductId =
+    productId ??
+    PRODUCTS.find((candidate) => t(candidate.name) === productName)?.id ??
+    'tshirt-classic';
   const instanceId = React.useId().replace(/:/g, '');
   const fabricGradientId = `fallback-fabric-${instanceId}`;
   const sheenGradientId = `fallback-sheen-${instanceId}`;
   const shadowFilterId = `fallback-shadow-${instanceId}`;
-  const definition = getGarmentPreviewDefinition(productId, surface.side);
+  const definition = getGarmentPreviewDefinition(resolvedProductId, surface.side);
   const width = surface.modelBounds.maxX - surface.modelBounds.minX;
   const height = surface.modelBounds.maxY - surface.modelBounds.minY;
   const visibleLayers = decals.filter(
@@ -141,7 +146,7 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
         className="relative mt-28 aspect-[5/6] w-[min(88vw,34rem)] sm:mt-20"
         role="img"
         aria-label={visualLabel}
-        data-garment-preview={productId}
+        data-garment-preview={resolvedProductId}
         data-surface-side={surface.side}
       >
         <div
