@@ -1,0 +1,211 @@
+          if (groupRef.current && idleAnimationEnabled && !isManipulating) {
+            groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
+          }
+        });
+
+        const beginManipulation = useCallback(() => {
+          const layer = activeLayerRef.current;
+          if (!layer || isManipulatingRef.current) return;
+
+          if (liveTransformRef.current?.layerId !== layer.id) {
+            liveTransformRef.current = { layerId: layer.id, transform: readDecalTransform(layer) };
+          }
+          isManipulatingRef.current = true;
+          setIsManipulating(true);
+          setDraggingDecal(true);
+          onDecalInteractionStart();
+        }, [onDecalInteractionStart, setDraggingDecal]);
+
+        const finishManipulation = useCallback(() => {
+          activePointersRef.current.clear();
+          transformBaselineRef.current = null;
+          if (isManipulatingRef.current) onDecalInteractionEnd();
+          isManipulatingRef.current = false;
+          setIsManipulating(false);
+          setDraggingDecal(false);
+        }, [onDecalInteractionEnd, setDraggingDecal]);
+
+        useImperativeHandle(
+          ref,
+          () => ({
+            previewDecalTransform: previewLayerTransform,
+            finishDecalInteraction: finishManipulation,
+          }),
+          [finishManipulation, previewLayerTransform],
+        );
+
+        useEffect(
+          () => () => {
+            finishManipulation();
+          },
+          [activeDecalId, finishManipulation, interactionMode],
+        );
+
+        const resetTransformBaseline = () => {
+          const current = getActiveTransform();
+          if (!current) {
+            transformBaselineRef.current = null;
+            return;
+          }
+
+          const pointers = Array.from(activePointersRef.current.entries());
+          const initial = { scale: current.scale, rotation: current.userRotation };
+
+          if (pointers.length >= 2) {
+            const [[firstId, first], [secondId, second]] = pointers;
+            transformBaselineRef.current = {
+              kind: 'multi',
+              pointerIds: [firstId, secondId],
+              startFirst: first,
+              startSecond: second,
+              initial,
+            };
+          } else if (pointers[0]) {
+            const [pointerId, start] = pointers[0];
+            transformBaselineRef.current = { kind: 'single', pointerId, start, initial };
+          } else {
+            transformBaselineRef.current = null;
+          }
+        };
+
+        const updateDecalPosition = (event: ThreeEvent<PointerEvent>) => {
+          const layer = activeLayerRef.current;
+          const current = getActiveTransform();
+          if (!event.face || !layer || !current) return;
+
+          const surface = getPrintSurface(modelConfig, layer.surfaceId);
+          const mesh = event.object as THREE.Mesh;
+          const localPoint = mesh.worldToLocal(event.point.clone());
+          if (!isPointOnSurfaceSide(localPoint.z, surface)) return;
+
+          const normal = event.face.normal.clone();
+          const target = new THREE.Vector3(0, 0, 1);
+          const quaternion = new THREE.Quaternion().setFromUnitVectors(target, normal);
+          const euler = new THREE.Euler().setFromQuaternion(quaternion);
+          const next = normalizeDecalTransform(
+            layer,
+            current,
+            {
+              position: [localPoint.x, localPoint.y, localPoint.z],
+              rotation: [euler.x, euler.y, euler.z],
+            },
+            surface,
+          );
+
+          previewLayerTransform(layer.id, next);
+          onDecalChange(next.position, next.rotation);
+        };
+
+        const updateDecalTransform = () => {
+          const baseline = transformBaselineRef.current;
+          const layer = activeLayerRef.current;
+          const current = getActiveTransform();
+          if (!baseline || !layer || !current) return;
+
+          let calculated: ArtworkTransform | null = null;
+          if (baseline.kind === 'single') {
+            const pointer = activePointersRef.current.get(baseline.pointerId);
+            if (pointer) {
+              calculated = calculateSinglePointerTransform(
+                baseline.initial,
+                baseline.start,
+                pointer,
+              );
+            }
+          } else {
+            const currentFirst = activePointersRef.current.get(baseline.pointerIds[0]);
+            const currentSecond = activePointersRef.current.get(baseline.pointerIds[1]);
+            if (currentFirst && currentSecond) {
+              calculated = calculateMultiPointerTransform(
+                baseline.initial,
+                baseline.startFirst,
+                baseline.startSecond,
+                currentFirst,
+                currentSecond,
+              );
+            }
+          }
+          if (!calculated) return;
+
+          const next = normalizeDecalTransform(
+            layer,
+            current,
+            { scale: calculated.scale, userRotation: calculated.rotation },
+            getPrintSurface(modelConfig, layer.surfaceId),
+          );
+          previewLayerTransform(layer.id, next);
+          onDecalTransformChange(next.scale, next.userRotation);
+        };
+
+        const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
+          if (!activeLayer || interactionMode === 'view') return;
+
+          event.stopPropagation();
+          const target = event.target as EventTarget & {
+            setPointerCapture?: (pointerId: number) => void;
+          };
+          target.setPointerCapture?.(event.pointerId);
+          activePointersRef.current.set(event.pointerId, {
+            x: event.clientX,
+            y: event.clientY,
+          });
+          beginManipulation();
+
+          if (interactionMode === 'move') updateDecalPosition(event);
+          else resetTransformBaseline();
+        };
+
+        const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
+          if (!isManipulatingRef.current || interactionMode === 'view') return;
+          if (!activePointersRef.current.has(event.pointerId)) return;
+
+          event.stopPropagation();
+          activePointersRef.current.set(event.pointerId, {
+            x: event.clientX,
+            y: event.clientY,
+          });
+
+          if (interactionMode === 'move') updateDecalPosition(event);
+          else {
+            const pointerCount = activePointersRef.current.size;
+            const baseline = transformBaselineRef.current;
+            if (
+              (pointerCount >= 2 && baseline?.kind !== 'multi') ||
+              (pointerCount === 1 && baseline?.kind !== 'single')
+            ) {
+              resetTransformBaseline();
+            }
+            updateDecalTransform();
+          }
+        };
+
+        const handlePointerEnd = (event: ThreeEvent<PointerEvent>) => {
+          const target = event.target as EventTarget & {
+            releasePointerCapture?: (pointerId: number) => void;
+          };
+          target.releasePointerCapture?.(event.pointerId);
+          activePointersRef.current.delete(event.pointerId);
+
+          if (interactionMode === 'transform' && activePointersRef.current.size > 0) {
+            resetTransformBaseline();
+          } else {
+            finishManipulation();
+          }
+        };
+
+        return (
+          <Center>
+            <group
+              ref={groupRef}
+              dispose={null}
+              position={modelConfig.position}
+              scale={modelConfig.scale}
+            >
+              <group rotation={modelConfig.rotation}>
+                <mesh
+                  castShadow={shadowsEnabled}
+                  receiveShadow={shadowsEnabled}
+                  geometry={targetMesh.geometry}
+                  material={coloredMaterial}
+                  onPointerDown={handlePointerDown}
+                  onPointerUp={handlePointerEnd}
