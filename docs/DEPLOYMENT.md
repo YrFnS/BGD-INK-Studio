@@ -4,15 +4,15 @@ This document defines the repository-controlled deployment contract and the exte
 
 ## Branch policy
 
-    **Production branch: `main`.**
+**Production branch: `main`.**
 
-    ```text
-    main   # authoritative production and development source
-    ```
+```text
+main   # authoritative production and development source
+```
 
-    PRs #1–#6 are merged. All superseded phase branches were deleted after PR #6 merged as `03d78a08febd8428555d6f1b657848f2a520eddc`. Merged pull requests and validation documents preserve the audit history.
+PRs #1–#6 are merged. All superseded phase branches were deleted after PR #6 merged as `03d78a08febd8428555d6f1b657848f2a520eddc`. Merged pull requests and validation documents preserve the audit history.
 
-    Historical phase branches are not deployment targets and must not be recreated as a stack.
+Historical phase branches are not deployment targets and must not be recreated as a stack.
 
 ## Repository-controlled build contract
 
@@ -179,9 +179,9 @@ The deployment is static and browser-local.
 
 ## Historical branch cleanup
 
-    Completed after the P6 merge:
+Completed after the P6 merge:
 
-    - PRs #1–#6 remain the audit record.
-    - P0–P6 validation documents remain in `main`.
-    - All superseded phase branches were deleted.
-    - Future work must branch from `main` without recreating the old stack.
+- PRs #1–#6 remain the audit record.
+- P0–P6 validation documents remain in `main`.
+- All superseded phase branches were deleted.
+- Future work must branch from `main` without recreating the old stack.
