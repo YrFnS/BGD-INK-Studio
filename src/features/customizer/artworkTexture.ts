@@ -41,7 +41,13 @@ export const useOptimizedArtworkTexture = (
     [hardwareMaximumDimension, quality],
   );
   const source = useMemo(
-    () => createSource(layer),
+    () =>
+      createSource({
+        assetId: layer.assetId,
+        url: layer.url,
+        pixelWidth: layer.pixelWidth,
+        pixelHeight: layer.pixelHeight,
+      }),
     [layer.assetId, layer.pixelHeight, layer.pixelWidth, layer.url],
   );
   const cacheKey = useMemo(
