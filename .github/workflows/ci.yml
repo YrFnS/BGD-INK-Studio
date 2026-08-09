@@ -132,7 +132,7 @@ jobs:
         run: |
           set -euo pipefail
           cat scripts/apply-p6-2.py.part-* > /tmp/apply-p6-2.py
-          echo "cafd1b5a8380c6dc78c246deeb87e328bcf3ef6fd44a3f61a715ab09b20ea913  /tmp/apply-p6-2.py" | sha256sum -c -
+          echo "87b236734d1afcdf19ee092c461616601da2bc0f6418ee0a1b1ac8250d6aeb9b  /tmp/apply-p6-2.py" | sha256sum -c -
           python -m py_compile /tmp/apply-p6-2.py
           python /tmp/apply-p6-2.py
 

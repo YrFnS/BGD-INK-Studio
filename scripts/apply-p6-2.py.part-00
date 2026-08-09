@@ -4,7 +4,7 @@ from pathlib import Path
 import json
 import textwrap
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path.cwd()
 
 
 def write_text(relative: str, content: str) -> None:
