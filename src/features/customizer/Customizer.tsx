@@ -31,6 +31,14 @@ import {
 import { ArtworkQualityOverlay } from './ArtworkQualityOverlay';
 import { Controls } from './Controls';
 import {
+  applyDecalTransform,
+  areDecalTransformsEqual,
+  normalizeDecalTransform,
+  readDecalTransform,
+  type DecalTransform,
+  type DecalTransformPatch,
+} from './decalTransform';
+import {
   areEditorSnapshotsEqual,
   cloneEditorSnapshot,
   commitEditorHistory,
@@ -49,7 +57,7 @@ import {
   createDefaultSurfaceTransform,
 } from './printArea';
 import type { PreviewMode, RenderingFallbackReason } from './renderingCapabilities';
-import { Scene } from './Scene';
+import { Scene, type SceneHandle } from './Scene';
 import { useRenderingEnvironment } from './useRenderingEnvironment';
 import { validateArtworkFile } from './artworkValidation';
 
@@ -61,6 +69,12 @@ interface CustomizerProps {
 
 type CustomizerLoadStatus = DraftLoadStatus | 'model-unavailable';
 type LayerDirection = 'forward' | 'backward';
+
+interface LiveEditorGesture {
+  layerId: string;
+  start: DecalTransform;
+  current: DecalTransform;
+}
 
 const createLayerId = (): string => {
   const token =
@@ -181,20 +195,25 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<SceneHandle>(null);
   const modelConfigRef = useRef<ReadyProductModelConfig | null>(null);
   const selectedColorRef = useRef('');
   const selectedSizeRef = useRef<Size>(Size.L);
   const selectedSurfaceIdRef = useRef<PrintSurfaceId>(DEFAULT_PRINT_SURFACE_ID);
+  const notesRef = useRef('');
   const activeDecalIdRef = useRef<string | null>(null);
   const decalsRef = useRef<DecalLayer[]>([]);
   const historyRef = useRef<EditorHistory | null>(null);
-  const gestureStartRef = useRef<EditorSnapshot | null>(null);
+  const liveGestureRef = useRef<LiveEditorGesture | null>(null);
   const mountedRef = useRef(true);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const saveVersionRef = useRef(0);
   const pendingSaveRef = useRef<DesignDraftSnapshot | null>(null);
   const autosaveTimerRef = useRef<number | null>(null);
+  const skipNextAutosaveRef = useRef(false);
   const languageRef = useRef(language);
+
+  notesRef.current = notes;
 
   useEffect(() => {
     languageRef.current = language;
@@ -258,12 +277,20 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
 
   const commitEditorChange = useCallback(
     (update: (current: EditorSnapshot) => EditorSnapshot) => {
-      const current = cloneEditorSnapshot(captureEditorSnapshot());
-      const next = update(cloneEditorSnapshot(current));
-      const baseHistory = historyRef.current
-        ? { ...historyRef.current, present: current }
-        : createEditorHistory(current);
+      const current = captureEditorSnapshot();
+      const next = update(current);
+      const existingHistory = historyRef.current;
+      const baseHistory =
+        existingHistory && areEditorSnapshotsEqual(existingHistory.present, current)
+          ? existingHistory
+          : existingHistory
+            ? { ...existingHistory, present: cloneEditorSnapshot(current) }
+            : createEditorHistory(current);
       const nextHistory = commitEditorHistory(baseHistory, next);
+      if (nextHistory === baseHistory) {
+        if (baseHistory !== existingHistory) historyRef.current = baseHistory;
+        return;
+      }
 
       historyRef.current = nextHistory;
       applyEditorSnapshot(nextHistory.present);
@@ -272,37 +299,66 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     [applyEditorSnapshot, captureEditorSnapshot, updateHistoryAvailability],
   );
 
-  const applyLiveEditorChange = useCallback(
-    (update: (current: EditorSnapshot) => EditorSnapshot) => {
-      const next = update(cloneEditorSnapshot(captureEditorSnapshot()));
-      applyEditorSnapshot(next);
+  const commitLiveGesture = useCallback((): boolean => {
+    const gesture = liveGestureRef.current;
+    if (!gesture) return false;
+    liveGestureRef.current = null;
+    if (areDecalTransformsEqual(gesture.start, gesture.current)) return false;
+
+    commitEditorChange((current) => ({
+      ...current,
+      decals: current.decals.map((layer) =>
+        layer.id === gesture.layerId ? applyDecalTransform(layer, gesture.current) : layer,
+      ),
+    }));
+    return true;
+  }, [commitEditorChange]);
+
+  const startEditorGesture = useCallback(
+    (layerId: string) => {
+      const activeGesture = liveGestureRef.current;
+      if (activeGesture?.layerId === layerId) return;
+      if (activeGesture) commitLiveGesture();
+
+      const layer = decalsRef.current.find((candidate) => candidate.id === layerId);
+      if (!layer) return;
+      liveGestureRef.current = {
+        layerId,
+        start: readDecalTransform(layer),
+        current: readDecalTransform(layer),
+      };
     },
-    [applyEditorSnapshot, captureEditorSnapshot],
+    [commitLiveGesture],
   );
 
   const beginEditorGesture = useCallback(() => {
-    if (gestureStartRef.current) return;
-    const start = cloneEditorSnapshot(captureEditorSnapshot());
-    gestureStartRef.current = start;
-    syncHistoryPresent(start);
-  }, [captureEditorSnapshot, syncHistoryPresent]);
+    const layerId = activeDecalIdRef.current;
+    if (layerId) startEditorGesture(layerId);
+  }, [startEditorGesture]);
 
-  const endEditorGesture = useCallback(() => {
-    const start = gestureStartRef.current;
-    if (!start) return;
+  const previewEditorGesture = useCallback(
+    (layerId: string, updates: DecalTransformPatch, applyToScene: boolean) => {
+      const config = modelConfigRef.current;
+      const layer = decalsRef.current.find((candidate) => candidate.id === layerId);
+      if (!config || !layer) return;
 
-    gestureStartRef.current = null;
-    const current = cloneEditorSnapshot(captureEditorSnapshot());
-    const baseHistory = historyRef.current
-      ? { ...historyRef.current, present: cloneEditorSnapshot(start) }
-      : createEditorHistory(start);
-    const nextHistory = areEditorSnapshotsEqual(start, current)
-      ? { ...baseHistory, present: current }
-      : commitEditorHistory(baseHistory, current);
+      startEditorGesture(layerId);
+      const gesture = liveGestureRef.current;
+      if (!gesture || gesture.layerId !== layerId) return;
 
-    historyRef.current = nextHistory;
-    updateHistoryAvailability(nextHistory);
-  }, [captureEditorSnapshot, updateHistoryAvailability]);
+      const next = normalizeDecalTransform(
+        layer,
+        gesture.current,
+        updates,
+        getPrintSurface(config, layer.surfaceId),
+      );
+      gesture.current = next;
+      if (applyToScene) sceneRef.current?.previewDecalTransform(layerId, next);
+    },
+    [startEditorGesture],
+  );
+
+  const endEditorGesture = useCallback((): boolean => commitLiveGesture(), [commitLiveGesture]);
 
   const handleUndo = useCallback(() => {
     endEditorGesture();
@@ -353,6 +409,18 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
   );
 
   const flushPendingSave = useCallback(async (): Promise<void> => {
+    if (endEditorGesture()) {
+      skipNextAutosaveRef.current = true;
+      pendingSaveRef.current = createSnapshot(
+        selectedColorRef.current,
+        selectedSizeRef.current,
+        notesRef.current,
+        activeDecalIdRef.current,
+        decalsRef.current,
+        collectRetainedAssetIds(historyRef.current, decalsRef.current),
+      );
+    }
+
     if (autosaveTimerRef.current !== null) {
       window.clearTimeout(autosaveTimerRef.current);
       autosaveTimerRef.current = null;
@@ -369,7 +437,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
         pendingSaveRef.current = snapshot;
       },
     );
-  }, [queueDraftSave]);
+  }, [endEditorGesture, queueDraftSave]);
 
   useEffect(
     () => registerDraftPersistenceFlusher(`customizer:${draftId}`, flushPendingSave),
@@ -395,7 +463,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     setInteractionMode('view');
     modelConfigRef.current = null;
     historyRef.current = null;
-    gestureStartRef.current = null;
+    liveGestureRef.current = null;
     updateHistoryAvailability(null);
 
     Promise.all([loadDesignDraft(draftId), platformApi.catalog.listProducts(controller.signal)])
@@ -479,12 +547,16 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
       decalsRef.current = [];
       modelConfigRef.current = null;
       historyRef.current = null;
-      gestureStartRef.current = null;
+      liveGestureRef.current = null;
     };
   }, [applyEditorSnapshot, draftId, showToast, updateHistoryAvailability]);
 
   useEffect(() => {
     if (loadStatus !== 'ready') return undefined;
+    if (skipNextAutosaveRef.current) {
+      skipNextAutosaveRef.current = false;
+      return undefined;
+    }
 
     setSaveStatus('unsaved');
     pendingSaveRef.current = createSnapshot(
@@ -653,54 +725,30 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
     );
   };
 
-  const handleDecalUpdate = (id: string, updates: Partial<DecalLayer>) => {
-    const config = modelConfigRef.current;
-    if (!config) return;
+  const handleDecalUpdate = useCallback(
+    (id: string, updates: Partial<DecalLayer>) => {
+      previewEditorGesture(id, updates, true);
+    },
+    [previewEditorGesture],
+  );
 
-    applyLiveEditorChange((current) => ({
-      ...current,
-      decals: current.decals.map((layer) => {
-        if (layer.id !== id) return layer;
+  const handleSceneDecalChange = useCallback(
+    (position: [number, number, number], rotation: [number, number, number]) => {
+      const layerId = activeDecalIdRef.current;
+      if (layerId) previewEditorGesture(layerId, { position, rotation }, false);
+    },
+    [previewEditorGesture],
+  );
 
-        const surface = getPrintSurface(config, layer.surfaceId);
-        const aspectRatio = normalizeArtworkAspectRatio(layer.aspectRatio);
-        const scale = clampScaleToSurface(updates.scale ?? layer.scale, surface, aspectRatio);
-        const position = clampPositionToSurface(
-          updates.position ?? layer.position,
-          surface,
-          scale,
-          aspectRatio,
-        );
-
-        return {
-          ...layer,
-          ...updates,
-          surfaceId: surface.id,
-          aspectRatio,
-          scale,
-          position,
-        };
-      }),
-    }));
-  };
-
-  const handleSceneDecalChange = (
-    position: [number, number, number],
-    rotation: [number, number, number],
-  ) => {
-    if (activeDecalIdRef.current) {
-      handleDecalUpdate(activeDecalIdRef.current, { position, rotation });
-    }
-  };
-
-  const handleSceneTransformChange = (scale: number, rotation: number) => {
-    if (activeDecalIdRef.current) {
-      handleDecalUpdate(activeDecalIdRef.current, {
-        scale,
-        userRotation: rotation,
-      });
-    }
-  };
+  const handleSceneTransformChange = useCallback(
+    (scale: number, rotation: number) => {
+      const layerId = activeDecalIdRef.current;
+      if (layerId) {
+        previewEditorGesture(layerId, { scale, userRotation: rotation }, false);
+      }
+    },
+    [previewEditorGesture],
+  );
 
   const handleSetActiveDecal = (id: string) => {
     endEditorGesture();
@@ -1012,6 +1060,7 @@ export const Customizer: React.FC<CustomizerProps> = ({ draftId, onCheckout, onM
         <div className={`h-full w-full ${cursorClass}`}>
           {previewMode === '3d' ? (
             <Scene
+              ref={sceneRef}
               key={sceneKey}
               modelConfig={modelConfig}
               selectedSurfaceId={selectedSurfaceId}

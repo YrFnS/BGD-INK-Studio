@@ -1,100 +1,102 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useThree } from '@react-three/fiber';
+import { incrementRuntimeCounter } from '@/runtime/performanceMetrics';
+import type { DecalLayer } from '@/types';
 import {
-  fitArtworkTextureDimensions,
-  getArtworkTextureDimensionLimit,
-} from './artworkTextureBudget';
+  acquireArtworkTexture,
+  createArtworkTextureCacheKey,
+} from './artworkTextureCache';
+import { getArtworkTextureLimits } from './artworkTextureBudget';
+import {
+  isArtworkTextureAbortError,
+  loadBoundedArtworkTexture,
+  type ArtworkTextureSource,
+} from './artworkTextureLoader';
 import type { RenderingQuality } from './renderingCapabilities';
-import * as THREE from 'three';
+import type * as THREE from 'three';
 
-const IMAGE_LOAD_TIMEOUT_MS = 10_000;
+type ArtworkTextureLayerSource = Pick<
+  DecalLayer,
+  'assetId' | 'url' | 'pixelWidth' | 'pixelHeight'
+>;
 
-const configureTexture = (
-  texture: THREE.Texture,
-  anisotropy: 2 | 4 | 8,
-): THREE.Texture => {
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = anisotropy;
-  texture.generateMipmaps = true;
-  texture.minFilter = THREE.LinearMipmapLinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.needsUpdate = true;
-  return texture;
-};
+const createSource = (layer: ArtworkTextureLayerSource): ArtworkTextureSource => ({
+  identity: layer.assetId ? `asset:${layer.assetId}` : `url:${layer.url}`,
+  url: layer.url,
+  pixelWidth: layer.pixelWidth,
+  pixelHeight: layer.pixelHeight,
+});
 
 export const useOptimizedArtworkTexture = (
-  url: string,
+  layer: ArtworkTextureLayerSource,
   quality: RenderingQuality,
   anisotropy: 2 | 4 | 8,
 ): THREE.Texture | null => {
   const { gl, invalidate } = useThree();
-  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const hardwareMaximumDimension = Math.max(1, gl.capabilities.maxTextureSize || 1);
+  const hardwareMaximumAnisotropy = Math.max(1, gl.capabilities.getMaxAnisotropy() || 1);
+  const effectiveAnisotropy = Math.max(1, Math.min(anisotropy, hardwareMaximumAnisotropy));
+  const limits = useMemo(
+    () => getArtworkTextureLimits(quality, hardwareMaximumDimension),
+    [hardwareMaximumDimension, quality],
+  );
+  const source = useMemo(
+    () =>
+      createSource({
+        assetId: layer.assetId,
+        url: layer.url,
+        pixelWidth: layer.pixelWidth,
+        pixelHeight: layer.pixelHeight,
+      }),
+    [layer.assetId, layer.pixelHeight, layer.pixelWidth, layer.url],
+  );
+  const cacheKey = useMemo(
+    () =>
+      createArtworkTextureCacheKey({
+        sourceIdentity: source.identity,
+        sourceWidth: source.pixelWidth,
+        sourceHeight: source.pixelHeight,
+        limits,
+        anisotropy: effectiveAnisotropy,
+      }),
+    [effectiveAnisotropy, limits, source.identity, source.pixelHeight, source.pixelWidth],
+  );
+  const [resolvedTexture, setResolvedTexture] = useState<{
+    key: string;
+    texture: THREE.Texture;
+  } | null>(null);
 
   useEffect(() => {
-    setTexture(null);
-    let disposed = false;
-    let ownedTexture: THREE.Texture | null = null;
-    let fallbackTexture: THREE.Texture | null = null;
-    const image = new Image();
+    let active = true;
+    const lease = acquireArtworkTexture(cacheKey, (signal) =>
+      loadBoundedArtworkTexture({
+        source,
+        limits,
+        anisotropy: effectiveAnisotropy,
+        signal,
+      }),
+    );
 
-    const loadOriginalTexture = () => {
-      if (disposed || fallbackTexture) return;
-      image.src = '';
-      fallbackTexture = new THREE.TextureLoader().load(url, (loaded) => {
-        if (disposed) {
-          loaded.dispose();
-          return;
-        }
-        ownedTexture = configureTexture(loaded, anisotropy);
-        setTexture(ownedTexture);
+    lease.texture.then(
+      (texture) => {
+        if (!active) return;
+        setResolvedTexture({ key: cacheKey, texture });
+        incrementRuntimeCounter('webglInvalidations');
         invalidate();
-      });
-    };
-
-    const timer = window.setTimeout(loadOriginalTexture, IMAGE_LOAD_TIMEOUT_MS);
-
-    image.decoding = 'async';
-    image.onload = () => {
-      window.clearTimeout(timer);
-      if (disposed || fallbackTexture) return;
-
-      const configuredLimit = getArtworkTextureDimensionLimit(quality);
-      const hardwareLimit = Math.max(1, gl.capabilities.maxTextureSize || configuredLimit);
-      const dimensions = fitArtworkTextureDimensions(
-        image.naturalWidth,
-        image.naturalHeight,
-        Math.min(configuredLimit, hardwareLimit),
-      );
-      const canvas = document.createElement('canvas');
-      canvas.width = dimensions.width;
-      canvas.height = dimensions.height;
-      const context = canvas.getContext('2d');
-
-      if (!context) {
-        loadOriginalTexture();
-        return;
-      }
-
-      context.clearRect(0, 0, dimensions.width, dimensions.height);
-      context.drawImage(image, 0, 0, dimensions.width, dimensions.height);
-      ownedTexture = configureTexture(new THREE.CanvasTexture(canvas), anisotropy);
-      setTexture(ownedTexture);
-      invalidate();
-    };
-    image.onerror = () => {
-      window.clearTimeout(timer);
-      loadOriginalTexture();
-    };
-    image.src = url;
+      },
+      (error: unknown) => {
+        if (!active || isArtworkTextureAbortError(error)) return;
+        setResolvedTexture((current) => (current?.key === cacheKey ? null : current));
+        incrementRuntimeCounter('webglInvalidations');
+        invalidate();
+      },
+    );
 
     return () => {
-      disposed = true;
-      window.clearTimeout(timer);
-      image.src = '';
-      ownedTexture?.dispose();
-      if (fallbackTexture && fallbackTexture !== ownedTexture) fallbackTexture.dispose();
+      active = false;
+      lease.release();
     };
-  }, [anisotropy, gl.capabilities.maxTextureSize, invalidate, quality, url]);
+  }, [cacheKey, effectiveAnisotropy, invalidate, limits, source]);
 
-  return texture;
+  return resolvedTexture?.key === cacheKey ? resolvedTexture.texture : null;
 };

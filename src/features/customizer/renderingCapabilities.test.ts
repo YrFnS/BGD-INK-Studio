@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  areRenderingCapabilitiesEqual,
   detectWebGLSupport,
   selectRenderingProfile,
   type RenderingCapabilities,
@@ -20,33 +21,82 @@ const capabilities = (
 });
 
 describe('adaptive rendering capabilities', () => {
-  it('selects a high-quality profile for capable desktop devices', () => {
-    expect(selectRenderingProfile(capabilities())).toMatchObject({
+  it('defaults an ordinary capable desktop to the balanced profile', () => {
+    expect(selectRenderingProfile(capabilities())).toEqual({
+      quality: 'balanced',
+      maximumDpr: 1.25,
+      shadows: false,
+      shadowMapSize: 256,
+      textureAnisotropy: 4,
+    });
+  });
+
+  it('reserves high quality for measured high-capability desktop conditions', () => {
+    expect(
+      selectRenderingProfile(
+        capabilities({
+          hardwareConcurrency: 16,
+          viewportWidth: 1600,
+          viewportHeight: 1000,
+        }),
+      ),
+    ).toEqual({
       quality: 'high',
-      maximumDpr: 2,
+      maximumDpr: 1.5,
       shadows: true,
-      idleAnimation: true,
+      shadowMapSize: 512,
       textureAnisotropy: 8,
     });
   });
 
-  it('reduces rendering cost for constrained or data-saving devices', () => {
+  it('reduces rendering cost for constrained, motion-sensitive, or compact devices', () => {
     expect(selectRenderingProfile(capabilities({ saveData: true }))).toMatchObject({
       quality: 'low',
       maximumDpr: 1,
-      antialias: false,
       shadows: false,
-      idleAnimation: false,
+    });
+    expect(selectRenderingProfile(capabilities({ reducedMotion: true }))).toMatchObject({
+      quality: 'low',
+      maximumDpr: 1,
+      shadows: false,
+    });
+    expect(
+      selectRenderingProfile(capabilities({ viewportWidth: 390, viewportHeight: 844 })),
+    ).toMatchObject({
+      quality: 'low',
+      maximumDpr: 1,
+      shadows: false,
     });
   });
 
-  it('uses a balanced profile for touch-first devices', () => {
-    expect(selectRenderingProfile(capabilities({ coarsePointer: true }))).toMatchObject({
+  it('uses the balanced profile for touch-first devices', () => {
+    expect(
+      selectRenderingProfile(
+        capabilities({
+          coarsePointer: true,
+          hardwareConcurrency: 16,
+          viewportWidth: 1600,
+          viewportHeight: 1000,
+        }),
+      ),
+    ).toEqual({
       quality: 'balanced',
-      maximumDpr: 1.5,
-      shadowMapSize: 512,
-      idleAnimation: false,
+      maximumDpr: 1.25,
+      shadows: false,
+      shadowMapSize: 256,
+      textureAnisotropy: 4,
     });
+  });
+
+  it('compares capability snapshots without serialization', () => {
+    const current = capabilities();
+    expect(areRenderingCapabilitiesEqual(current, capabilities())).toBe(true);
+    expect(
+      areRenderingCapabilitiesEqual(current, capabilities({ viewportWidth: 1024 })),
+    ).toBe(false);
+    expect(
+      areRenderingCapabilitiesEqual(current, capabilities({ reducedMotion: true })),
+    ).toBe(false);
   });
 
   it('detects WebGL2, WebGL1, and unsupported canvases', () => {

@@ -82,3 +82,41 @@ jobs:
             playwright-report
             playwright-report-pwa
           retention-days: 7
+
+  performance:
+    name: Production runtime performance budgets
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Node.js and npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production runtime performance budgets
+        run: npm run test:performance
+
+      - name: Upload performance report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-performance-report
+          path: |
+            playwright-report-performance
+            test-results
+          retention-days: 7

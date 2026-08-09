@@ -1,406 +1,238 @@
 # BGD/INK Studio
 
-BGD/INK Studio is a bilingual English/Iraqi-Arabic web application for preparing custom-apparel design drafts in a model-aware 3D editor.
+BGD/INK Studio is a bilingual, browser-local apparel design prototype for preparing recoverable custom-print drafts. The application combines an editorial storefront, a model-aware 3D customizer, safe 2D recovery, IndexedDB persistence, and local production handoff files without pretending to be a live commerce backend.
 
-> The project is intentionally frontend and browser-local. Designs, original artwork, preparation details, quantities, and generated production files stay on the current device. They are not sent to a shop, synchronized between devices, or written to a production database.
+## Repository status
 
-## Current scope
-
-The implemented application includes:
-
-- Premium React/Vite storefront
-- Owned BGD/INK garment illustrations, app icons, and social artwork
-- Product-aware 3D customizer
-- Browser-local IndexedDB drafts and original artwork blobs
-- Recoverable size, colour, quantity, notes, and contact preparation
-- Artwork dimensions, transparency, padding, DPI, and quality guidance
-- Undo/redo and complete layer controls
-- Adaptive rendering, WebGL recovery, and a safe 2D fallback
-- Local multi-surface PNG proofs and JSON specifications
-- Persistent English/Iraqi-Arabic content and contextual RTL behavior
-- Safe-area, short-landscape, phone, and tablet layout handling
-- Preview-safe SEO and optional production indexing
-- Controlled installable PWA shell with explicit update confirmation
-- Honest cached offline access for previously opened public screens
-
-Paused until explicitly reopened:
-
-- Backend development
-- Production databases
-- Remote artwork storage
-- Accounts and cross-device synchronization
-- Staff or administration portals
-- Authoritative stock, pricing, customer, and order data
-- Real order acceptance, payment, approval, tracking, or fulfillment
-
-The preparation and receipt flow saves a **local design draft**, not a real customer order.
-
-## Branch and phase status
+The authoritative repository state is:
 
 ```text
 main
-└── agent/bgd-ink-p0-foundation
-    └── agent/bgd-ink-p2-models-print-areas
-        └── agent/bgd-ink-p3-premium-storefront
-            └── agent/bgd-ink-p4-delivery-seo-pwa
-                └── agent/bgd-ink-p5-prelaunch-hardening
+└── agent/p6-runtime-stability   # active stabilization pull request
 ```
 
-### P0 — safe foundation and rebrand
+- `main` contains the merged P0–P5 application baseline.
+- `agent/p6-runtime-stability` is the only active phase branch and is reviewed through draft PR #6.
+- The older `agent/bgd-ink-p0-foundation`, `agent/bgd-ink-p2-models-print-areas`, `agent/bgd-ink-p3-premium-storefront`, `agent/bgd-ink-p4-delivery-seo-pwa`, and `agent/bgd-ink-p5-prelaunch-hardening` branches are historical references, not an active stack and not deployment targets.
+- Do not develop new work from a historical phase branch.
+- Do not merge PR #6 until its final review and external deployment-provider branch check are complete.
 
-Complete:
+P6.1 through P6.6 are implemented and validated. PR #6 remains draft until the external provider Production Branch settings are manually confirmed and the owner approves the merge/release decision.
 
-- Central BGD/INK brand configuration
-- Legacy ASHUS browser-data migration
-- Removed public prototype administration, hardcoded PINs, browser secrets, and false offline claims
-- Brand source-of-truth enforcement
+## Version and release policy
 
-### P1 — engineering foundation
+**Current private package version: `0.4.0`.**
 
-Complete:
+The package is private and is not published to npm. P0–P6 are engineering roadmap phases, not semantic-version numbers. P6 does not create a GitHub release or production tag by itself, so the private package version remains `0.4.0` and must match `package-lock.json`.
 
-- Compiled Tailwind CSS
-- Strict TypeScript
-- Zero-warning ESLint and Prettier
-- Source code under `src/` with enforced import boundaries
-- History API routes and direct-route hosting fallback
-- IndexedDB draft recovery and My Designs
-- Pinned Node/npm, committed lockfile, cached deterministic install, CI, tests, and performance budgets
+A version bump and release tag should happen only when a release owner approves the deployment target, verified public domain, indexing state, business information, and merge decision. Preview deployments and a passing pull request are not a production release.
 
-### P2 — production-quality local customizer
+## Product boundary
 
-Implemented engineering foundation:
+The current application is intentionally frontend-only and browser-local.
 
-- Honest model readiness instead of substituting unrelated geometry
-- Classic T-shirt front/back print surfaces
-- Centimetre placement and safe boundaries
-- Aspect-ratio-aware artwork dimensions
-- Source pixels, transparency, padding, effective DPI, and quality warnings
-- Undo/redo and complete layer controls
-- View, Move, and Resize/Rotate modes
-- Touch gestures and adaptive rendering
-- WebGL recovery and safe 2D fallback
-- Multi-surface PNG proof and URL-free JSON specification
-- GPU preview-texture limits and measured GLB budgets
+It includes:
 
-Still dependent on real physical assets and measurements:
+- English and Iraqi-Arabic storefront and Studio flows.
+- Recoverable IndexedDB design drafts and original artwork blobs.
+- Model-aware 3D placement for the genuine Classic T-shirt model.
+- Typed print surfaces, constrained placement, physical dimensions, and quality guidance.
+- Layer naming, visibility, ordering, duplication, deletion, Undo, and Redo.
+- Local PNG proofs and URL-free JSON production specifications.
+- A controlled production PWA shell with honest offline behavior.
+- Aggregate, opt-in runtime diagnostics used only by test and debug sessions.
 
-- Confirmed Classic T-shirt calibration
-- Genuine oversized T-shirt, hoodie, and vest models
-- Supported sleeve surfaces
-- Geometry-aware seam warnings
-- Final garment-model compression and re-audit
+It does **not** include:
 
-### P3 — premium storefront and customer journey
+- Accounts, a backend, or cross-device synchronization.
+- Remote artwork or customer-data storage.
+- Authoritative inventory, payment, or pricing.
+- Real order acceptance, tracking, or fulfillment.
+- Approved production policy, legal, privacy, returns, or care content.
+- Genuine 3D geometry for garments other than the Classic T-shirt.
+- Verified physical print calibration or production authorization.
 
-Implemented browser experience:
+## Runtime architecture
 
-- Editorial print-lab homepage and model-aware Studio Workbench
-- Owned local garment artwork and interface icons
-- Removed remote stock photography, fabricated-looking reviews, and unsupported promises
-- Honest model-aware catalog
-- Bilingual Studio Guide
-- Full contextual Iraqi-Arabic and RTL review
-- Recoverable quantity and preparation details
-- Accessible validation, draft-load retry, and autosave retry
-- Localized Baghdad areas with stable stored values
-- Touch-first local receipt
-- Safe-area and dynamic-viewport shell
-- Pixel 5, iPhone 13, and iPad Mini-sized browser coverage
-- Lightweight Web Animations motion runtime
+### Editor interaction
 
-Still dependent on approved business content and hardware:
+Pointer-frequency artwork movement, resize, and rotation stay outside durable React and IndexedDB state. The matching Three.js decal is previewed imperatively, then the final transform is committed once when the gesture ends.
 
-- Real product and completed-work photography
-- Confirmed prices, times, garment specifications, printing methods, and size charts
-- Official contact channels
-- Approved privacy, returns, care, and fulfillment policies
-- Physical Android, iPhone, and tablet validation
+One continuous gesture is required to create:
 
-### P5 — pre-launch hardening
+- one durable editor-history commit,
+- one durable draft save,
+- and one recoverable final transform.
 
-Complete on `agent/bgd-ink-p5-prelaunch-hardening`:
+### WebGL behavior
 
-- Flush pending customizer and preparation saves before internal navigation and browser history transitions
-- Keep language changes from reloading the active editor
-- Remove the duplicate local receipt store and purge obsolete customer-contact records
-- Use atomic revisioned IndexedDB updates with bounded artwork cleanup
-- Require an explicit verified URL and indexability flag before publishing canonical or crawlable output
-- Localize WhatsApp handoff fields and resolve garment display names
-- Verify every owned product asset in the fresh PWA precache
-- Remove third-party font requests and add a restrictive production Content Security Policy
-- Localize global loading and crash-recovery states
-- Remove the unused GSAP package and restore practical CSS budget headroom
+All visible 3D profiles use demand rendering. Hidden documents stop the canvas loop. The scene requests frames only for camera movement, artwork changes, textures, renderer/profile changes, resize, or recovery.
 
-Validated baseline:
+Rendering profiles are bounded and reactive:
 
-```text
-81 unit/component/accessibility tests across 30 files
-11 desktop, phone, tablet, Arabic, editor, recovery, and export Chromium journeys
-1 production-only PWA Chromium journey
-```
+| Profile | Maximum DPR | Shadows | Shadow map | Texture anisotropy |
+| --- | ---: | --- | ---: | ---: |
+| Low power | 1 | Off | 256 | 2 |
+| Balanced | 1.25 | Off | 256 | 4 |
+| High capability | 1.5 | On | 512 | 8 |
 
-### P4 — delivery, SEO, and controlled PWA
+Reduced-motion, Save-Data, pointer, viewport, orientation, device-pixel-ratio, visibility, and capability changes can lower or restore quality without resetting the active draft.
 
-The code-only foundation is complete:
+### Artwork decoding and texture ownership
 
-- Preview-safe `noindex` behavior by default
-- Optional production canonical URLs
-- Open Graph, Twitter, and owned social artwork
-- Organization, website, application, collection, and product structured data
-- Public sitemap and robots generation
-- Private local routes excluded from indexing
-- Owned standard, Apple, and maskable app icons
-- Production-only service-worker registration
-- Explicit update confirmation before activation
-- Bilingual install, update, and offline notices
-- Conditional WhatsApp handoff when an official number is configured
-- Production-mode offline browser validation
+Every successful GPU artwork path is bounded before upload:
 
-Still dependent on approved external choices:
+| Profile | Maximum dimension | Maximum decoded pixel area |
+| --- | ---: | ---: |
+| Low power | 1,024 px | 786,432 pixels |
+| Balanced | 1,536 px | 1,572,864 pixels |
+| High capability | 2,048 px | 3,145,728 pixels |
 
-- Verified production domain
-- Official WhatsApp, email, Instagram, and other destinations
-- Analytics provider, consent wording, and privacy policy
-- Error-monitoring provider and retention policy
-- Campaign, coupon, bulk-order, and repeat-order rules
+The effective dimension is also limited by the browser-reported WebGL maximum texture size. Compatible duplicate layers share one reference-counted texture. Hiding, deleting, replacing a profile, switching to 2D, leaving the route, cancellation, timeout, or failure releases ownership deterministically.
 
-## Brand
+### Recovery
 
-Brand values live in `src/config/brand.ts`:
-
-- Customer-facing name: **BGD/INK**
-- Product name: **BGD/INK Studio**
-- Tagline: **Design it. Wear it.** / **صمّمها والبسها**
-- Primary market: Baghdad, Iraq
-
-`npm run check:brand` prevents customer-facing files from reintroducing obsolete or duplicated brand literals.
-
-## Technology
-
-- React 18 and strict TypeScript
-- Vite and compiled Tailwind CSS 4
-- React Three Fiber, Drei, and Three.js
-- Repository-specific Web Animations compatibility layer
-- IndexedDB for local drafts and original artwork
-- Canvas PNG proof generation
-- JSON local production specifications
-- Versioned custom service worker
-- Vitest, Testing Library, fake IndexedDB, and axe
-- Playwright for desktop, mobile, tablet, and production-PWA Chromium journeys
-- ESLint and Prettier
+When WebGL is unsupported, lost, or unable to render the model, the Studio preserves the local draft and presents the safe 2D preview. The user can retry 3D after graphics recovery. Original artwork remains separate from generated GPU previews and export files.
 
 ## Requirements
 
-- Node.js **22.23.1**
-- npm **10.9.8**
-- Git LFS for GLB assets
+Use the pinned runtime:
 
-## Local development
+```text
+Node.js 22.23.1
+npm 10.9.8
+```
+
+Check the installed versions:
+
+```bash
+node --version
+npm --version
+```
+
+Git LFS is required for the garment model:
 
 ```bash
 git lfs install
-nvm use
-npm ci --include=dev
+git lfs pull
+```
+
+## Local setup
+
+```bash
+git clone https://github.com/YrFnS/BGD-INK-Studio.git
+cd BGD-INK-Studio
+git checkout agent/p6-runtime-stability
+git lfs pull
+npm ci --include=dev --no-audit --no-fund
 npm run dev
 ```
 
-No application secret or remote-backend environment variable is required.
+After PR #6 is approved and merged, new development and production deployment should use `main`.
 
-## Validation
+## Validation commands
+
+Fast repository and production-build validation:
 
 ```bash
 npm run check
+```
+
+Functional browser journeys:
+
+```bash
 npm run test:e2e
+```
+
+Production PWA journey:
+
+```bash
 npm run test:pwa
 ```
 
-The fast gate performs:
-
-```text
-environment validation
-→ strict TypeScript
-→ zero-warning ESLint
-→ brand validation
-→ import-boundary validation
-→ measured GLB budgets
-→ storefront trust validation
-→ Iraqi-Arabic and RTL validation
-→ responsive-shell validation
-→ unit, component, and accessibility tests
-→ production build
-→ JavaScript and CSS budgets
-→ delivery, manifest, social, SEO, and service-worker validation
-```
-
-Useful commands:
+Production runtime-performance budgets:
 
 ```bash
-npm run typecheck
-npm run lint
-npm run check:environment
-npm run check:brand
-npm run check:boundaries
-npm run check:assets
-npm run check:storefront
-npm run check:localization
-npm run check:responsive
-npm run check:bundle
-npm run check:delivery
-npm run test
-npm run test:unit
-npm run test:coverage
-npm run test:e2e
-npm run test:e2e:ui
-npm run test:pwa
-npm run format:check
-npm run format
-npm run build
-npm run preview
+npm run test:performance
 ```
 
-Current validated coverage:
-
-```text
-81 unit/component/accessibility tests across 30 files
-11 desktop, phone, tablet, Arabic, editor, recovery, and export Chromium journeys
-1 production-only PWA Chromium journey
-```
-
-## Routes
-
-| Route                | Purpose                                       | Search visibility |
-| -------------------- | --------------------------------------------- | ----------------- |
-| `/`                  | Premium landing page                          | Public            |
-| `/catalog`           | Model-aware garment selection                 | Public            |
-| `/guide`             | Measurement, method, policy, and FAQ guidance | Public            |
-| `/designs`           | Recent local designs                          | Private/noindex   |
-| `/studio/:draftId`   | Recoverable 3D editor                         | Private/noindex   |
-| `/checkout/:draftId` | Recoverable local draft preparation           | Private/noindex   |
-| `/draft/:draftId`    | Local draft receipt                           | Private/noindex   |
-
-Browser Back/Forward navigation is supported. Direct-route fallbacks are provided through `public/_redirects` for Netlify and `vercel.json` for Vercel.
-
-## Local draft model
-
-IndexedDB draft version 6 stores:
-
-- Draft name, product, colour, size, quantity, and notes
-- Original PNG, JPEG, or WebP artwork blobs
-- Layer names, visibility, order, selection, and print surfaces
-- Placement, rotation, aspect ratio, and physical scale
-- Source dimensions, transparency, padding, and quality metadata
-- Local contact and address fields
-- Local receipt linkage
-
-My Designs can reopen, rename, duplicate, and permanently delete drafts. Duplicates receive independent artwork blobs and preserve prepared quantity while clearing contact and receipt state.
-
-Clearing browser data can permanently remove designs. There is no server backup or account recovery.
-
-## Customizer interaction
-
-- **View Garment:** orbit and zoom the product camera
-- **Move Design:** drag the selected visible layer inside its safe surface
-- **Resize/Rotate:** use pointer or pinch-and-twist transforms
-
-Continuous gestures become one undoable history action. Rendering adapts to device capabilities and falls back to a local 2D preview when WebGL is unavailable or loses context.
-
-## Local production files
-
-### PNG proof
-
-The proof includes:
-
-- Every configured product surface
-- Product, size, colour, draft name, and ID
-- Physical print-area dimensions and safe margins
-- Visible artwork placement, rotation, order, and names
-- Explicit physical-calibration warning
-
-### JSON specification
-
-The specification includes:
-
-- Product and draft metadata
-- Viewer-facing centimetre coordinates
-- Configured surfaces
-- Visible and hidden layers
-- Dimensions, offsets, rotation, source metadata, transparency, estimated DPI, and warnings
-- Explicit `unverified` physical calibration
-
-Temporary `blob:` preview URLs are excluded. These outputs are planning and handoff aids, not authorization to print.
-
-## SEO deployment
-
-Preview builds are non-indexable by default.
-
-Enable indexing only after the real public domain is verified:
+Complete P6 exit suite after one clean install:
 
 ```bash
-VITE_PUBLIC_SITE_URL=https://verified-production-domain.example
-VITE_INDEXABLE_BUILD=true
+npm ci --include=dev --no-audit --no-fund
+npm run verify:p6
 ```
 
-Do not use these values for temporary previews or placeholder domains.
+`npm run check` includes environment, strict TypeScript, zero-warning ESLint, brand, import-boundary, 3D asset, storefront, localization, responsive-shell, runtime-shell, editor-gesture, demand-rendering, texture-lifecycle, runtime-performance, repository-reconciliation, unit/accessibility, production build, bundle, and delivery gates.
 
-## PWA and offline behavior
+The commands are the source of truth for current test counts. Phase validation documents preserve historical counts for their exact validated commits; README and roadmap files intentionally avoid volatile hard-coded totals.
 
-The service worker registers only in production and in a secure context or localhost.
+## Runtime-performance budgets
 
-It provides:
+The committed source of truth is `src/config/runtime-performance-budgets.json`.
 
-- Owned install icons and manifest shortcuts
-- Versioned application-shell caching
-- Runtime caching for same-origin static assets
-- Network-first navigation with a cached shell fallback
-- Explicit confirmation before a waiting update activates
-- Bilingual install, update, and offline notices
+Key ceilings include:
 
-Offline support is conditional. Previously opened public screens can reopen after their assets have been cached; new or uncached content still requires a connection. IndexedDB designs remain browser-local and are not synchronized.
+| Measurement | Budget |
+| --- | ---: |
+| Homepage interactive median | 2,500 ms |
+| Route-transition median | 1,250 ms |
+| Studio ready | 9,000 ms |
+| Large artwork ready | 7,000 ms |
+| Constrained artwork ready | 15,000 ms |
+| Maximum normal long task | 600 ms |
+| Maximum constrained long task | 1,200 ms |
+| Maximum normal frame gap | 550 ms |
+| Maximum constrained frame gap | 1,000 ms |
 
-## Conditional WhatsApp handoff
+Strict logical invariants include:
 
-The local receipt can generate a detailed WhatsApp handoff containing the draft ID, garment, variant, quantity, layers, customer details, address, and notes.
+- one durable history commit per continuous gesture,
+- one durable draft save per continuous gesture,
+- no more than eight measured React/R3F commits per gesture,
+- no more than two extra WebGL frames during the visible idle window,
+- zero WebGL frames during the hidden observation window,
+- zero texture entries and references after final cleanup,
+- and a constrained low-power journey under 4× CPU throttling.
 
-The action is hidden until a verified WhatsApp number is configured in `src/config/brand.ts`. No placeholder contact is shown.
+Do not raise budgets simply to obtain a passing build. Diagnose and remove the regression.
 
-## Performance baseline
+## Deployment policy
 
-Three.js remains lazy and excluded from the initial storefront.
+Repository-controlled Vercel and Netlify configuration is branch-neutral. The required production branch is `main`; pull requests may receive isolated preview deployments.
 
-| Metric                               |      Current |     Limit |
-| ------------------------------------ | -----------: | --------: |
-| Initial JavaScript, gzip             |    75.68 KiB |    90 KiB |
-| Initial CSS, gzip                    |    15.99 KiB |  16.5 KiB |
-| Largest async JavaScript chunk, gzip |   168.08 KiB |   200 KiB |
-| Largest JavaScript chunk, raw        |   651.42 KiB |   725 KiB |
-| Total JavaScript, gzip               |   381.95 KiB |   390 KiB |
-| Total JavaScript, raw                | 1,325.67 KiB | 1,350 KiB |
-| Total CSS, gzip                      |    15.99 KiB |    17 KiB |
+Before a production release, verify the provider dashboards directly:
 
-P5 restored practical initial-CSS headroom while keeping the total CSS and JavaScript limits unchanged.
+- Vercel Production Branch is `main`.
+- Netlify Production Branch is `main`.
+- No historical phase branch is pinned as a production, deploy-context, or build-hook target.
+- Only the verified production environment receives `VITE_PUBLIC_SITE_URL`.
+- `VITE_INDEXABLE_BUILD=true` is enabled only after the public domain and indexing decision are approved.
 
-## Safety boundaries
-
-- No public administration portal
-- No browser-exposed API keys
-- No real order, payment, inventory reservation, delivery promise, or fulfillment flow
-- No account recovery or cross-device synchronization
-- No remote artwork upload
-- Official contact actions appear only after verified destinations are configured
-- Generated proofs use unverified calibration until physically confirmed
-- Offline wording does not promise universal availability
-- Analytics and monitoring remain disabled until consent and privacy decisions are approved
-
-Do not use the local prototype for real customer orders or sensitive production data.
+Detailed deployment and provider checks are in `docs/DEPLOYMENT.md`.
 
 ## Documentation
 
-- [P3 storefront direction](docs/P3-STOREFRONT-DIRECTION.md)
-- [P3 Iraqi-Arabic and RTL sweep](docs/P3-ARABIC-RTL-SWEEP.md)
-- [P3 dense editor Arabic and RTL](docs/P3-DENSE-EDITOR-ARABIC-RTL.md)
-- [P3 Guide and preparation RTL review](docs/P3-GUIDE-PREPARATION-RTL.md)
-- [P3 performance and responsive finalization](docs/P3-PERFORMANCE-RESPONSIVE-FINALIZATION.md)
-- [P4 delivery, SEO, and PWA](docs/P4-DELIVERY-SEO-PWA.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [Roadmap](tasks.md)
+- `docs/P6-RUNTIME-STABILITY-PLAN.md` — P6 issue inventory, phase outcomes, and exit criteria.
+- `docs/P6-2-EDITOR-GESTURE-VALIDATION.md` — one-commit editor gesture architecture.
+- `docs/P6-3-DEMAND-RENDERING-VALIDATION.md` — demand rendering and adaptive profiles.
+- `docs/P6-4-TEXTURE-LIFECYCLE-VALIDATION.md` — bounded decoding and shared texture lifecycle.
+- `docs/P6-5-RUNTIME-PERFORMANCE-VALIDATION.md` — production measurements and budgets.
+- `docs/P6-6-REPOSITORY-RECONCILIATION.md` — branch, package, deployment, and release reconciliation.
+- `docs/DEPLOYMENT.md` — branch-neutral Vercel/Netlify deployment policy.
+- `docs/TROUBLESHOOTING.md` — runtime, persistence, WebGL, artwork, and performance troubleshooting.
+
+## Remaining external release inputs
+
+Engineering validation cannot invent or approve:
+
+- the final production domain,
+- official contact destinations,
+- approved privacy, returns, care, and fulfillment policies,
+- confirmed prices, production times, garment specifications, and size charts,
+- genuine remaining garment models,
+- physical print calibration,
+- representative physical Android, iPhone, and tablet review,
+- or provider-dashboard production-branch settings.
+
+Keep preview language honest until those inputs are approved.

@@ -1,0 +1,35 @@
+{
+  "samples": {
+    "homepageStartup": 3,
+    "routeNavigation": 6
+  },
+  "timingMs": {
+    "homepageInteractiveMedian": 2500,
+    "routeTransitionMedian": 1250,
+    "studioReady": 9000,
+    "largeArtworkReady": 7000,
+    "constrainedArtworkReady": 15000,
+    "maximumLongTask": 600,
+    "totalLongTasks": 1800,
+    "constrainedMaximumLongTask": 1200,
+    "constrainedTotalLongTasks": 4000,
+    "maximumFrameGap": 550,
+    "constrainedMaximumFrameGap": 1000
+  },
+  "counts": {
+    "editorHistoryCommitsPerGesture": 1,
+    "draftSavesPerGesture": 1,
+    "maximumReactCommitsPerGesture": 8,
+    "maximumVisibleIdleWebglFrames": 2,
+    "hiddenWebglFrames": 0,
+    "maximumTextureEntriesAfterCleanup": 0,
+    "maximumTextureReferencesAfterCleanup": 0
+  },
+  "windowsMs": {
+    "idleSettle": 1200,
+    "hiddenObservation": 700
+  },
+  "throttling": {
+    "cpuRate": 4
+  }
+}

@@ -9,7 +9,10 @@
   },
   "artworkTextures": {
     "highMaximumDimension": 2048,
+    "highMaximumPixelArea": 3145728,
     "balancedMaximumDimension": 1536,
-    "lowMaximumDimension": 1024
+    "balancedMaximumPixelArea": 1572864,
+    "lowMaximumDimension": 1024,
+    "lowMaximumPixelArea": 786432
   }
 }
