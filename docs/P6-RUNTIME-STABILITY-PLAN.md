@@ -2,11 +2,15 @@
 
 ## Status
 
-Planning baseline created on `agent/p6-runtime-stability`, branched from the authoritative `main` branch.
+P6.1 through P6.4 are complete and validated on `agent/p6-runtime-stability`, branched from the authoritative `main` branch. P6.5 runtime-performance CI gates and P6.6 repository/release reconciliation remain open.
 
 P6 addresses the runtime defects discovered after the P0–P5 merge: the unreliable custom cursor, artificial startup delay, excessive decorative compositing, route-transition instability, editor rerender pressure, continuous WebGL work, unsafe texture fallback behavior, and the absence of runtime-performance regression gates.
 
-Implementation has not started yet. This document defines the order, boundaries, acceptance criteria, and validation required before P6 can be considered complete.
+Validated phase records:
+
+- `docs/P6-2-EDITOR-GESTURE-VALIDATION.md`
+- `docs/P6-3-DEMAND-RENDERING-VALIDATION.md`
+- `docs/P6-4-TEXTURE-LIFECYCLE-VALIDATION.md`
 
 ## Branch and delivery strategy
 
@@ -119,324 +123,300 @@ Remove the effects that make the whole application feel slow or unreliable befor
 
 #### Blocking startup removal
 
-- Remove the full-screen preloader from the normal render path.
-- Do not replace it with another artificial timer.
-- Use existing route-level Suspense/loading states only when actual code or data is pending.
-- Ensure the homepage is focusable and interactive immediately after React mounts.
+- Remove `<Preloader />` from the normal application shell.
+- Delete the artificial multi-stage startup timeline.
+- Keep route content immediately interactive after React mounts.
+- If a one-time brand reveal is retained later, it must be non-blocking, session-scoped, reduced-motion aware, and measured separately.
 
-#### Noise/compositing cleanup
+#### Full-screen noise removal
 
-- Remove the full-screen SVG turbulence filter.
-- Do not retain a permanent blend-mode layer over WebGL.
-- A future grain texture may only return as a tiny owned raster asset after profiling proves negligible cost; it must be disabled in the Studio, reduced-motion, Save-Data, and constrained rendering modes.
+- Remove `<Noise />` from the shell.
+- Delete the viewport-sized animated SVG turbulence filter and overlay blend layer.
+- Do not replace it in P6.
+
+#### Magnetic CTA removal
+
+- Replace `Magnetic` with a layout-only wrapper or remove the wrapper entirely.
+- Keep CSS hover and focus feedback.
+- Remove every `mousemove`, `getBoundingClientRect`, and animation write from the CTA path.
+
+#### Route-aware shell boundary
+
+- Verify no decorative shell effect is mounted inside `/studio/:draftId`.
+- Keep only required navigation, toast, PWA, and page content infrastructure globally mounted.
 
 #### Page transition repair
 
-- Make route changes depend only on the stable route path/key.
-- Do not trigger exit state because the parent produced a new React child object.
+- Transition only when the stable route key changes.
+- Do not store or render stale `children` snapshots.
 - Replace `transition-all` with explicit opacity and transform properties.
-- Ignore transition events from descendants by checking `event.target === event.currentTarget`.
-- Handle reduced motion without a delayed invisible state.
-- Prevent rapid navigation from leaving stale content mounted or trapping the route in `exit`.
-
-#### Magnetic interaction removal
-
-- Remove the current magnetic wrapper from primary actions.
-- Preserve ordinary hover/focus feedback through CSS transforms that do not read layout on every pointer movement.
-
-#### Route-aware effects
-
-- Keep nonessential public-shell decoration outside `/studio/:draftId`.
-- Confirm that opening the editor does not retain hidden cursor, noise, preloader, or homepage-only listeners.
+- Ignore descendant transition events.
+- Respect reduced motion.
+- Keep browser Back/Forward navigation deterministic.
 
 ### Acceptance criteria
 
-- The browser cursor never disappears unexpectedly.
-- The application has no timer-based blocking overlay during startup.
-- No full-viewport SVG filter remains mounted.
-- Route content transitions exactly once per route change and never because unrelated state rerendered.
-- Rapid Back/Forward and header navigation do not flash old content or leave the page transparent.
-- Existing accessibility, mobile navigation, Arabic/RTL, and PWA tests continue to pass.
+- Native cursor is visible over links, buttons, fields, selects, text areas, and canvas-adjacent controls.
+- No artificial full-screen startup gate remains.
+- No animated viewport-sized SVG filter remains.
+- Homepage pointer movement performs no layout reads for primary actions.
+- Same-route rerenders do not start route transitions.
+- Exactly one current route container exists after navigation.
+- Browser Back/Forward preserves the correct route and content.
+- Reduced-motion users receive no route-transition delay.
 
 ## Phase P6.2 — Editor gesture and state pipeline
 
 ### Goal
 
-Make artwork movement, resizing, and rotation responsive by separating high-frequency visual updates from durable React state.
-
-### Target architecture
-
-Use two state layers:
-
-1. **Live gesture state** in refs and Three.js objects for pointer-frequency updates.
-2. **Committed editor state** in React/IndexedDB for durable snapshots, undo/redo, controls, and recovery.
+Separate high-frequency visual transforms from durable editor state, history, and persistence.
 
 ### Work
 
-- Create a typed live transform object for the active layer.
-- During a gesture:
-  - Update the decal/mesh through refs.
-  - Batch screen-driven updates to at most one requestAnimationFrame callback.
-  - Avoid cloning complete editor snapshots.
-  - Avoid replacing the full `decals` array for each pointer event.
-  - Avoid restarting the autosave timer for each pointer event.
-- On gesture completion:
-  - Normalize and clamp the final transform once.
-  - Commit one React snapshot.
-  - Create one undo history entry.
-  - Schedule one debounced durable save.
-- On pointer cancellation, route exit, context loss, or component unmount:
-  - End or roll back the gesture deterministically.
-  - Preserve the last valid committed state.
-  - Flush pending durable state through the existing persistence coordinator.
-- Keep immediate discrete actions—rename, visibility, order, delete, colour, and size—as normal committed state updates.
-- Replace `JSON.stringify` snapshot equality with a typed comparator or stable revision system.
-- Clone only the data required for a bounded history entry.
-- Audit callback identity and memoization only after the gesture pipeline is corrected; do not use memoization to conceal high-frequency state architecture problems.
+#### Two-layer editor state
+
+Maintain two explicit layers:
+
+1. **Live gesture state**
+   - Mutable refs or Three.js object state
+   - Position, scale, and rotation only
+   - Updated during pointer movement
+   - No history or persistence side effects
+2. **Committed editor state**
+   - React state and `DecalLayer[]`
+   - Updated once when a logical action finishes
+   - Drives history, autosave, export, checkout, and recovery
+
+#### Gesture lifecycle
+
+- Add explicit begin, update, commit, and cancel paths.
+- Capture the initial transform once at gesture start.
+- Update the selected Three.js decal imperatively during movement.
+- Invalidate at most once per animation frame.
+- Commit one normalized final transform on pointer-up.
+- Treat pointer cancellation, lost capture, mode changes, active-layer changes, visibility changes, route changes, and unmount as explicit commit or rollback decisions.
+- Keep multi-pointer resize and rotation coherent as the pointer count changes.
+
+#### Slider lifecycle
+
+- Keep local slider display state during continuous input.
+- Commit one editor action on pointer-up, keyboard completion, or blur.
+- Preserve accessible live values without rerendering the full customizer per input event.
+
+#### History and cloning
+
+- Remove `JSON.stringify` snapshot equality.
+- Add typed equality for editor snapshots and decal layers, or introduce revision IDs.
+- Clone only when creating a durable history entry.
+- Keep one history entry per logical gesture.
+- Preserve the history limit.
+
+#### Persistence
+
+- Autosave only committed state.
+- Do not restart the autosave timer during every pointer move.
+- Flush an active gesture before navigation or checkout.
+- Failed writes must preserve the latest committed pending snapshot for retry.
 
 ### Acceptance criteria
 
-- A move, resize, or rotate gesture creates exactly one undoable history action.
-- Pointer movement does not perform one durable React commit per event.
-- Autosave does not restart for every pointer event.
-- Undo and redo reproduce the exact final transform.
-- A failed save retains the pending snapshot and keeps the user on the current route.
-- Context loss, pointer cancellation, and route navigation do not leave `isDragging` or gesture refs stuck.
-- Arabic language changes do not remount or reset the active editor.
+- Pointer movement does not call React state setters for every transform sample.
+- A three-second gesture creates one durable editor commit.
+- A three-second gesture creates one undo action.
+- A three-second gesture schedules one autosave cycle after commit.
+- Undo restores the exact pre-gesture transform.
+- Redo restores the exact final transform.
+- Route navigation during a gesture does not lose the final intended state or persist an unbounded update stream.
+- Existing layer rename, visibility, order, duplication, removal, export, and checkout behavior remains correct.
 
 ## Phase P6.3 — Demand-driven WebGL and adaptive rendering
 
 ### Goal
 
-Stop continuous GPU work and make the 3D editor scale predictably across devices.
+Stop rendering identical frames while the editor is idle and reduce default GPU pressure.
 
 ### Work
 
-- Use `frameloop="demand"` for every rendering profile.
-- Remove permanent idle garment rotation.
-- Explicitly invalidate the canvas for:
-  - Camera control changes
-  - Live gesture frames
-  - Committed layer, colour, size, surface, or theme changes
+#### Demand rendering
+
+- Use `frameloop="demand"` for every visible 3D profile.
+- Use `frameloop="never"` when the document is hidden.
+- Remove permanent garment idle rotation.
+- Request frames only for:
+  - Camera interaction and damping
+  - Live artwork transform changes
+  - Committed editor changes
+  - Colour, surface, theme, and layer changes
   - Texture readiness
   - Canvas resize
+  - Profile changes
   - WebGL restoration
-- Pause all rendering while the document is hidden.
-- Consider pausing when the canvas is fully outside the viewport, provided recovery is reliable.
-- Rebalance profile defaults:
-  - Start desktop at balanced quality unless measured capability justifies high quality.
-  - Cap ordinary DPR at 1.5.
-  - Avoid 1024 shadow maps as an automatic default.
-  - Disable shadows where they do not materially improve print placement.
-  - Keep anisotropy proportional to the actual texture and device budget.
-- Make rendering capability selection respond to:
-  - Viewport and orientation changes
-  - Pointer capability changes
-  - reduced-motion changes
-  - Save-Data changes where available
-  - Device-pixel-ratio/display changes where practical
-- Apply profile changes without unnecessary draft reloads or scene remounts.
-- Preserve WebGL support detection, context-loss recovery, retry, and safe 2D fallback.
+
+#### Rendering profile rebalance
+
+- Start ordinary capable desktops at balanced quality.
+- Cap ordinary DPR below the old value of 2.
+- Disable shadows by default unless profiling proves they fit the target budget.
+- Reduce shadow-map size and anisotropy.
+- Keep antialiasing and power preference profile-dependent.
+- Preserve the low-power profile for constrained devices.
+
+#### Reactive capabilities
+
+- Recalculate profile inputs after:
+  - Viewport resize
+  - Orientation change
+  - Pointer capability change
+  - Reduced-motion change
+  - Save-Data change where available
+  - Display DPR change where detectable
+  - Page visibility restoration
+- Apply mutable renderer settings in place where safe.
+- Do not reset the current draft, active layer, history, or pending save state when the profile changes.
 
 ### Acceptance criteria
 
-- After the Studio settles, the canvas does not sustain a continuous render loop while idle.
-- Camera and artwork interactions still render immediately.
-- Hidden-page rendering stops.
-- Profile changes do not lose layers, history, selection, or pending saves.
-- Low-power mode uses bounded DPR, textures, lighting, and shadows.
-- The existing WebGL-loss and 2D-fallback journeys remain passing.
+- A visible idle editor does not render continuously.
+- A hidden document renders no frames.
+- Camera movement remains smooth and complete.
+- Live artwork movement still receives a frame for every scheduled visual update.
+- Texture readiness and profile changes become visible without manual interaction.
+- Ordinary devices use bounded DPR and no automatic high-cost shadow profile.
+- Rendering-profile changes do not lose draft state.
+- WebGL context loss still moves safely to the 2D fallback, and retry still works.
 
-## Phase P6.4 — Bounded artwork decoding, texture sharing, and cleanup
+## Phase P6.4 — Texture memory and artwork decoding
 
 ### Goal
 
-Guarantee that uploaded artwork cannot bypass GPU limits and that repeated layers do not leak or duplicate texture memory unnecessarily.
+Guarantee bounded GPU texture uploads, share compatible textures, and make resource cleanup deterministic.
 
 ### Work
 
-- Remove the direct original-image `TextureLoader` timeout fallback.
-- Ensure every successful path follows:
-  1. Decode the browser-local artwork.
-  2. Calculate the configured dimension and pixel-area limit.
+#### Remove the unsafe fallback
+
+- Delete the direct original-image `TextureLoader` fallback.
+- Every successful path must:
+  1. Decode the source.
+  2. Calculate dimension and pixel-area limits.
   3. Resize before texture construction.
-  4. Configure colour space, mipmaps, filtering, and anisotropy.
-  5. Upload only the bounded result to WebGL.
-- Prefer `createImageBitmap` with resize options where supported; retain a canvas-based fallback that obeys the same limits.
-- Add a maximum decoded pixel-area guard in addition to per-dimension limits.
-- Create a shared texture cache keyed by at least:
-  - Artwork asset ID or stable source identity
-  - Rendering quality/size limit
-  - Colour-space and sampling configuration when relevant
-- Reference-count cache entries.
-- Dispose a texture only after its final consumer releases it.
-- Release cache entries on draft unload, permanent layer deletion, profile replacement, and failed decode.
-- Prevent a slow decode from installing a texture after the component/draft was disposed.
-- Keep original IndexedDB blobs unchanged; only derived GPU previews are bounded.
+  4. Configure and upload only the bounded result.
+- Prefer `createImageBitmap` resize options when supported.
+- Use a bounded canvas path as the compatibility fallback.
 
-### Tests
+#### Add a pixel-area guard
 
-- Large landscape image
-- Large portrait image
-- Transparent PNG
-- Slow decode/timeout path
-- Decode failure
-- Duplicate layers using one artwork asset
-- Quality-profile change
-- Repeated add/remove cycles
-- Draft navigation during decode
-- WebGL context loss and restoration
+- Enforce both maximum dimension and maximum decoded pixel area.
+- Intersect configured limits with the runtime WebGL maximum texture size.
+- Preserve aspect ratio.
+- Avoid upscaling artwork that already fits.
+
+#### Shared texture cache
+
+- Key the cache by stable artwork asset identity and effective texture configuration.
+- Reuse one texture for duplicate layers with compatible settings.
+- Reference-count every consumer.
+- Keep source blobs separate from GPU previews.
+
+#### Deterministic cleanup
+
+- Release references when layers hide, delete, switch profile, enter 2D fallback, leave the route, or unmount.
+- Abort pending decodes after the final consumer releases.
+- Dispose ready resources exactly once after the final release.
+- Remove failed entries so later attempts can retry.
+- Prevent stale or cancelled asynchronous completions from installing textures.
+
+#### Validation
+
+- Add tests for large landscape, portrait, square, and transparent artwork.
+- Add timeout, external abort, failure/retry, duplicate sharing, profile replacement, repeated upload/delete, and route-navigation cancellation coverage.
+- Keep WebGL context-loss and safe 2D recovery coverage active.
+- Add a permanent texture-lifecycle source gate.
 
 ### Acceptance criteria
 
-- No GPU texture exceeds `min(profile limit, hardware limit)`.
-- No fallback path uploads the original unbounded image.
-- Duplicate layers share the same compatible texture.
-- Every created owned texture has a deterministic release path.
-- Repeated upload/delete cycles do not produce unbounded cache growth.
+- No path can upload the unbounded original image to WebGL.
+- Every active texture satisfies both dimension and decoded pixel-area limits.
+- Effective limits respect the runtime WebGL hardware ceiling.
+- Compatible duplicate layers share one texture.
+- Pending work is cancelled after final release.
+- Stale results are disposed rather than installed.
+- Ready textures are disposed exactly once after final release.
+- Repeated add/remove cycles return the cache to baseline.
+- Failed loads do not poison later retries.
 
-## Phase P6.5 — Runtime-performance regression gates
+### Status
+
+Complete and validated. See `docs/P6-4-TEXTURE-LIFECYCLE-VALIDATION.md`.
+
+## Phase P6.5 — Runtime-performance CI gates
 
 ### Goal
 
-Turn responsiveness into a maintained quality requirement rather than a one-time manual observation.
+Convert the repaired source architecture into measured production-runtime release requirements.
 
 ### Work
 
-- Add a dedicated Playwright runtime-performance configuration or project.
-- Test a production build rather than the development server.
-- Run deterministic journeys for:
-  - Homepage startup and immediate interaction
-  - Homepage scroll
-  - Repeated route navigation
-  - Studio open and settle
-  - Scripted move gesture
-  - Scripted resize/rotate gesture
-  - Idle Studio rendering
-  - Large artwork upload
-  - Duplicate layer creation
-  - Repeated layer add/remove
-- Use Chromium CDP CPU throttling for at least one constrained-device journey where it is stable in CI.
-- Sample requestAnimationFrame gaps and long-task duration.
-- Expose test-only logical counters for editor commits, saves, render frames, and texture lifecycle.
-- Run each noisy timing journey more than once and evaluate median/p95 results.
-- Store thresholds in `src/config/runtime-performance-budgets.json` or a dedicated test configuration file.
-- Add the runtime journey to CI after the existing validation job.
-- Upload the performance report only on failure.
+- Add a production Playwright performance configuration.
+- Add counters for:
+  - React editor commits
+  - Completed gestures
+  - Durable save operations
+  - WebGL invalidations and rendered frames
+  - Long tasks and large frame gaps
+  - Texture loads, creations, replacements, cancellations, and disposals
+- Measure:
+  - Homepage startup and navigation
+  - Draft restoration
+  - Long move and resize/rotate gestures
+  - Visible idle editor
+  - Hidden and restored document
+  - Constrained-device profile
+  - Large transparent artwork
+  - Duplicate layers
+  - Repeated upload/delete cycles
+  - 3D fallback and retry
+- Add `src/config/runtime-performance-budgets.json`.
+- Use tolerant medians or percentiles for timing assertions.
+- Keep hardware-independent count assertions strict.
+- Keep existing bundle budgets unchanged.
 
-### Initial invariant gates
+### Acceptance criteria
 
-These are required regardless of final timing numbers:
-
-- Zero artificial preloader delay.
-- Zero custom-cursor animation work.
-- Zero continuous editor frames after idle settle.
-- One history commit per completed continuous gesture.
-- No per-pointer-event durable save scheduling.
-- No texture above the configured/hardware limit.
-- Compatible duplicate layers share one texture entry.
-- Route transitions occur once per route change.
-- Existing bundle limits are not raised.
-
-### Timing-budget policy
-
-Final absolute thresholds must be selected from the P6.0 production baseline and then tightened after the architectural fixes. Thresholds must be tolerant of normal CI variance but strict enough to catch:
-
-- Main-thread stalls visible to the user
-- Multi-hundred-millisecond frame gaps
-- Route transitions that fail to settle
-- Editor drag regressions
-- Continuous idle rendering
-- Large-image decode regressions
+- Performance journeys run against the production build.
+- One gesture produces one durable commit and one save cycle.
+- A visible idle editor produces no continuous frame stream.
+- A hidden editor produces no frames.
+- Constrained-device journeys remain usable under controlled throttling.
+- Texture and memory counters return to baseline after repeated cycles.
+- Runtime-budget violations fail CI.
 
 ## Phase P6.6 — Repository and release hygiene
 
 ### Goal
 
-Make the repository accurately describe the consolidated application and its validated state.
+Reconcile the repository once runtime performance is fully validated.
 
 ### Work
 
-- Update the README and roadmap to state that `main` contains P0–P5 and P6 is the only active development branch.
-- Remove the obsolete active stacked-branch diagram.
-- Reconcile hard-coded test counts with actual command output, or remove counts that are likely to become stale.
-- Align `package.json` versioning with the next validated release only when P6 is complete.
-- Document the new runtime budgets and commands.
-- Add troubleshooting guidance for:
-  - Reduced-motion behavior
-  - 2D fallback
-  - Context loss
-  - Large artwork
-  - Performance test failures
-- Review obsolete merged branches for deletion after confirming no deployment target references them. Branch deletion is a repository-maintenance decision and is not required for the P6 code merge.
+- Correct package and release version claims.
+- Update README branch documentation.
+- Reconcile test counts and validation claims.
+- Add runtime troubleshooting guidance.
+- Record final measured budgets and fallback behavior.
+- Confirm no deployment target depends on obsolete phase branches.
+- Remove or archive superseded branches only after deployment verification.
+- Complete final P6 exit checks before marking PR #6 ready.
 
-### Acceptance criteria
+## Final P6 definition of done
 
-- Documentation matches the actual branch and release state.
-- Validation counts or claims are generated from current results or intentionally omitted.
-- Runtime-performance commands are documented alongside existing checks.
-- No deployment or README instruction points developers to an obsolete phase branch.
-
-## Validation matrix
-
-P6 must cover the following combinations where relevant:
-
-| Dimension | Required coverage |
-| --- | --- |
-| Pointer | Fine pointer/mouse and coarse pointer/touch |
-| Motion | Normal motion and `prefers-reduced-motion: reduce` |
-| Language | English/LTR and Iraqi Arabic/RTL |
-| Viewport | Desktop, Pixel 5-sized phone, iPhone 13-sized phone, iPad Mini-sized tablet, short landscape |
-| Renderer | WebGL 2, WebGL unavailable, context lost, safe 2D fallback |
-| Quality | High-capability desktop, balanced device, constrained/save-data profile |
-| Artwork | Small, large, transparent, failed decode, duplicate layers |
-| Navigation | Header navigation, browser Back/Forward, route change with pending save |
-| Lifecycle | Visible, hidden, pagehide, unmount during decode/gesture |
-
-## Required commands before completion
-
-The final branch must pass:
+P6 is complete only when:
 
 ```bash
-npm ci --include=dev --no-audit --no-fund
 npm run check
 npm run test:e2e
 npm run test:pwa
 npm run test:performance
 ```
 
-`test:performance` will be added during P6.5. Existing validation remains mandatory throughout implementation.
-
-## Definition of done
-
-P6 is complete only when all of the following are true:
-
-- The native cursor is restored and the current custom cursor is removed.
-- The application no longer blocks startup with an artificial preloader.
-- The full-screen SVG turbulence layer is removed.
-- Page transitions are route-keyed, reduced-motion-safe, and immune to descendant transition events.
-- The magnetic pointer effect no longer performs layout work on every mouse movement.
-- Editor gestures use a live ref/rAF path and produce one durable commit/history entry per gesture.
-- Undo/redo no longer depends on serializing complete snapshots for every equality check.
-- The WebGL canvas uses demand rendering and becomes idle after settling.
-- Rendering profiles react safely to meaningful environment changes.
-- Every artwork decode path enforces dimension and pixel-area limits before GPU upload.
-- Compatible duplicate layers share textures and all owned textures have deterministic cleanup.
-- Runtime-performance budgets are committed and enforced in CI.
-- Existing bundle budgets are preserved or tightened.
-- Existing accessibility, localization, persistence, WebGL recovery, PWA, and browser journeys pass.
-- README, roadmap, release status, and troubleshooting documentation reflect the actual repository state.
-
-## Implementation order
-
-Execute the work in this order:
-
-1. P6.0 baseline and instrumentation
-2. P6.1 shell and navigation stabilization
-3. P6.2 editor gesture/state pipeline
-4. P6.3 demand-driven WebGL
-5. P6.4 bounded texture lifecycle
-6. P6.5 runtime-performance CI gates
-7. P6.6 repository and release hygiene
-
-Do not begin new visual features until this sequence is complete and validated.
+all pass without weakening tests or budgets, the production runtime journeys satisfy committed limits, documentation and versioning are reconciled, and PR #6 contains no unresolved stabilization work.
