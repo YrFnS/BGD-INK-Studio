@@ -19,6 +19,10 @@ const files = {
   ),
   hook: await readFile(path.join(root, 'src/features/customizer/artworkTexture.ts'), 'utf8'),
   shirt: await readFile(path.join(root, 'src/features/customizer/ShirtModel.tsx'), 'utf8'),
+  loaderTests: await readFile(
+    path.join(root, 'src/features/customizer/artworkTextureLoader.test.ts'),
+    'utf8',
+  ),
   cacheTests: await readFile(
     path.join(root, 'src/features/customizer/artworkTextureCache.test.ts'),
     'utf8',
@@ -63,6 +67,11 @@ requirePattern(
   files.loader,
   /disposeLateResult[\s\S]*AbortController[\s\S]*timeout/,
   'slow or cancelled decodes must have an abort and late-result disposal path',
+);
+requirePattern(
+  files.loaderTests,
+  /explicit timeout failure[\s\S]*code:\s*'timeout'[\s\S]*external cancellation[\s\S]*AbortError/,
+  'loader tests must preserve both timeout and external-abort behavior',
 );
 requirePattern(
   files.cache,
