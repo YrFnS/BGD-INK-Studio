@@ -61,7 +61,7 @@ export const useRenderingEnvironment = () => {
     if (typeof window === 'undefined') return undefined;
 
     let scheduledFrame: number | null = null;
-    let removeResolutionListener = () => undefined;
+    let removeResolutionListener: () => void = () => undefined;
 
     const runScheduledRefresh = () => {
       scheduledFrame = null;
