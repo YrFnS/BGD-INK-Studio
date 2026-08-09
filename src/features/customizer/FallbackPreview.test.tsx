@@ -52,4 +52,26 @@ describe('safe 2D fallback', () => {
     expect(screen.getByText(/تصميمك ما ضاع/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'جرّب معاينة 3D من جديد' })).toBeInTheDocument();
   });
+
+  it('selects the product-specific silhouette from the localized product name', () => {
+    render(
+      <AppProvider>
+        <FallbackPreview
+          productName="Premium Hoodie"
+          color="#111111"
+          surface={surface}
+          decals={[]}
+          activeDecalId={null}
+          reason="manual"
+          canRetry3d
+          onRetry3d={vi.fn()}
+        />
+      </AppProvider>,
+    );
+
+    expect(screen.getByRole('img', { name: /Premium Hoodie/ })).toHaveAttribute(
+      'data-garment-preview',
+      'hoodie-premium',
+    );
+  });
 });
