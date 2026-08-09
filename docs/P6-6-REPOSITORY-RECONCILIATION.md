@@ -2,38 +2,38 @@
 
 ## Status
 
-    **Complete, validated, merged, and consolidated** in `main`.
+**Complete, validated, merged, and consolidated** in `main`.
 
-    Validated reconciled implementation head:
+Validated reconciled implementation head:
 
-    ```text
-    0cbd21ab9c264072f8497ece9e14c25f78fc9aa0
-    fix: separate CI validation from provider builds
-    ```
+```text
+0cbd21ab9c264072f8497ece9e14c25f78fc9aa0
+fix: separate CI validation from provider builds
+```
 
-    Validated GitHub Actions run:
+Validated GitHub Actions run:
 
-    ```text
-    31308581420
-    ```
+```text
+31308581420
+```
 
-    All source/build, functional, PWA, and production-performance jobs passed, and both pull-request preview providers completed successfully.
+All source/build, functional, PWA, and production-performance jobs passed, and both pull-request preview providers completed successfully.
 
-    PR #6 was squash-merged as `03d78a08febd8428555d6f1b657848f2a520eddc`, and all superseded phase branches were deleted afterward. This does not by itself create a public production release or alter external Vercel/Netlify Production Branch settings.
+PR #6 was squash-merged as `03d78a08febd8428555d6f1b657848f2a520eddc`, and all superseded phase branches were deleted afterward. This does not by itself create a public production release or alter external Vercel/Netlify Production Branch settings.
 
 ## Reconciliation decisions
 
 ### Authoritative branch state
 
-    ```text
-    main
-    ```
+```text
+main
+```
 
-    - PRs #1–#6 are merged.
-    - `main` contains the complete P0–P6 application.
-    - PR #6 produced squash commit `03d78a08febd8428555d6f1b657848f2a520eddc`.
-    - All superseded phase branches were deleted after their contents were verified as merged.
-    - Merged pull requests and validation documents are the audit record.
+- PRs #1–#6 are merged.
+- `main` contains the complete P0–P6 application.
+- PR #6 produced squash commit `03d78a08febd8428555d6f1b657848f2a520eddc`.
+- All superseded phase branches were deleted after their contents were verified as merged.
+- Merged pull requests and validation documents are the audit record.
 
 ### Package and release state
 
@@ -64,7 +64,7 @@ Production branch: main
 PR branch: preview only
 ```
 
-The deployment contract now separates responsibilities:
+The deployment contract separates responsibilities:
 
 - GitHub CI runs the complete source, unit, build, functional, PWA, and production-performance validation.
 - Vercel and Netlify run the deterministic `npm run build` provider build for the already-validated commit.
@@ -148,15 +148,15 @@ The production performance suite completed all three journeys in **19.2 seconds*
 
 ### Production bundle
 
-| Metric                               |       Result |     Limit |
-| ------------------------------------ | -----------: | --------: |
-| Initial JavaScript, gzip             |    74.79 KiB |    90 KiB |
-| Initial CSS, gzip                    |    15.77 KiB |    17 KiB |
-| Largest async JavaScript chunk, gzip |   168.08 KiB |   200 KiB |
-| Largest JavaScript chunk, raw        |   651.42 KiB |   725 KiB |
-| Total JavaScript, gzip               |   385.00 KiB |   390 KiB |
-| Total JavaScript, raw                | 1,335.48 KiB | 1,350 KiB |
-| Total CSS, gzip                      |    15.77 KiB |    17 KiB |
+| Metric | Result | Limit |
+| --- | ---: | ---: |
+| Initial JavaScript, gzip | 74.79 KiB | 90 KiB |
+| Initial CSS, gzip | 15.77 KiB | 17 KiB |
+| Largest async JavaScript chunk, gzip | 168.08 KiB | 200 KiB |
+| Largest JavaScript chunk, raw | 651.42 KiB | 725 KiB |
+| Total JavaScript, gzip | 385.00 KiB | 390 KiB |
+| Total JavaScript, raw | 1,335.48 KiB | 1,350 KiB |
+| Total CSS, gzip | 15.77 KiB | 17 KiB |
 
 No JavaScript, CSS, image, GPU, or runtime budget was increased.
 
@@ -175,9 +175,9 @@ No JavaScript, CSS, image, GPU, or runtime budget was increased.
 
 ## Post-merge result
 
-    - PR #6 was reviewed, marked ready, and squash-merged as `03d78a08febd8428555d6f1b657848f2a520eddc`.
-    - All phase branches were deleted; only `main` remains.
-    - The complete P6 automated exit suite passed before merge.
-    - Vercel built the merged `main` commit successfully.
+- PR #6 was reviewed, marked ready, and squash-merged as `03d78a08febd8428555d6f1b657848f2a520eddc`.
+- All phase branches were deleted; only `main` remains.
+- The complete P6 automated exit suite passed before merge.
+- Vercel built the merged `main` commit successfully.
 
-    External provider dashboard settings, the public production domain, indexing approval, business content, and physical-device validation remain separate production-launch inputs. Repository source does not claim those external decisions have been completed.
+External provider dashboard settings, the public production domain, indexing approval, business content, and physical-device validation remain separate production-launch inputs. Repository source does not claim those external decisions have been completed.
