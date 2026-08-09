@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { resolveGarmentMesh } from './garmentMesh';
 
-const createMesh = (name: string, width = 1): THREE.Mesh => {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 1, 1));
+const createMesh = (name: string, segments = 1): THREE.Mesh => {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1, segments, segments, segments));
   mesh.name = name;
   return mesh;
 };
