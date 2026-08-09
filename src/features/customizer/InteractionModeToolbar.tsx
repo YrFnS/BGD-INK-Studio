@@ -105,6 +105,9 @@ export const InteractionModeToolbar: React.FC<InteractionModeToolbarProps> = ({
           aria-label={copy.toolbar}
           aria-describedby="interaction-mode-help"
           data-interaction-mode={mode}
+          data-preview-mode={previewMode}
+          data-rendering-quality={renderingQuality}
+          data-webgl-support={webglSupport}
         >
           {modes.map((item) => {
             const disabled = !is3d || (item.requiresLayer && !hasActiveLayer);
