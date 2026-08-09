@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useThree } from '@react-three/fiber';
+import { incrementRuntimeCounter } from '@/runtime/performanceMetrics';
 import type { DecalLayer } from '@/types';
 import {
   acquireArtworkTexture,
@@ -32,20 +33,16 @@ export const useOptimizedArtworkTexture = (
   anisotropy: 2 | 4 | 8,
 ): THREE.Texture | null => {
   const { gl, invalidate } = useThree();
-  const { assetId, url, pixelWidth, pixelHeight } = layer;
   const hardwareMaximumDimension = Math.max(1, gl.capabilities.maxTextureSize || 1);
   const hardwareMaximumAnisotropy = Math.max(1, gl.capabilities.getMaxAnisotropy() || 1);
-  const effectiveAnisotropy = Math.max(
-    1,
-    Math.min(anisotropy, hardwareMaximumAnisotropy),
-  );
+  const effectiveAnisotropy = Math.max(1, Math.min(anisotropy, hardwareMaximumAnisotropy));
   const limits = useMemo(
     () => getArtworkTextureLimits(quality, hardwareMaximumDimension),
     [hardwareMaximumDimension, quality],
   );
   const source = useMemo(
-    () => createSource({ assetId, url, pixelWidth, pixelHeight }),
-    [assetId, pixelHeight, pixelWidth, url],
+    () => createSource(layer),
+    [layer.assetId, layer.pixelHeight, layer.pixelWidth, layer.url],
   );
   const cacheKey = useMemo(
     () =>
@@ -78,11 +75,13 @@ export const useOptimizedArtworkTexture = (
       (texture) => {
         if (!active) return;
         setResolvedTexture({ key: cacheKey, texture });
+        incrementRuntimeCounter('webglInvalidations');
         invalidate();
       },
       (error: unknown) => {
         if (!active || isArtworkTextureAbortError(error)) return;
         setResolvedTexture((current) => (current?.key === cacheKey ? null : current));
+        incrementRuntimeCounter('webglInvalidations');
         invalidate();
       },
     );

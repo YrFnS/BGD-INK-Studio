@@ -1,3 +1,4 @@
+import { incrementRuntimeCounter } from '@/runtime/performanceMetrics';
 import { DecalLayer, PrintSurfaceId, Size } from '@/types';
 
 export interface EditorSnapshot {
@@ -72,6 +73,7 @@ export const commitEditorHistory = (
 ): EditorHistory => {
   if (areEditorSnapshotsEqual(history.present, next)) return history;
 
+  incrementRuntimeCounter('editorHistoryCommits');
   return {
     past: [...history.past, cloneEditorSnapshot(history.present)].slice(-limit),
     present: cloneEditorSnapshot(next),

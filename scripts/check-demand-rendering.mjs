@@ -47,7 +47,7 @@ requirePattern(
 );
 requirePattern(
   files.scene,
-  /onStart=\{\(\) => invalidate\(\)\}[\s\S]*onChange=\{\(\) => invalidate\(\)\}[\s\S]*onEnd=\{\(\) => invalidate\(\)\}/,
+  /const requestFrame = \(\) => \{[\s\S]*invalidate\(\);[\s\S]*onStart=\{requestFrame\}[\s\S]*onChange=\{requestFrame\}[\s\S]*onEnd=\{requestFrame\}/,
   'camera controls must request demand frames through their full interaction lifecycle',
 );
 requirePattern(

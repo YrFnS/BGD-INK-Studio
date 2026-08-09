@@ -1,4 +1,10 @@
-import React, { ReactNode, useEffect, useImperativeHandle, useRef } from 'react';
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 import { OrbitControls } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import {
@@ -6,6 +12,11 @@ import {
   type PrintSurfaceDefinition,
   type ReadyProductModelConfig,
 } from '@/data/assets3d';
+import {
+  incrementRuntimeCounter,
+  isRuntimePerformanceMetricsEnabled,
+} from '@/runtime/performanceMetrics';
+import { RuntimeWebGLProbe } from '@/runtime/RuntimeWebGLProbe';
 import { DecalLayer, PrintSurfaceId, Theme } from '@/types';
 import type { DecalTransform } from './decalTransform';
 import type { CustomizerInteractionMode } from './interactionGestures';
@@ -75,6 +86,7 @@ const CameraRig = ({ surface }: { surface: PrintSurfaceDefinition }) => {
     camera.position.set(...surface.cameraPosition);
     camera.lookAt(...surface.cameraTarget);
     camera.updateProjectionMatrix();
+    incrementRuntimeCounter('webglInvalidations');
     invalidate();
   }, [camera, invalidate, surface]);
 
@@ -109,7 +121,10 @@ const DemandRenderCoordinator = ({
     gl.shadowMap.enabled = renderingProfile.shadows;
     gl.shadowMap.autoUpdate = renderingProfile.shadows;
     gl.shadowMap.needsUpdate = true;
-    if (isPageVisible) invalidate();
+    if (isPageVisible) {
+      incrementRuntimeCounter('webglInvalidations');
+      invalidate();
+    }
   }, [
     gl,
     invalidate,
@@ -121,7 +136,10 @@ const DemandRenderCoordinator = ({
   ]);
 
   useEffect(() => {
-    if (isPageVisible) invalidate();
+    if (isPageVisible) {
+      incrementRuntimeCounter('webglInvalidations');
+      invalidate();
+    }
   }, [
     activeDecalId,
     color,
@@ -156,6 +174,7 @@ const WebGLContextMonitor = ({
       onContextLost();
     };
     const handleContextRestored = () => {
+      incrementRuntimeCounter('webglInvalidations');
       invalidate();
       onContextRestored();
     };
@@ -180,6 +199,10 @@ const DemandOrbitControls = ({
   surface: PrintSurfaceDefinition;
 }) => {
   const invalidate = useThree((state) => state.invalidate);
+  const requestFrame = () => {
+    incrementRuntimeCounter('webglInvalidations');
+    invalidate();
+  };
 
   return (
     <OrbitControls
@@ -195,9 +218,9 @@ const DemandOrbitControls = ({
       minDistance={2}
       maxDistance={6}
       enabled={enabled}
-      onStart={() => invalidate()}
-      onChange={() => invalidate()}
-      onEnd={() => invalidate()}
+      onStart={requestFrame}
+      onChange={requestFrame}
+      onEnd={requestFrame}
     />
   );
 };
@@ -228,16 +251,39 @@ export const Scene = React.forwardRef<SceneHandle, SceneProps>(
     const shirtModelRef = useRef<ShirtModelHandle>(null);
     const isDark = theme === 'dark';
     const selectedSurface = getPrintSurface(modelConfig, selectedSurfaceId);
+    const runtimeMetricsEnabled = isRuntimePerformanceMetricsEnabled();
 
     useImperativeHandle(
       ref,
       () => ({
         previewDecalTransform: (layerId, transform) => {
+          incrementRuntimeCounter('webglInvalidations');
           shirtModelRef.current?.previewDecalTransform(layerId, transform);
         },
       }),
       [],
     );
+
+    const handleDecalChange = useCallback(
+      (position: [number, number, number], rotation: [number, number, number]) => {
+        incrementRuntimeCounter('webglInvalidations');
+        onDecalChange(position, rotation);
+      },
+      [onDecalChange],
+    );
+
+    const handleDecalTransformChange = useCallback(
+      (scale: number, rotation: number) => {
+        incrementRuntimeCounter('webglInvalidations');
+        onDecalTransformChange(scale, rotation);
+      },
+      [onDecalTransformChange],
+    );
+
+    const handleDecalInteractionEnd = useCallback(() => {
+      incrementRuntimeCounter('completedGestures');
+      onDecalInteractionEnd();
+    }, [onDecalInteractionEnd]);
 
     const stopDecalInteraction = () => {
       shirtModelRef.current?.finishDecalInteraction();
@@ -258,6 +304,7 @@ export const Scene = React.forwardRef<SceneHandle, SceneProps>(
         }}
         onPointerMissed={stopDecalInteraction}
       >
+        {runtimeMetricsEnabled && <RuntimeWebGLProbe />}
         <DemandRenderCoordinator
           activeDecalId={activeDecalId}
           color={color}
@@ -300,10 +347,10 @@ export const Scene = React.forwardRef<SceneHandle, SceneProps>(
             textureAnisotropy={renderingProfile.textureAnisotropy}
             renderingQuality={renderingProfile.quality}
             shadowsEnabled={renderingProfile.shadows}
-            onDecalChange={onDecalChange}
-            onDecalTransformChange={onDecalTransformChange}
+            onDecalChange={handleDecalChange}
+            onDecalTransformChange={handleDecalTransformChange}
             onDecalInteractionStart={onDecalInteractionStart}
-            onDecalInteractionEnd={onDecalInteractionEnd}
+            onDecalInteractionEnd={handleDecalInteractionEnd}
             setDraggingDecal={setDraggingDecal}
           />
         </ModelErrorBoundary>
