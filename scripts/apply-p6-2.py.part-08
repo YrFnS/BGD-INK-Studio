@@ -1,0 +1,142 @@
+    const requirePattern = (source, pattern, message) => {
+      if (!pattern.test(source)) failures.push(message);
+    };
+    const forbidPattern = (source, pattern, message) => {
+      if (pattern.test(source)) failures.push(message);
+    };
+
+    forbidPattern(
+      files.customizer,
+      /applyLiveEditorChange|gestureStartRef/,
+      'pointer-frequency changes must not flow through durable React snapshots',
+    );
+    requirePattern(
+      files.customizer,
+      /liveGestureRef[\s\S]*previewEditorGesture[\s\S]*commitLiveGesture/,
+      'the customizer must stage a lightweight live transform and commit it once',
+    );
+    requirePattern(
+      files.scene,
+      /useImperativeHandle[\s\S]*previewDecalTransform/,
+      'the scene must expose an imperative transform-preview boundary',
+    );
+    requirePattern(
+      files.shirt,
+      /applyDecalTransformToObject[\s\S]*invalidate\(\)/,
+      'live canvas movement must update the Three.js object and invalidate without parent rerenders',
+    );
+    forbidPattern(
+      files.controls,
+      /value=\{activeDecal\.(?:scale|userRotation)\}/,
+      'continuous range inputs must not be controlled by durable editor state',
+    );
+    requirePattern(
+      files.controls,
+      /defaultValue=\{activeDecal\.scale\}[\s\S]*onInput=/,
+      'artwork size changes must preview locally until the gesture ends',
+    );
+    requirePattern(
+      files.controls,
+      /defaultValue=\{activeDecal\.userRotation\}[\s\S]*onInput=/,
+      'rotation changes must preview locally until the gesture ends',
+    );
+    forbidPattern(
+      files.history,
+      /JSON\.stringify/,
+      'editor history equality must use typed field comparison rather than serialization',
+    );
+    requirePattern(
+      files.transform,
+      /normalizeDecalTransform[\s\S]*applyDecalTransformToObject/,
+      'live and committed transforms must share one normalization boundary',
+    );
+    requirePattern(
+      files.journey,
+      /continuous transform[\s\S]*pointerdown[\s\S]*pointerup[\s\S]*Undo[\s\S]*Redo/,
+      'the browser journey must prove several live updates become one undoable commit',
+    );
+
+    if (failures.length > 0) {
+      console.error('\nEditor-gesture validation failed:\n');
+      failures.forEach((failure) => console.error(`  - ${failure}`));
+      process.exit(1);
+    }
+
+    console.log(
+      'Editor-gesture validation passed: live transforms stay imperative, one durable commit is created per gesture, and typed history equality is enforced.',
+    );
+    ''',
+)
+
+# Add a browser journey proving multiple input events collapse into one history action.
+path = ROOT / 'e2e/layer-editor.spec.ts'
+journey = path.read_text(encoding='utf-8')
+journey += textwrap.dedent(
+    r'''
+
+    test('commits a continuous transform as one undoable and recoverable edit', async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.goto('/catalog');
+      await page.getByRole('button', { name: /Classic T-Shirt/ }).click();
+      await expect(page).toHaveURL(/\/studio\/draft-/);
+
+      await page.locator('input[type="file"]').setInputFiles({
+        name: 'gesture-logo.png',
+        mimeType: 'image/png',
+        buffer: tinyPng,
+      });
+
+      const artworkWidth = page.getByLabel('Artwork width');
+      const initialScale = Number.parseFloat(await artworkWidth.inputValue());
+      const finalScale = await artworkWidth.evaluate((element) => {
+        const input = element as HTMLInputElement;
+        const minimum = Number.parseFloat(input.min);
+        const maximum = Number.parseFloat(input.max);
+        const values = [0.35, 0.55, 0.75].map(
+          (progress) => minimum + (maximum - minimum) * progress,
+        );
+
+        input.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 7 }));
+        values.forEach((value) => {
+          input.value = String(value);
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        input.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 7 }));
+        return values.at(-1) ?? input.valueAsNumber;
+      });
+
+      await expect
+        .poll(async () => Number.parseFloat(await page.getByLabel('Artwork width').inputValue()))
+        .toBeCloseTo(finalScale, 5);
+
+      await page.getByRole('button', { name: /Undo/ }).click();
+      await expect
+        .poll(async () => Number.parseFloat(await page.getByLabel('Artwork width').inputValue()))
+        .toBeCloseTo(initialScale, 5);
+
+      await page.getByRole('button', { name: /Redo/ }).click();
+      await expect
+        .poll(async () => Number.parseFloat(await page.getByLabel('Artwork width').inputValue()))
+        .toBeCloseTo(finalScale, 5);
+
+      await expect(page.getByText('Saved on this device', { exact: true })).toBeVisible();
+      await page.reload();
+      await expect
+        .poll(async () => Number.parseFloat(await page.getByLabel('Artwork width').inputValue()))
+        .toBeCloseTo(finalScale, 5);
+    });
+    ''',
+)
+path.write_text(journey, encoding='utf-8')
+
+# Add the permanent source gate to the normal validation command.
+package_path = ROOT / 'package.json'
+package = json.loads(package_path.read_text(encoding='utf-8'))
+package['scripts']['check:editor-gesture'] = 'node scripts/check-editor-gesture.mjs'
+package['scripts']['check'] = package['scripts']['check'].replace(
+    'npm run check:runtime-shell && npm run test:unit',
+    'npm run check:runtime-shell && npm run check:editor-gesture && npm run test:unit',
+)
+package_path.write_text(json.dumps(package, indent=2) + '\n', encoding='utf-8')
+
+print('P6.2 source changes applied successfully.')
