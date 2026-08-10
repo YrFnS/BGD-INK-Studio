@@ -47,6 +47,10 @@ Output directory:
 dist
 ```
 
+`npm run build` invokes the `prebuild` asset gate first. The build fails when a GLB is unresolved pointer text, malformed binary glTF, or outside the reviewed asset budgets.
+
+The approved Classic T-shirt model is committed directly at `public/basic_t-shirt.glb`. Standard Git checkouts on Vercel, Netlify, CI, and local machines receive the same binary without provider-specific Git LFS settings.
+
 `npm run check` remains the required CI and release gate. Deployment providers run the deterministic production build after CI has validated the commit.
 
 ## Vercel
@@ -60,7 +64,8 @@ dist
 - SPA rewrites,
 - immutable asset caching,
 - service-worker and manifest caching rules,
-- and security headers.
+- security headers,
+- and no dependency on a dashboard Git LFS toggle.
 
 ### External dashboard checklist
 
@@ -82,7 +87,8 @@ The repository cannot encode or read the Vercel project’s Production Branch se
 - SPA fallback,
 - static-asset caching,
 - service-worker and manifest caching rules,
-- and security headers.
+- security headers,
+- and no obsolete `GIT_LFS_ENABLED` build variable.
 
 ### External dashboard checklist
 
