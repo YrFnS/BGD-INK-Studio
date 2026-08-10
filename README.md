@@ -109,12 +109,7 @@ node --version
 npm --version
 ```
 
-Git LFS is required for the garment model:
-
-```bash
-git lfs install
-git lfs pull
-```
+The approved Classic T-shirt model is committed directly at `public/basic_t-shirt.glb`. Normal Git clones and deployment providers receive the real binary without Git LFS. `npm run check:assets` verifies its binary glTF structure and reviewed asset budgets, and `npm run build` invokes that gate automatically through `prebuild`.
 
 ## Local setup
 
@@ -122,7 +117,6 @@ git lfs pull
 git clone https://github.com/YrFnS/BGD-INK-Studio.git
 cd BGD-INK-Studio
 git checkout main
-git lfs pull
 npm ci --include=dev --no-audit --no-fund
 npm run dev
 ```
@@ -198,7 +192,7 @@ Do not raise budgets simply to obtain a passing build. Diagnose and remove the r
 
 ## Deployment policy
 
-Repository-controlled Vercel and Netlify configuration is branch-neutral. `main` is the only repository branch and the required production source; future pull requests may receive isolated preview deployments.
+Repository-controlled Vercel and Netlify configuration is branch-neutral. `main` is the only repository branch and the required production source; future pull requests may receive isolated preview deployments. The garment model is delivered as a normal Git asset, so no provider-specific Git LFS toggle is required.
 
 Before a production release, verify the provider dashboards directly:
 
