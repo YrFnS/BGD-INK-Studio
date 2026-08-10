@@ -1,1 +1,1 @@
-*.glb filter=lfs diff=lfs merge=lfs -text
+# Current optimized GLB assets are small enough to remain normal Git files.

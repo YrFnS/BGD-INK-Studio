@@ -16,6 +16,7 @@ import {
   readDecalTransform,
   type DecalTransform,
 } from './decalTransform';
+import { resolveGarmentMesh, type GarmentNodeMap } from './garmentMesh';
 import {
   calculateMultiPointerTransform,
   calculateSinglePointerTransform,
@@ -50,7 +51,7 @@ export interface ShirtModelHandle {
 }
 
 interface LoadedGarmentModel {
-  nodes: Record<string, THREE.Object3D>;
+  nodes: GarmentNodeMap;
 }
 
 type TransformBaseline =
@@ -197,15 +198,10 @@ export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
     decalsRef.current = decals;
 
     const { nodes } = useGLTF(modelConfig.modelUrl) as unknown as LoadedGarmentModel;
-    const targetMesh = useMemo(() => {
-      const node = nodes[modelConfig.garmentMeshName];
-      if (!(node instanceof THREE.Mesh)) {
-        throw new Error(
-          `The garment mesh "${modelConfig.garmentMeshName}" was not found in ${modelConfig.modelUrl}.`,
-        );
-      }
-      return node;
-    }, [modelConfig.garmentMeshName, modelConfig.modelUrl, nodes]);
+    const targetMesh = useMemo(
+      () => resolveGarmentMesh(nodes, modelConfig.garmentMeshName),
+      [modelConfig.garmentMeshName, nodes],
+    );
     const coloredMaterial = useMemo(
       () =>
         Array.isArray(targetMesh.material)

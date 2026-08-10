@@ -31,16 +31,18 @@ npm ci --include=dev --no-audit --no-fund
 
 Do not delete or regenerate `package-lock.json` merely to bypass an installation error. The private package version in `package.json` and `package-lock.json` must remain identical.
 
-## Git LFS or missing garment model
+## Missing or invalid garment model
 
-The Classic T-shirt GLB is stored through Git LFS.
+The approved Classic T-shirt GLB is committed directly at `public/basic_t-shirt.glb`; Git LFS is not required for a normal clone or deployment.
+
+Restore and validate the repository copy:
 
 ```bash
-git lfs install
-git lfs pull
+git restore public/basic_t-shirt.glb
+npm run check:assets
 ```
 
-Check that `public/basic_t-shirt.glb` is a real binary and not a small text pointer. `npm run check:assets` rejects unresolved pointers, invalid glTF files, and asset-budget regressions.
+The asset gate rejects unresolved pointer text, invalid binary glTF files, malformed declared lengths, and reviewed geometry, material, texture, or byte-budget regressions. `npm run build` invokes the same gate automatically through `prebuild`, so a deployment cannot silently publish a missing model.
 
 ## Which validation command should I run?
 
@@ -181,14 +183,15 @@ A WebGL failure must not delete artwork, history, placement, or IndexedDB data.
 
 ## The garment model fails but WebGL works
 
-The model error boundary presents the procedural or 2D fallback. Confirm:
+The model error boundary presents the product-aware 2D fallback. Confirm:
 
-- Git LFS completed,
+- the deployed commit contains the real `public/basic_t-shirt.glb` binary,
 - `public/basic_t-shirt.glb` passes `npm run check:assets`,
-- the configured mesh name still exists,
-- and the deployed static asset is served with a successful response.
+- the model still contains at least one renderable mesh,
+- the deployed static asset is served with a successful response,
+- and the tested URL is the newest preview rather than an older alias or cached deployment.
 
-Do not silently substitute one garment’s GLB for another product.
+The loader first uses the configured mesh name, then garment-like mesh names, then the largest renderable geometry. Do not silently substitute one garment’s GLB for another product.
 
 ## Large artwork is slow
 
@@ -307,7 +310,7 @@ The production output directory is `dist`.
 
 ## Deployment uses the wrong branch
 
-The required production branch is `main`. `agent/p6-runtime-stability` is a pull-request preview branch until approved and merged. Historical phase branches must not be production or build-hook targets.
+The required production branch is `main`. Pull-request branches are preview sources until approved and merged. Historical phase branches must not be production or build-hook targets.
 
 Repository configuration is branch-neutral, but provider production-branch selection lives in the external dashboards. Confirm it directly in both Vercel and Netlify before a production release. See `docs/DEPLOYMENT.md`.
 
