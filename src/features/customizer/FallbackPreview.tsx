@@ -21,6 +21,29 @@ interface FallbackPreviewProps {
 
 const toPercentage = (value: number): string => `${Math.max(0, Math.min(100, value))}%`;
 
+const getTintOpacity = (color: string): number => {
+  const value = color.trim().replace('#', '');
+  const normalized =
+    value.length === 3
+      ? value
+          .split('')
+          .map((character) => `${character}${character}`)
+          .join('')
+      : value;
+
+  if (!/^[0-9a-f]{6}$/i.test(normalized)) return 0.58;
+
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+  const luminance = (red * 0.2126 + green * 0.7152 + blue * 0.0722) / 255;
+
+  if (luminance > 0.9) return 0.04;
+  if (luminance > 0.65) return 0.24;
+  if (luminance > 0.35) return 0.5;
+  return 0.82;
+};
+
 export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
   productId,
   productName,
@@ -37,16 +60,26 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
     productId ??
     PRODUCTS.find((candidate) => t(candidate.name) === productName)?.id ??
     'tshirt-classic';
-  const instanceId = React.useId().replace(/:/g, '');
-  const fabricGradientId = `fallback-fabric-${instanceId}`;
-  const sheenGradientId = `fallback-sheen-${instanceId}`;
-  const shadowFilterId = `fallback-shadow-${instanceId}`;
   const definition = getGarmentPreviewDefinition(resolvedProductId, surface.side);
   const width = surface.modelBounds.maxX - surface.modelBounds.minX;
   const height = surface.modelBounds.maxY - surface.modelBounds.minY;
   const visibleLayers = decals.filter(
     (layer) => layer.visible && layer.surfaceId === surface.id,
   );
+  const tintOpacity = getTintOpacity(color);
+  const garmentMaskStyle: React.CSSProperties = {
+    backgroundColor: color,
+    WebkitMaskImage: `url("${definition.assetPath}")`,
+    maskImage: `url("${definition.assetPath}")`,
+    WebkitMaskPosition: 'center',
+    maskPosition: 'center',
+    WebkitMaskRepeat: 'no-repeat',
+    maskRepeat: 'no-repeat',
+    WebkitMaskSize: 'contain',
+    maskSize: 'contain',
+    mixBlendMode: 'multiply',
+    opacity: tintOpacity,
+  };
 
   const copy =
     language === 'ar'
@@ -154,63 +187,32 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
           aria-hidden="true"
         />
 
-        <svg
-          viewBox={definition.viewBox}
-          className="absolute inset-0 h-full w-full"
-          aria-hidden="true"
-        >
-          <defs>
-            <linearGradient id={fabricGradientId} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#ffffff" stopOpacity="0.38" />
-              <stop offset="0.2" stopColor={color} />
-              <stop offset="0.72" stopColor={color} />
-              <stop offset="1" stopColor="#000000" stopOpacity="0.52" />
-            </linearGradient>
-            <linearGradient id={sheenGradientId} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stopColor="#ffffff" stopOpacity="0.04" />
-              <stop offset="0.42" stopColor="#ffffff" stopOpacity="0.2" />
-              <stop offset="0.72" stopColor="#ffffff" stopOpacity="0.02" />
-              <stop offset="1" stopColor="#000000" stopOpacity="0.18" />
-            </linearGradient>
-            <filter id={shadowFilterId} x="-30%" y="-30%" width="160%" height="170%">
-              <feDropShadow dx="0" dy="24" stdDeviation="20" floodColor="#000000" floodOpacity="0.72" />
-            </filter>
-          </defs>
-
-          <g filter={`url(#${shadowFilterId})`}>
-            <path
-              d={definition.silhouettePath}
-              fill={`url(#${fabricGradientId})`}
-              stroke="rgba(255,255,255,.28)"
-              strokeWidth="3"
-              strokeLinejoin="round"
-            />
-            <path d={definition.silhouettePath} fill={`url(#${sheenGradientId})`} opacity="0.8" />
-            {definition.secondaryPath && (
-              <>
-                <path
-                  d={definition.secondaryPath}
-                  fill={`url(#${fabricGradientId})`}
-                  stroke="rgba(255,255,255,.25)"
-                  strokeWidth="3"
-                  strokeLinejoin="round"
-                />
-                <path d={definition.secondaryPath} fill={`url(#${sheenGradientId})`} opacity="0.7" />
-              </>
-            )}
-            {definition.detailPaths.map((path) => (
-              <path
-                key={path}
-                d={path}
-                fill="none"
-                stroke="rgba(255,255,255,.28)"
-                strokeWidth="4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            ))}
-          </g>
-        </svg>
+        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+          <img
+            src={definition.assetPath}
+            alt=""
+            className="absolute inset-0 h-full w-full object-contain drop-shadow-[0_28px_24px_rgba(0,0,0,.58)]"
+            data-garment-render={definition.assetPath}
+            draggable={false}
+          />
+          <div className="absolute inset-0" style={garmentMaskStyle} />
+          <div
+            className="absolute inset-0 opacity-20"
+            style={{
+              WebkitMaskImage: `url("${definition.assetPath}")`,
+              maskImage: `url("${definition.assetPath}")`,
+              WebkitMaskPosition: 'center',
+              maskPosition: 'center',
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat',
+              WebkitMaskSize: 'contain',
+              maskSize: 'contain',
+              background:
+                'linear-gradient(112deg, rgba(255,255,255,.34), transparent 34%, transparent 70%, rgba(0,0,0,.28))',
+              mixBlendMode: 'soft-light',
+            }}
+          />
+        </div>
 
         <div
           className="absolute overflow-hidden border border-dashed border-red-400/90 bg-black/8 shadow-[0_0_0_1px_rgba(0,0,0,.18),0_0_28px_rgba(239,68,68,.08)]"
@@ -236,7 +238,7 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
             const y =
               (1 - (layer.position[1] - surface.modelBounds.minY) / height) * 100;
             const layerWidth = (layer.scale / width) * 100;
-            const layerHeight = ((layer.scale / aspectRatio) / height) * 100;
+            const layerHeight = (layer.scale / aspectRatio / height) * 100;
 
             return (
               <img

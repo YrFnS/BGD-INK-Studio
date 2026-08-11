@@ -1,44 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1500" role="img" aria-labelledby="title desc">
-  <title id="title">BGD/INK Oversized tee</title>
-  <desc id="desc">Editorial oversized T-shirt illustration marked as awaiting approved 3D geometry.</desc>
+  <title id="title">BGD/INK Oversized Tee</title>
+  <desc id="desc">Owned photorealistic oversized tee product render.</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#efeae0"/>
-      <stop offset="1" stop-color="#cfc7b9"/>
-    </linearGradient>
-    <linearGradient id="fabric" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#262626"/>
-      <stop offset="1" stop-color="#090909"/>
-    </linearGradient>
-    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-      <path d="M60 0H0V60" fill="none" stroke="#171717" stroke-opacity=".075" stroke-width="2"/>
-    </pattern>
-    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
-      <feDropShadow dx="0" dy="34" stdDeviation="28" flood-color="#554c40" flood-opacity=".32"/>
-    </filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f3eee4"/><stop offset="1" stop-color="#d9d0c2"/></linearGradient>
+    <pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse"><path d="M64 0H0V64" fill="none" stroke="#171717" stroke-opacity=".075" stroke-width="2"/></pattern>
+    <filter id="shadow" x="-30%" y="-25%" width="160%" height="175%"><feDropShadow dx="0" dy="34" stdDeviation="26" flood-color="#5b5146" flood-opacity=".32"/></filter>
   </defs>
   <rect width="1200" height="1500" rx="56" fill="url(#bg)"/>
-  <rect x="28" y="28" width="1144" height="1444" rx="38" fill="url(#grid)" stroke="#171717" stroke-opacity=".12"/>
-  <path d="M924 94h190v190H924z" fill="#e13b2d"/>
-  <path d="m952 122 134 134m0-134L952 256" stroke="#0b0b0b" stroke-width="4" opacity=".7"/>
-  <g fill="#151515" font-family="Arial, Helvetica, sans-serif">
-    <text x="86" y="112" font-size="30" font-weight="700" letter-spacing="8">BGD/INK / 02</text>
-    <text x="86" y="151" font-size="17" letter-spacing="5" opacity=".58">COLLECTION DIRECTION / MODEL PENDING</text>
-  </g>
-  <g filter="url(#shadow)" transform="translate(0 82)">
-    <path d="M326 292c95-46 164-68 274-68s179 22 274 68l220 96-91 238-155-61-36 644H388l-36-644-155 61-91-238 220-96Z" fill="url(#fabric)" stroke="#fff" stroke-opacity=".15" stroke-width="4"/>
-    <path d="M492 244c12 78 49 118 108 118s96-40 108-118" fill="none" stroke="#4d4d4d" stroke-width="30" stroke-linecap="round"/>
-    <path d="M388 565c74 25 139 37 212 37s138-12 212-37" fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="3"/>
-    <rect x="444" y="480" width="312" height="408" rx="8" fill="#e13b2d" fill-opacity=".025" stroke="#e13b2d" stroke-opacity=".45" stroke-width="4" stroke-dasharray="18 14"/>
-    <g transform="translate(485 614)" opacity=".72">
-      <path d="M0 0h230v108H0z" fill="none" stroke="#f0eadf" stroke-width="4"/>
-      <path d="M28 30h174M28 54h116M28 78h148" stroke="#f0eadf" stroke-width="9"/>
-    </g>
-  </g>
-  <g font-family="Arial, Helvetica, sans-serif">
-    <text x="86" y="1330" fill="#151515" font-size="54" font-weight="700" letter-spacing="-2">OVERSIZED TEE</text>
-    <text x="86" y="1380" fill="#151515" fill-opacity=".55" font-size="22" letter-spacing="4">GENUINE MODEL REQUIRED</text>
-    <path d="M86 1422h1028" stroke="#171717" stroke-opacity=".15"/>
-    <text x="86" y="1458" fill="#151515" fill-opacity=".45" font-size="17" letter-spacing="3">CUSTOMIZATION UNLOCKS AFTER GEOMETRY APPROVAL</text>
-  </g>
+  <rect x="24" y="24" width="1152" height="1452" rx="42" fill="url(#grid)" stroke="#171717" stroke-opacity=".11"/>
+  <text x="76" y="100" fill="#171717" font-family="Arial,Helvetica,sans-serif" font-size="24" font-weight="700" letter-spacing="7">BGD/INK / 02</text>
+  <text x="76" y="140" fill="#171717" fill-opacity=".48" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" letter-spacing="4">RELAXED / DROP SHOULDER</text>
+  <rect x="970" y="72" width="154" height="154" fill="#ef3d31"/>
+  <path d="M1002 104l90 90m0-90-90 90" stroke="#171717" stroke-width="4"/>
+  <g filter="url(#shadow)"><image href="/brand/products/renders/oversized-tee-front.svg" x="90" y="145" width="1020" height="1110" preserveAspectRatio="xMidYMid meet"/></g>
+  <text x="76" y="1360" fill="#171717" font-family="Arial,Helvetica,sans-serif" font-size="52" font-weight="800">OVERSIZED TEE</text>
+  <text x="76" y="1407" fill="#171717" fill-opacity=".48" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" letter-spacing="4">MODEL PENDING</text>
 </svg>

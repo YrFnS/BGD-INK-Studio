@@ -1,4 +1,4 @@
-import { access, readFile } from 'node:fs/promises';
+import { access, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
@@ -10,6 +10,18 @@ const customerFacingFiles = [
   'src/data/storefront.ts',
   'src/translations.ts',
 ];
+const renderConfigurationPath = 'src/features/customizer/garmentPreview.ts';
+const requiredRenderPaths = [
+  '/brand/products/renders/classic-tshirt-front.svg',
+  '/brand/products/renders/classic-tshirt-back.svg',
+  '/brand/products/renders/oversized-tee-front.svg',
+  '/brand/products/renders/oversized-tee-back.svg',
+  '/brand/products/renders/premium-hoodie-front.svg',
+  '/brand/products/renders/premium-hoodie-back.svg',
+  '/brand/products/renders/urban-vest-front.svg',
+  '/brand/products/renders/urban-vest-back.svg',
+];
+const maximumRenderBytes = 160 * 1024;
 
 const forbiddenPatterns = [
   {
@@ -42,6 +54,10 @@ const forbiddenPatterns = [
   },
 ];
 
+const hasRemoteAssetReference = (asset) =>
+  /(?:href|src)\s*=\s*["']https?:\/\//i.test(asset) ||
+  /url\(\s*["']?https?:\/\//i.test(asset);
+
 const failures = [];
 const contentsByFile = new Map();
 
@@ -63,14 +79,19 @@ if (/\p{Extended_Pictographic}/u.test(heroSource)) {
 }
 
 const productsSource = contentsByFile.get('src/data/products.ts') ?? '';
-const imagePaths = Array.from(productsSource.matchAll(/image:\s*['"]([^'"]+)['"]/g), (match) => match[1]);
+const imagePaths = Array.from(
+  productsSource.matchAll(/image:\s*['"]([^'"]+)['"]/g),
+  (match) => match[1],
+);
 if (imagePaths.length === 0) {
   failures.push('src/data/products.ts: no product artwork paths were found');
 }
 
 for (const imagePath of imagePaths) {
   if (!imagePath.startsWith('/brand/products/') || !imagePath.endsWith('.svg')) {
-    failures.push(`src/data/products.ts: product artwork must be an owned /brand/products/*.svg asset, received ${imagePath}`);
+    failures.push(
+      `src/data/products.ts: product artwork must be an owned /brand/products/*.svg asset, received ${imagePath}`,
+    );
     continue;
   }
 
@@ -81,8 +102,47 @@ for (const imagePath of imagePaths) {
     if (!asset.includes('<svg')) {
       failures.push(`${assetPath}: owned product artwork must be a valid SVG source file`);
     }
+    if (hasRemoteAssetReference(asset)) {
+      failures.push(`${assetPath}: product artwork must not load remote imagery`);
+    }
   } catch {
     failures.push(`${assetPath}: referenced owned product artwork does not exist`);
+  }
+}
+
+const renderConfiguration = await readFile(
+  path.join(root, renderConfigurationPath),
+  'utf8',
+);
+
+for (const renderPath of requiredRenderPaths) {
+  if (!renderConfiguration.includes(renderPath)) {
+    failures.push(`${renderConfigurationPath}: missing render mapping for ${renderPath}`);
+  }
+
+  const assetPath = path.join(root, 'public', renderPath.slice(1));
+  try {
+    const [asset, metadata] = await Promise.all([
+      readFile(assetPath, 'utf8'),
+      stat(assetPath),
+    ]);
+
+    if (!asset.includes('<svg') || !asset.includes('viewBox="0 0 600 750"')) {
+      failures.push(`${assetPath}: garment render must be a 600 × 750 SVG wrapper`);
+    }
+    if (!asset.includes('data:image/webp;base64,')) {
+      failures.push(`${assetPath}: garment render must embed an owned WebP payload`);
+    }
+    if (hasRemoteAssetReference(asset)) {
+      failures.push(`${assetPath}: garment render must not load remote imagery`);
+    }
+    if (metadata.size > maximumRenderBytes) {
+      failures.push(
+        `${assetPath}: ${metadata.size} bytes exceeds the ${maximumRenderBytes}-byte render budget`,
+      );
+    }
+  } catch {
+    failures.push(`${assetPath}: required garment render does not exist`);
   }
 }
 
@@ -93,5 +153,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `Storefront trust validation passed: ${imagePaths.length} owned product assets, no stock-photo references, fabricated testimonials, emoji process icons, or unsupported production promises.`,
+  `Storefront trust validation passed: ${imagePaths.length} catalog assets and ${requiredRenderPaths.length} owned garment renders, with no stock-photo references, fabricated testimonials, emoji process icons, unsupported production promises, or remote imagery.`,
 );
