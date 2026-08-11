@@ -13,6 +13,7 @@ const renderFallback = (onRetry3d = vi.fn()) =>
   render(
     <AppProvider>
       <FallbackPreview
+        productId="tshirt-classic"
         productName="Classic T-Shirt"
         color="#111111"
         surface={surface}
@@ -35,7 +36,13 @@ describe('safe 2D fallback', () => {
     const { container } = renderFallback(onRetry3d);
 
     expect(screen.getByText('Safe 2D preview')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /Classic T-Shirt.*Print area: Front/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: /Classic T-Shirt.*Print area: Front/ }),
+    ).toBeInTheDocument();
+    expect(container.querySelector('img[data-garment-render]')).toHaveAttribute(
+      'src',
+      '/brand/products/renders/classic-tshirt-front.svg',
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Try 3D again' }));
     expect(onRetry3d).toHaveBeenCalledOnce();
@@ -53,10 +60,11 @@ describe('safe 2D fallback', () => {
     expect(screen.getByRole('button', { name: 'جرّب معاينة 3D من جديد' })).toBeInTheDocument();
   });
 
-  it('selects the product-specific silhouette from the localized product name', () => {
-    render(
+  it('selects the explicit product render independently of localized names', () => {
+    const { container } = render(
       <AppProvider>
         <FallbackPreview
+          productId="hoodie-premium"
           productName="Premium Hoodie"
           color="#111111"
           surface={surface}
@@ -72,6 +80,10 @@ describe('safe 2D fallback', () => {
     expect(screen.getByRole('img', { name: /Premium Hoodie/ })).toHaveAttribute(
       'data-garment-preview',
       'hoodie-premium',
+    );
+    expect(container.querySelector('img[data-garment-render]')).toHaveAttribute(
+      'src',
+      '/brand/products/renders/premium-hoodie-front.svg',
     );
   });
 });
