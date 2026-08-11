@@ -54,6 +54,10 @@ const forbiddenPatterns = [
   },
 ];
 
+const hasRemoteAssetReference = (asset) =>
+  /(?:href|src)\s*=\s*["']https?:\/\//i.test(asset) ||
+  /url\(\s*["']?https?:\/\//i.test(asset);
+
 const failures = [];
 const contentsByFile = new Map();
 
@@ -98,7 +102,7 @@ for (const imagePath of imagePaths) {
     if (!asset.includes('<svg')) {
       failures.push(`${assetPath}: owned product artwork must be a valid SVG source file`);
     }
-    if (/https?:\/\//i.test(asset)) {
+    if (hasRemoteAssetReference(asset)) {
       failures.push(`${assetPath}: product artwork must not load remote imagery`);
     }
   } catch {
@@ -129,7 +133,7 @@ for (const renderPath of requiredRenderPaths) {
     if (!asset.includes('data:image/webp;base64,')) {
       failures.push(`${assetPath}: garment render must embed an owned WebP payload`);
     }
-    if (/https?:\/\//i.test(asset)) {
+    if (hasRemoteAssetReference(asset)) {
       failures.push(`${assetPath}: garment render must not load remote imagery`);
     }
     if (metadata.size > maximumRenderBytes) {
