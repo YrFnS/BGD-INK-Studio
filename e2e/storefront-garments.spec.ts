@@ -44,12 +44,12 @@ test('loads every owned garment render and preserves catalog availability in a r
     .toBe(true);
 
   const decodedAssets = await page.evaluate(async (paths) => {
-    const loadImage = (source: string) =>
+    const loadImage = (source: string, label: string) =>
       new Promise<{ width: number; height: number }>((resolve, reject) => {
         const image = new Image();
         image.onload = () =>
           resolve({ width: image.naturalWidth, height: image.naturalHeight });
-        image.onerror = () => reject(new Error(`Could not decode image: ${source}`));
+        image.onerror = () => reject(new Error(`Could not decode image: ${label}`));
         image.src = source;
       });
 
@@ -66,20 +66,28 @@ test('loads every owned garment render and preserves catalog availability in a r
           throw new Error(`Could not parse SVG wrapper: ${path}`);
         }
 
-        const embeddedImage = documentNode.querySelector('image');
-        const embeddedSource =
-          embeddedImage?.getAttribute('href') ??
-          embeddedImage?.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
-        if (!embeddedSource) {
-          throw new Error(`SVG wrapper has no embedded raster image: ${path}`);
+        const embeddedSources = [...documentNode.querySelectorAll('image')]
+          .map(
+            (embeddedImage) =>
+              embeddedImage.getAttribute('href') ??
+              embeddedImage.getAttributeNS('http://www.w3.org/1999/xlink', 'href'),
+          )
+          .filter((source): source is string => Boolean(source));
+        if (embeddedSources.length === 0) {
+          throw new Error(`SVG wrapper has no embedded image: ${path}`);
         }
 
-        const [wrapper, raster] = await Promise.all([
-          loadImage(path),
-          loadImage(new URL(embeddedSource, window.location.href).href),
-        ]);
+        const wrapper = await loadImage(path, path);
+        const nestedImages = await Promise.all(
+          embeddedSources.map((source, index) =>
+            loadImage(
+              new URL(source, response.url).href,
+              `${path} nested image ${index + 1}`,
+            ),
+          ),
+        );
 
-        return { path, wrapper, raster };
+        return { path, wrapper, nestedImages };
       }),
     );
   }, uniqueGarmentAssetPaths);
@@ -88,8 +96,11 @@ test('loads every owned garment render and preserves catalog availability in a r
   for (const decodedAsset of decodedAssets) {
     expect(decodedAsset.wrapper.width, decodedAsset.path).toBeGreaterThan(0);
     expect(decodedAsset.wrapper.height, decodedAsset.path).toBeGreaterThan(0);
-    expect(decodedAsset.raster.width, decodedAsset.path).toBeGreaterThan(0);
-    expect(decodedAsset.raster.height, decodedAsset.path).toBeGreaterThan(0);
+    expect(decodedAsset.nestedImages.length, decodedAsset.path).toBeGreaterThan(0);
+    for (const nestedImage of decodedAsset.nestedImages) {
+      expect(nestedImage.width, decodedAsset.path).toBeGreaterThan(0);
+      expect(nestedImage.height, decodedAsset.path).toBeGreaterThan(0);
+    }
   }
 
   for (const product of PRODUCTS) {
