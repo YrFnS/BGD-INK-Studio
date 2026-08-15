@@ -202,6 +202,14 @@ export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
       () => resolveGarmentMesh(nodes, modelConfig.garmentMeshName),
       [modelConfig.garmentMeshName, nodes],
     );
+    const garmentGeometry = useMemo(() => {
+      const geometry = targetMesh.geometry.clone();
+      geometry.center();
+      geometry.applyMatrix4(
+        new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...modelConfig.rotation)),
+      );
+      return geometry;
+    }, [modelConfig.rotation, targetMesh.geometry]);
     const coloredMaterial = useMemo(
       () =>
         Array.isArray(targetMesh.material)
@@ -259,13 +267,14 @@ export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
 
     useEffect(
       () => () => {
+        garmentGeometry.dispose();
         if (Array.isArray(coloredMaterial)) {
           coloredMaterial.forEach((material) => material.dispose());
         } else {
           coloredMaterial.dispose();
         }
       },
-      [coloredMaterial],
+      [coloredMaterial, garmentGeometry],
     );
 
     useEffect(() => {
@@ -459,34 +468,32 @@ export const ShirtModel = React.forwardRef<ShirtModelHandle, ShirtModelProps>(
     return (
       <Center>
         <group dispose={null} position={modelConfig.position} scale={modelConfig.scale}>
-          <group rotation={modelConfig.rotation}>
-            <mesh
-              castShadow={shadowsEnabled}
-              receiveShadow={shadowsEnabled}
-              geometry={targetMesh.geometry}
-              material={coloredMaterial}
-              onPointerDown={handlePointerDown}
-              onPointerUp={handlePointerEnd}
-              onPointerCancel={handlePointerEnd}
-              onPointerMove={handlePointerMove}
-            >
-              <PrintAreaGuide surface={selectedSurface} />
-              {decals.map((layer, order) =>
-                layer.visible ? (
-                  <DecalItem
-                    key={layer.id}
-                    layer={layer}
-                    surface={getPrintSurface(modelConfig, layer.surfaceId)}
-                    isActive={layer.id === activeDecalId}
-                    order={order}
-                    textureAnisotropy={textureAnisotropy}
-                    renderingQuality={renderingQuality}
-                    onMeshChange={(mesh) => registerDecalMesh(layer.id, mesh)}
-                  />
-                ) : null,
-              )}
-            </mesh>
-          </group>
+          <mesh
+            castShadow={shadowsEnabled}
+            receiveShadow={shadowsEnabled}
+            geometry={garmentGeometry}
+            material={coloredMaterial}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerEnd}
+            onPointerCancel={handlePointerEnd}
+            onPointerMove={handlePointerMove}
+          >
+            <PrintAreaGuide surface={selectedSurface} />
+            {decals.map((layer, order) =>
+              layer.visible ? (
+                <DecalItem
+                  key={layer.id}
+                  layer={layer}
+                  surface={getPrintSurface(modelConfig, layer.surfaceId)}
+                  isActive={layer.id === activeDecalId}
+                  order={order}
+                  textureAnisotropy={textureAnisotropy}
+                  renderingQuality={renderingQuality}
+                  onMeshChange={(mesh) => registerDecalMesh(layer.id, mesh)}
+                />
+              ) : null,
+            )}
+          </mesh>
         </group>
       </Center>
     );

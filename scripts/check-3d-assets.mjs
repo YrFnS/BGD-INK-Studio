@@ -210,6 +210,7 @@ const inspectGlb = async (filePath) => {
     materials: (json.materials ?? []).length,
     textures: (json.textures ?? []).length,
     images,
+    extensionsRequired: json.extensionsRequired ?? [],
     extensionsUsed: json.extensionsUsed ?? [],
   };
 };
@@ -248,6 +249,9 @@ for (const filePath of files.sort()) {
   }
   if (asset.materials > budgets.maximumMaterials) {
     failures.push(`${name} exceeds the material-count budget.`);
+  }
+  if (asset.extensionsRequired.includes('KHR_materials_pbrSpecularGlossiness')) {
+    failures.push(`${name} requires the unsupported KHR_materials_pbrSpecularGlossiness extension.`);
   }
 
   for (const image of asset.images) {
